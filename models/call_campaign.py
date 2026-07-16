@@ -181,6 +181,25 @@ class CallCampaign(models.Model):
             })
         lead.write(vals)
 
+        # ── Call log entry → feeds the Call Report dashboard ─────────────
+        # Every submitted campaign call is one call done by this user.
+        # Qualities that mean the phone was never answered are logged as
+        # 'no_answer'; everything else counts as 'answered' (connected).
+        _NOT_CONNECTED = {'not_responding', 'not_reachable', 'wrong_number',
+                          'not_attended'}
+        self.env['lead.call.log'].sudo().create({
+            'lead_id': lead.id,
+            'user_id': self.env.uid,
+            'call_time': fields.Datetime.now(),
+            'call_type': 'outgoing',
+            'call_status': 'no_answer' if quality in _NOT_CONNECTED
+                           else 'answered',
+            'caller_number': lead.phone_number or '',
+            'remarks': _('Campaign call — %s%s') % (
+                dict(QUALITY_SELECTION).get(quality, quality or ''),
+                (': ' + response) if response else ''),
+        })
+
         # ── Chatter note ─────────────────────────────────────────────────
         quality_label = dict(QUALITY_SELECTION).get(quality, quality or '')
         msg = _('📞 <b>Campaign Call</b> — Quality: %s') % quality_label
