@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="custom_leads_19.LeadCallTimer">
+        <div class="o_lead_call_timer_backdrop">
+            <div class="o_lead_call_timer_card">
+
+                <!-- Header -->
+                <div class="o_call_timer_header">
+                    <div class="o_call_timer_pulse">
+                        <span class="o_call_timer_pulse_ring"/>
+                        <i class="fa fa-phone o_call_timer_phone_icon"/>
+                    </div>
+                    <div class="o_call_timer_info">
+                        <div class="o_call_timer_label">Outgoing Call</div>
+                        <div class="o_call_timer_lead_name" t-esc="state.leadName"/>
+                        <div class="o_call_timer_phone" t-esc="state.phone"/>
+                    </div>
+                    <!-- Open Lead in new tab -->
+                    <button class="o_call_open_lead_btn" t-on-click="openLeadNewTab"
+                            title="Open Lead in new tab">
+                        <i class="fa fa-external-link"/>
+                        <span>Lead</span>
+                    </button>
+                </div>
+
+                <!-- Timer digits -->
+                <div class="o_call_timer_display">
+                    <div class="o_call_timer_digits" t-esc="timeDisplay"/>
+                    <div class="o_call_timer_status">
+                        <t t-if="state.isRunning">
+                            <span class="o_call_status_dot o_call_status_active"/>
+                            Connected
+                        </t>
+                        <t t-else="">
+                            <span class="o_call_status_dot o_call_status_paused"/>
+                            Paused
+                        </t>
+                    </div>
+                </div>
+
+                <!-- Recording section -->
+                <div class="o_call_rec_section">
+                    <t t-if="state.recState === 'idle'">
+                        <button class="o_rec_enable_btn" t-on-click="enableRecording">
+                            <i class="fa fa-microphone"/> Enable Call Recording
+                        </button>
+                        <div class="o_rec_hint">Records your microphone during the call</div>
+                    </t>
+                    <t t-elif="state.recState === 'requesting'">
+                        <div class="o_rec_requesting">
+                            <i class="fa fa-spinner fa-spin"/>
+                            <span>Allow microphone in your browser popup...</span>
+                        </div>
+                        <div class="o_rec_hint o_rec_hint_warn">
+                            👆 Look for the permission popup at the top of your browser
+                        </div>
+                    </t>
+                    <t t-elif="state.recState === 'recording'">
+                        <div class="o_rec_active">
+                            <span class="o_rec_dot"/>
+                            <span class="o_rec_label">REC</span>
+                            <span class="o_rec_size" t-esc="recSizeDisplay"/>
+                            <span class="o_rec_desc">Recording in progress</span>
+                        </div>
+                    </t>
+                    <t t-elif="state.recState === 'denied'">
+                        <div class="o_rec_denied">
+                            <i class="fa fa-microphone-slash"/>
+                            Microphone access denied.
+                            <small>Allow in browser settings to record.</small>
+                        </div>
+                    </t>
+                    <t t-elif="state.recState === 'http_required'">
+                        <div class="o_rec_http">
+                            <div class="o_rec_http_row">
+                                <i class="fa fa-lock o_rec_http_icon"/>
+                                <span>Recording requires HTTPS</span>
+                            </div>
+                            <div class="o_rec_http_hint">
+                                📎 Use <strong>Upload Recording</strong> in Call History tab after the call.
+                            </div>
+                        </div>
+                    </t>
+                    <t t-elif="state.recState === 'unsupported'">
+                        <div class="o_rec_denied">
+                            <i class="fa fa-microphone-slash"/>
+                            Recording not supported on this browser.
+                        </div>
+                    </t>
+                </div>
+
+                <!-- Saved call log banner (shown after log is saved) -->
+                <div class="o_call_log_saved_banner" t-if="state.logId">
+                    <i class="fa fa-check-circle"/>
+                    <span>Call log saved</span>
+                    <button class="o_call_view_log_btn" t-on-click="viewCallLog">
+                        View Call Log <i class="fa fa-arrow-right"/>
+                    </button>
+                </div>
+
+                <!-- Action buttons -->
+                <div class="o_call_timer_actions">
+                    <button class="o_call_btn o_call_btn_pause"
+                            t-on-click="pauseResume"
+                            t-att-disabled="state.isSaving">
+                        <i t-attf-class="fa fa-{{ state.isRunning ? 'pause' : 'play' }}"/>
+                        <span t-esc="state.isRunning ? 'Pause' : 'Resume'"/>
+                    </button>
+                    <button class="o_call_btn o_call_btn_end"
+                            t-on-click="endCall"
+                            t-att-disabled="state.isSaving">
+                        <t t-if="!state.isSaving">
+                            <i class="fa fa-phone-slash"/> End Call
+                        </t>
+                        <t t-else="">
+                            <i class="fa fa-spinner fa-spin"/> Saving...
+                        </t>
+                    </button>
+                </div>
+
+                <button class="o_call_timer_discard" t-on-click="cancel"
+                        t-att-disabled="state.isSaving">
+                    Discard (don't log)
+                </button>
+
+            </div>
+        </div>
+    </t>
+</templates>

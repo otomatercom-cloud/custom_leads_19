@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+<t t-name="custom_leads_19.CallReportDashboard">
+<div class="o_call_report_dashboard">
+
+    <!-- ── Header ─────────────────────────────────────────────────── -->
+    <div class="o_crd_header">
+        <div>
+            <div class="o_crd_kicker">Leads Management</div>
+            <h1>Call Report</h1>
+            <p>Calls done by Admission Officers &amp; Team Leads</p>
+        </div>
+        <div class="o_crd_header_actions">
+            <button type="button" class="btn btn-light"
+                    t-on-click="loadData" t-att-disabled="state.loading">
+                <i t-attf-class="fa {{ state.loading ? 'fa-spinner fa-spin' : 'fa-refresh' }} me-1"/>Refresh
+            </button>
+            <button type="button" class="btn btn-secondary"
+                    t-on-click="openAllCalls">
+                <i class="fa fa-list me-1"/>Call Logs
+            </button>
+            <button type="button" class="btn btn-success"
+                    t-on-click="exportExcel" t-att-disabled="state.loading">
+                <i class="fa fa-file-excel-o me-1"/>Export Excel
+            </button>
+        </div>
+    </div>
+
+    <!-- ── Date filter bar ────────────────────────────────────────── -->
+    <div class="o_crd_filterbar">
+        <div class="o_crd_quick">
+            <button type="button"
+                    t-attf-class="btn btn-sm {{ state.activeRange === 'today' ? 'btn-primary' : 'btn-outline-primary' }}"
+                    t-on-click="() => this.setQuickRange('today')">Today</button>
+            <button type="button"
+                    t-attf-class="btn btn-sm {{ state.activeRange === 'yesterday' ? 'btn-primary' : 'btn-outline-primary' }}"
+                    t-on-click="() => this.setQuickRange('yesterday')">Yesterday</button>
+            <button type="button"
+                    t-attf-class="btn btn-sm {{ state.activeRange === 'week' ? 'btn-primary' : 'btn-outline-primary' }}"
+                    t-on-click="() => this.setQuickRange('week')">Last 7 Days</button>
+            <button type="button"
+                    t-attf-class="btn btn-sm {{ state.activeRange === 'month' ? 'btn-primary' : 'btn-outline-primary' }}"
+                    t-on-click="() => this.setQuickRange('month')">This Month</button>
+        </div>
+        <div class="o_crd_dates">
+            <label>From</label>
+            <input type="date" class="form-control form-control-sm"
+                   t-att-value="state.dateFrom" t-on-change="onDateFromChange"/>
+            <label>To</label>
+            <input type="date" class="form-control form-control-sm"
+                   t-att-value="state.dateTo" t-on-change="onDateToChange"/>
+            <button type="button" class="btn btn-sm btn-primary"
+                    t-on-click="applyFilter" t-att-disabled="state.loading">
+                <i class="fa fa-filter me-1"/>Apply
+            </button>
+        </div>
+    </div>
+
+    <!-- ── Error ──────────────────────────────────────────────────── -->
+    <div t-if="state.error" class="alert alert-danger mt-3" t-esc="state.error"/>
+
+    <!-- ── Loading skeleton ───────────────────────────────────────── -->
+    <t t-if="state.loading">
+        <div class="o_crd_skeleton">
+            <div class="o_crd_skeleton_cards">
+                <t t-foreach="[1,2,3,4,5,6]" t-as="n" t-key="n">
+                    <div class="o_crd_skeleton_card"/>
+                </t>
+            </div>
+            <div class="o_crd_skeleton_table"/>
+        </div>
+    </t>
+
+    <t t-else="">
+        <!-- ── Summary cards ──────────────────────────────────────── -->
+        <div class="o_crd_cards">
+            <div class="o_crd_card o_crd_card_total">
+                <div class="o_crd_card_icon"><i class="fa fa-phone"/></div>
+                <div class="o_crd_card_value" t-esc="summary.total_calls"/>
+                <div class="o_crd_card_label">Total Calls</div>
+            </div>
+            <div class="o_crd_card o_crd_card_connected">
+                <div class="o_crd_card_icon"><i class="fa fa-check-circle"/></div>
+                <div class="o_crd_card_value" t-esc="summary.connected"/>
+                <div class="o_crd_card_label">Connected</div>
+            </div>
+            <div class="o_crd_card o_crd_card_out">
+                <div class="o_crd_card_icon"><i class="fa fa-arrow-up"/></div>
+                <div class="o_crd_card_value" t-esc="summary.outgoing"/>
+                <div class="o_crd_card_label">Outgoing</div>
+            </div>
+            <div class="o_crd_card o_crd_card_in">
+                <div class="o_crd_card_icon"><i class="fa fa-arrow-down"/></div>
+                <div class="o_crd_card_value" t-esc="summary.incoming"/>
+                <div class="o_crd_card_label">Incoming</div>
+            </div>
+            <div class="o_crd_card o_crd_card_leads">
+                <div class="o_crd_card_icon"><i class="fa fa-users"/></div>
+                <div class="o_crd_card_value" t-esc="summary.unique_leads"/>
+                <div class="o_crd_card_label">Unique Leads</div>
+            </div>
+            <div class="o_crd_card o_crd_card_time">
+                <div class="o_crd_card_icon"><i class="fa fa-clock-o"/></div>
+                <div class="o_crd_card_value o_crd_card_value_sm" t-esc="summary.total_duration"/>
+                <div class="o_crd_card_label">Total Talk Time</div>
+            </div>
+        </div>
+
+        <!-- ── Empty state ────────────────────────────────────────── -->
+        <div t-if="!hasRows" class="o_crd_empty">
+            <i class="fa fa-phone-slash fa-2x"/>
+            <p>No calls recorded for the selected period.</p>
+        </div>
+
+        <!-- ── Team blocks ────────────────────────────────────────── -->
+        <t t-foreach="teams" t-as="team" t-key="team.id">
+            <div class="o_crd_team">
+                <div class="o_crd_team_header">
+                    <div class="o_crd_team_name">
+                        <i class="fa fa-users me-2"/><t t-esc="team.name"/>
+                    </div>
+                    <div class="o_crd_team_stats">
+                        <span class="o_crd_badge o_crd_badge_total">
+                            <t t-esc="team.total_calls"/> calls
+                        </span>
+                        <span class="o_crd_badge o_crd_badge_ok">
+                            <t t-esc="team.total_connected"/> connected
+                        </span>
+                    </div>
+                </div>
+                <div class="o_crd_table_wrap">
+                    <table class="o_crd_table">
+                        <thead>
+                            <tr>
+                                <th class="o_crd_th_name">Name</th>
+                                <th>Role</th>
+                                <th>Reporting TL</th>
+                                <th class="o_crd_num">Calls</th>
+                                <th class="o_crd_num">Out</th>
+                                <th class="o_crd_num">In</th>
+                                <th class="o_crd_num">Connected</th>
+                                <th class="o_crd_num">Not Conn.</th>
+                                <th class="o_crd_num">Leads</th>
+                                <th class="o_crd_num">Talk Time</th>
+                                <th class="o_crd_num">Avg</th>
+                                <th class="o_crd_num">Connect %</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-foreach="team.rows" t-as="row" t-key="row.user_id + '_' + row.role">
+                                <tr t-attf-class="o_crd_row {{ row.role === 'tl' ? 'o_crd_row_tl' : '' }}"
+                                    t-on-click="() => this.openUserCalls(row)">
+                                    <td class="o_crd_td_name">
+                                        <span t-if="row.role === 'tl'" class="o_crd_tl_star">★</span>
+                                        <t t-esc="row.name"/>
+                                    </td>
+                                    <td>
+                                        <span t-attf-class="o_crd_role {{ row.role === 'tl' ? 'o_crd_role_tl' : 'o_crd_role_officer' }}">
+                                            <t t-esc="row.role === 'tl' ? 'Team Lead' : 'Officer'"/>
+                                        </span>
+                                    </td>
+                                    <td class="o_crd_muted" t-esc="row.tl_name"/>
+                                    <td class="o_crd_num o_crd_bold" t-esc="row.calls"/>
+                                    <td class="o_crd_num" t-esc="row.outgoing"/>
+                                    <td class="o_crd_num" t-esc="row.incoming"/>
+                                    <td class="o_crd_num o_crd_green" t-esc="row.connected"/>
+                                    <td class="o_crd_num o_crd_red" t-esc="row.not_connected"/>
+                                    <td class="o_crd_num" t-esc="row.unique_leads"/>
+                                    <td class="o_crd_num" t-esc="row.duration"/>
+                                    <td class="o_crd_num" t-esc="row.avg_duration"/>
+                                    <td class="o_crd_num">
+                                        <div class="o_crd_rate">
+                                            <div class="o_crd_rate_bar">
+                                                <div class="o_crd_rate_fill"
+                                                     t-attf-style="width: {{ connectRate(row) }}%"/>
+                                            </div>
+                                            <span><t t-esc="connectRate(row)"/>%</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </t>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </t>
+
+        <!-- ── Callers without a team ─────────────────────────────── -->
+        <t t-if="others.length">
+            <div class="o_crd_team">
+                <div class="o_crd_team_header">
+                    <div class="o_crd_team_name">
+                        <i class="fa fa-user me-2"/>Other Callers (no team)
+                    </div>
+                </div>
+                <div class="o_crd_table_wrap">
+                    <table class="o_crd_table">
+                        <thead>
+                            <tr>
+                                <th class="o_crd_th_name">Name</th>
+                                <th class="o_crd_num">Calls</th>
+                                <th class="o_crd_num">Out</th>
+                                <th class="o_crd_num">In</th>
+                                <th class="o_crd_num">Connected</th>
+                                <th class="o_crd_num">Not Conn.</th>
+                                <th class="o_crd_num">Leads</th>
+                                <th class="o_crd_num">Talk Time</th>
+                                <th class="o_crd_num">Avg</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-foreach="others" t-as="row" t-key="row.user_id">
+                                <tr class="o_crd_row" t-on-click="() => this.openUserCalls(row)">
+                                    <td class="o_crd_td_name" t-esc="row.name"/>
+                                    <td class="o_crd_num o_crd_bold" t-esc="row.calls"/>
+                                    <td class="o_crd_num" t-esc="row.outgoing"/>
+                                    <td class="o_crd_num" t-esc="row.incoming"/>
+                                    <td class="o_crd_num o_crd_green" t-esc="row.connected"/>
+                                    <td class="o_crd_num o_crd_red" t-esc="row.not_connected"/>
+                                    <td class="o_crd_num" t-esc="row.unique_leads"/>
+                                    <td class="o_crd_num" t-esc="row.duration"/>
+                                    <td class="o_crd_num" t-esc="row.avg_duration"/>
+                                </tr>
+                            </t>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </t>
+
+        <div class="o_crd_footnote">
+            Period: <t t-esc="state.dateFrom"/> → <t t-esc="state.dateTo"/>
+            · Click any row to open the underlying call logs
+            · Connected = answered status or duration &gt; 0
+        </div>
+    </t>
+</div>
+</t>
+</templates>

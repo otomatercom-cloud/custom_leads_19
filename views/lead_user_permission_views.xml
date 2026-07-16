@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <!-- ─── List View ─────────────────────────────────────────────────── -->
+    <record id="view_lead_user_permission_list" model="ir.ui.view">
+        <field name="name">lead.user.permission.list</field>
+        <field name="model">lead.user.permission</field>
+        <field name="arch" type="xml">
+            <list string="User Permissions"
+                  decoration-success="perm_super_admin or perm_manager or perm_team_lead or perm_officer or perm_tele_caller or perm_digital_team or perm_digital_head or perm_branch_head or perm_crash_head or perm_crash_user or perm_reattempt_user or perm_reattempt_tl or perm_reattempt_manager"
+                  decoration-muted="not perm_super_admin and not perm_manager and not perm_team_lead and not perm_officer and not perm_tele_caller and not perm_digital_team and not perm_digital_head and not perm_branch_head and not perm_crash_head and not perm_crash_user and not perm_reattempt_user and not perm_reattempt_tl and not perm_reattempt_manager">
+                <field name="user_id"/>
+                <field name="employee_id" readonly="1" optional="show"/>
+                <field name="current_groups" readonly="1" string="Active Roles"/>
+                <field name="notes" optional="show"/>
+                <button name="action_apply" type="object" string="Apply"
+                        icon="fa-check" title="Apply permissions to user"/>
+                <button name="action_revoke_all" type="object" string="Revoke All"
+                        icon="fa-times"
+                        confirm="Remove ALL Lead Management access for this user?"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ─── Form View ─────────────────────────────────────────────────── -->
+    <record id="view_lead_user_permission_form" model="ir.ui.view">
+        <field name="name">lead.user.permission.form</field>
+        <field name="model">lead.user.permission</field>
+        <field name="arch" type="xml">
+            <form string="User Permission">
+                <header>
+                    <button name="action_apply" type="object"
+                            string="Apply Permissions" class="btn-primary" icon="fa-check"/>
+                    <button name="action_sync_from_odoo" type="object"
+                            string="Sync from Odoo" icon="fa-refresh"
+                            title="Pull current Odoo group memberships into this record"/>
+                    <button name="action_revoke_all" type="object"
+                            string="Revoke All Access" class="btn-danger" icon="fa-times"
+                            confirm="This will remove ALL Lead Management access for this user. Continue?"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="user_id"/>
+                        <h1><field name="user_id" placeholder="Select User…"/></h1>
+                    </div>
+
+                    <group>
+                        <group string="Info">
+                            <field name="employee_id" readonly="1"/>
+                            <field name="current_groups" readonly="1" string="Active Roles"/>
+                            <field name="active"/>
+                            <field name="notes" placeholder="Optional note…"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <!-- Tab 1: Lead Roles -->
+                        <page string="Lead Roles" name="lead_roles">
+                            <group>
+                                <group string="Administration">
+                                    <field name="perm_super_admin"/>
+                                    <field name="perm_manager"/>
+                                </group>
+                                <group string="Team">
+                                    <field name="perm_team_lead"/>
+                                    <field name="perm_branch_head"/>
+                                </group>
+                            </group>
+                            <group>
+                                <group string="Operations">
+                                    <field name="perm_officer"/>
+                                    <field name="perm_tele_caller"/>
+                                </group>
+                                <group string="Digital">
+                                    <field name="perm_digital_team"/>
+                                    <field name="perm_digital_head"/>
+                                </group>
+                            </group>
+                            <group>
+                                <group string="Crash Management">
+                                    <field name="perm_crash_head"/>
+                                    <field name="perm_crash_user"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <!-- Tab 2: Re-Attempt Roles -->
+                        <page string="Re-Attempt Roles" name="reattempt_roles">
+                            <group>
+                                <group string="Re-Attempt Access">
+                                    <field name="perm_reattempt_user"/>
+                                    <field name="perm_reattempt_tl"/>
+                                    <field name="perm_reattempt_manager"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+
+                    <div class="alert alert-info mt-2" role="alert">
+                        <strong>How it works:</strong> Tick the roles this user should have,
+                        then click <b>Apply Permissions</b>. Multiple roles are allowed —
+                        e.g. a Team Lead can also have Re-Attempt Team Lead access.
+                        Click <b>Sync from Odoo</b> to load existing group memberships
+                        for users configured outside this screen.
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ─── Search View ───────────────────────────────────────────────── -->
+    <record id="view_lead_user_permission_search" model="ir.ui.view">
+        <field name="name">lead.user.permission.search</field>
+        <field name="model">lead.user.permission</field>
+        <field name="arch" type="xml">
+            <search string="User Permissions">
+                <field name="user_id" string="User"/>
+                <filter string="Has Access" name="has_access"
+                        domain="['|','|','|','|','|','|','|','|','|','|','|',
+                                 ('perm_super_admin','=',True),
+                                 ('perm_manager','=',True),
+                                 ('perm_team_lead','=',True),
+                                 ('perm_officer','=',True),
+                                 ('perm_tele_caller','=',True),
+                                 ('perm_digital_team','=',True),
+                                 ('perm_digital_head','=',True),
+                                 ('perm_branch_head','=',True),
+                                 ('perm_crash_head','=',True),
+                                 ('perm_crash_user','=',True),
+                                 ('perm_reattempt_user','=',True),
+                                 ('perm_reattempt_tl','=',True),
+                                 ('perm_reattempt_manager','=',True)]"/>
+                <filter string="No Access" name="no_access"
+                        domain="[('perm_super_admin','=',False),
+                                 ('perm_manager','=',False),
+                                 ('perm_team_lead','=',False),
+                                 ('perm_officer','=',False),
+                                 ('perm_tele_caller','=',False),
+                                 ('perm_digital_team','=',False),
+                                 ('perm_digital_head','=',False),
+                                 ('perm_branch_head','=',False),
+                                 ('perm_crash_head','=',False),
+                                 ('perm_crash_user','=',False),
+                                 ('perm_reattempt_user','=',False),
+                                 ('perm_reattempt_tl','=',False),
+                                 ('perm_reattempt_manager','=',False)]"/>
+                <separator/>
+                <filter string="Super Admin"   name="f_super"     domain="[('perm_super_admin','=',True)]"/>
+                <filter string="Manager"       name="f_manager"   domain="[('perm_manager','=',True)]"/>
+                <filter string="Team Lead"     name="f_tl"        domain="[('perm_team_lead','=',True)]"/>
+                <filter string="Adm Officer"   name="f_officer"   domain="[('perm_officer','=',True)]"/>
+                <filter string="Tele Caller"   name="f_tele"      domain="[('perm_tele_caller','=',True)]"/>
+                <filter string="Re-Attempt"    name="f_reattempt" domain="[('perm_reattempt_user','=',True)]"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- ─── Action ────────────────────────────────────────────────────── -->
+    <record id="action_lead_user_permission" model="ir.actions.act_window">
+        <field name="name">User Permissions</field>
+        <field name="res_model">lead.user.permission</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_lead_user_permission_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No user permissions configured yet.</p>
+            <p>Add users here and tick the roles they should have, then click
+               <b>Apply Permissions</b>.</p>
+        </field>
+    </record>
+
+    <!-- ─── Menu under Configuration ─────────────────────────────────── -->
+    <menuitem id="menu_lead_user_permissions"
+              name="User Permissions"
+              parent="menu_leads_config"
+              action="action_lead_user_permission"
+              sequence="1"
+              groups="custom_leads_19.group_super_admin"/>
+
+</odoo>

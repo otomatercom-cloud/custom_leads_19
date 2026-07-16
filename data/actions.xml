@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Sequence for leads reference number -->
+        <record id="seq_leads_logic" model="ir.sequence">
+            <field name="name">Lead Reference</field>
+            <field name="code">leads.logic</field>
+            <field name="prefix">LEAD/%(year)s/</field>
+            <field name="padding">4</field>
+            <field name="number_next">1</field>
+            <field name="number_increment">1</field>
+        </record>
+
+        <!-- Mail activity type for lead tasks -->
+        <record id="mail_activity_lead_tasks" model="mail.activity.type">
+            <field name="name">Lead Task</field>
+            <field name="res_model">leads.logic</field>
+            <field name="icon">fa-phone</field>
+        </record>
+    </data>
+</odoo>

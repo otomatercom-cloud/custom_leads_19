@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_lead_admission_wizard_form" model="ir.ui.view">
+        <field name="name">lead.admission.wizard.form</field>
+        <field name="model">lead.admission.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Lead Admission">
+                <sheet>
+                    <div style="background:linear-gradient(135deg,#065f46,#059669);
+                                border-radius:12px;padding:16px 20px;margin-bottom:20px;
+                                display:flex;align-items:center;gap:12px;">
+                        <span style="font-size:28px;">🎓</span>
+                        <div>
+                            <div style="color:#a7f3d0;font-size:11px;font-weight:700;
+                                        text-transform:uppercase;letter-spacing:1px;">
+                                Converting Lead to Admission
+                            </div>
+                            <div style="color:#fff;font-size:18px;font-weight:800;">
+                                <field name="lead_name" readonly="1" nolabel="1"
+                                       style="color:#fff;font-weight:800;"/>
+                            </div>
+                            <div style="color:#d1fae5;font-size:12px;margin-top:4px;">
+                                <field name="lead_phone" readonly="1" nolabel="1"/> |
+                                <field name="lead_email" readonly="1" nolabel="1"/>
+                            </div>
+                        </div>
+                    </div>
+
+                    <field name="lead_id" invisible="1"/>
+                    <field name="batch_required" invisible="1"/>
+
+                    <!-- ── SIMPLE MODE: one-click admission ── -->
+                    <div invisible="batch_required"
+                         style="background:#f0fdf4;border:1px solid #86efac;border-radius:10px;
+                                padding:16px 20px;margin-bottom:4px;">
+                        <div style="font-size:14px;font-weight:700;color:#166534;margin-bottom:6px;">
+                            ✅ Ready to Confirm Admission
+                        </div>
+                        <div style="font-size:13px;color:#15803d;line-height:1.6;">
+                            Click <b>Confirm Admission</b> below to convert this lead to admission.
+                            No batch or fee selection is needed — this is configured by your admin.
+                        </div>
+                    </div>
+
+                    <!-- ── FULL MODE: batch + fee selection ── -->
+                    <group string="Step 1 — Select Batch" invisible="not batch_required">
+                        <field name="batch_id" options="{'no_create': True}"/>
+                    </group>
+
+                    <div invisible="not batch_required or not batch_id" style="margin:8px 0 12px;">
+                        <div style="font-size:12px;color:#64748b;font-weight:700;
+                                    text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">
+                            Fee Structures in this Batch
+                        </div>
+                        <field name="available_fee_ids" nolabel="1">
+                            <list create="0" delete="0">
+                                <field name="name"/>
+                                <field name="fee_type" widget="badge"/>
+                                <field name="gst_rate" string="GST"/>
+                                <field name="amount_exclusive" string="Base ₹"/>
+                                <field name="tax_amount" string="GST ₹"/>
+                                <field name="amount_inclusive" string="Total ₹"/>
+                                <field name="installment_count" string="Inst."/>
+                            </list>
+                        </field>
+                    </div>
+
+                    <group string="Step 2 — Select Fee Structure" invisible="not batch_required or not batch_id">
+                        <field name="fee_structure_id" options="{'no_create': True}"/>
+                    </group>
+
+                    <div invisible="not batch_required or not fee_structure_id"
+                         style="border:1px solid #e2e8f0;border-radius:12px;
+                                overflow:hidden;margin:12px 0;">
+                        <div style="background:#f8fafc;padding:10px 16px;
+                                    border-bottom:1px solid #e2e8f0;">
+                            <span style="font-size:13px;font-weight:700;color:#1e293b;">
+                                Fee Breakdown
+                            </span>
+                            <span style="margin-left:8px;background:#dbeafe;color:#1d4ed8;
+                                         border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700;">
+                                <field name="fee_type_display" readonly="1" nolabel="1"/>
+                            </span>
+                            <span style="margin-left:6px;background:#f3e8ff;color:#7c3aed;
+                                         border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700;">
+                                GST <field name="gst_rate_display" readonly="1" nolabel="1"/>
+                            </span>
+                        </div>
+                        <div style="padding:14px 16px;">
+                            <table style="width:100%;border-collapse:collapse;">
+                                <tr>
+                                    <td style="padding:5px 0;color:#64748b;font-size:13px;">Course Fee (Excl. GST)</td>
+                                    <td style="text-align:right;font-weight:600;font-size:13px;">
+                                        ₹ <field name="base_fee_display" readonly="1" nolabel="1"/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:5px 0;color:#64748b;font-size:13px;">GST Amount</td>
+                                    <td style="text-align:right;font-weight:600;font-size:13px;">
+                                        ₹ <field name="gst_display" readonly="1" nolabel="1"/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:5px 0;color:#64748b;font-size:13px;">Course Fee (Incl. GST)</td>
+                                    <td style="text-align:right;font-weight:700;font-size:14px;color:#2563eb;">
+                                        ₹ <field name="total_fee_display" readonly="1" nolabel="1"/>
+                                    </td>
+                                </tr>
+                                <tr invisible="admission_fee_display == 0">
+                                    <td style="padding:5px 0;color:#64748b;font-size:13px;">+ Admission Fee</td>
+                                    <td style="text-align:right;font-weight:600;font-size:13px;color:#f59e0b;">
+                                        ₹ <field name="admission_fee_display" readonly="1" nolabel="1"/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2">
+                                        <div style="border-top:2px solid #e2e8f0;margin:8px 0;"/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="font-size:14px;font-weight:800;color:#1e293b;">Grand Total (Payable)</td>
+                                    <td style="text-align:right;">
+                                        <span style="background:linear-gradient(135deg,#065f46,#059669);
+                                                     color:#fff;padding:4px 14px;border-radius:8px;
+                                                     font-size:16px;font-weight:800;">
+                                            ₹ <field name="grand_total_display" readonly="1" nolabel="1"/>
+                                        </span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div invisible="not installment_summary" style="padding:0 16px 14px;">
+                            <div style="font-size:12px;color:#64748b;font-weight:700;
+                                        text-transform:uppercase;margin-bottom:6px;">
+                                Installment Schedule
+                            </div>
+                            <field name="installment_summary" readonly="1" nolabel="1"
+                                   widget="text"
+                                   style="font-family:monospace;font-size:12px;
+                                          background:#f8fafc;border-radius:8px;
+                                          padding:10px;border:1px solid #e2e8f0;
+                                          white-space:pre;width:100%;"/>
+                        </div>
+                    </div>
+
+                    <field name="admission_fee_display" invisible="1"/>
+                    <field name="installment_summary" invisible="1"/>
+                </sheet>
+                <footer>
+                    <!-- Simple mode button -->
+                    <button name="action_confirm_admission" type="object"
+                            string="✅ Confirm Admission" class="btn-primary"
+                            invisible="batch_required"/>
+                    <!-- Full mode button (needs fee structure) -->
+                    <button name="action_confirm_admission" type="object"
+                            string="✅ Confirm Admission" class="btn-primary"
+                            invisible="not batch_required or not fee_structure_id"/>
+                    <button string="Cancel" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

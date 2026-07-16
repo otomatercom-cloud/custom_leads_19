@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <!-- ── Super Admin: full access ─────────────────────────────────────── -->
+    <record id="rule_leads_super_admin" model="ir.rule">
+        <field name="name">Leads: Super Admin Full Access</field>
+        <field name="model_id" ref="model_leads_logic"/>
+        <field name="domain_force">[(1,'=',1)]</field>
+        <field name="groups" eval="[(4, ref('custom_leads_19.group_super_admin'))]"/>
+        <field name="perm_read"   eval="True"/>
+        <field name="perm_write"  eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- ── Manager: full access ──────────────────────────────────────────── -->
+    <record id="rule_leads_manager" model="ir.rule">
+        <field name="name">Leads: Manager Full Access</field>
+        <field name="model_id" ref="model_leads_logic"/>
+        <field name="domain_force">[(1,'=',1)]</field>
+        <field name="groups" eval="[(4, ref('custom_leads_19.group_lead_manager'))]"/>
+        <field name="perm_read"   eval="True"/>
+        <field name="perm_write"  eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- ── Team Lead: sees only leads belonging to their team(s) ─────────
+         Traverses: lead.team_id → lead.team.team_lead_ids → hr.employee.user_id
+    ──────────────────────────────────────────────────────────────────────── -->
+    <record id="rule_leads_team_lead" model="ir.rule">
+        <field name="name">Leads: Team Lead — Team Leads Only</field>
+        <field name="model_id" ref="model_leads_logic"/>
+        <field name="domain_force">[('team_id.team_lead_ids.user_id', '=', user.id)]</field>
+        <field name="groups" eval="[(4, ref('custom_leads_19.group_lead_team_lead'))]"/>
+        <field name="perm_read"   eval="True"/>
+        <field name="perm_write"  eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <!-- ── Admission Officer: sees only leads assigned to them ───────────
+         Traverses: lead.lead_owner (hr.employee) → user_id
+    ──────────────────────────────────────────────────────────────────────── -->
+    <record id="rule_leads_admission_officer" model="ir.rule">
+        <field name="name">Leads: Admission Officer — Own Leads Only</field>
+        <field name="model_id" ref="model_leads_logic"/>
+        <field name="domain_force">[('lead_owner.user_id', '=', user.id)]</field>
+        <field name="groups" eval="[(4, ref('custom_leads_19.group_lead_users'))]"/>
+        <field name="perm_read"   eval="True"/>
+        <field name="perm_write"  eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <!-- ── Tele Caller: only sees leads assigned to them ────────────────── -->
+    <record id="rule_leads_tele_caller" model="ir.rule">
+        <field name="name">Leads: Tele Caller Own Leads Only</field>
+        <field name="model_id" ref="model_leads_logic"/>
+        <field name="domain_force">[('tele_caller_id','=',user.id)]</field>
+        <field name="groups" eval="[(4, ref('custom_leads_19.group_lead_tele_callers'))]"/>
+        <field name="perm_read"   eval="True"/>
+        <field name="perm_write"  eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+</odoo>

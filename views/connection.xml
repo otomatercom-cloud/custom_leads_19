@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_connect_form" model="ir.ui.view">
+        <field name="name">connect.form.form</field>
+        <field name="model">connect.form</field>
+        <field name="arch" type="xml">
+            <form string="Connected">
+                <sheet>
+                    <group>
+                        <field name="lead_quality"/>
+                        <field name="expected_joining_date" invisible="lead_quality not in ['hot','warm']"/>
+                        <field name="subject"/>
+                        <field name="task_owner_id"/>
+                        <field name="due_date"/>
+                        <field name="description"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="act_connect" string="Save" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_not_connect_form" model="ir.ui.view">
+        <field name="name">not.connect.form.form</field>
+        <field name="model">not.connect.form</field>
+        <field name="arch" type="xml">
+            <form string="Not Connected">
+                <sheet>
+                    <group>
+                        <field name="notes"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="act_done" string="Save" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_convert_lead_form" model="ir.ui.view">
+        <field name="name">convert.lead.form</field>
+        <field name="model">convert.lead</field>
+        <field name="arch" type="xml">
+            <form string="Convert Lead">
+                <sheet>
+                    <group>
+                        <field name="lead_id" invisible="1"/>
+                        <field name="amount"/>
+                        <field name="closing_date"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="act_convert" string="Convert" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_lost_lead_form" model="ir.ui.view">
+        <field name="name">lost.lead.form.form</field>
+        <field name="model">lost.lead.form</field>
+        <field name="arch" type="xml">
+            <form string="Mark as Lost">
+                <sheet>
+                    <group>
+                        <field name="reason" placeholder="Describe the reason for losing this lead (min 10 chars)..."/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="act_lost_lead" string="Mark Lost" type="object" class="btn-danger"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

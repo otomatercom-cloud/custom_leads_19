@@ -1,0 +1,338 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         LEAD ASSIGNMENT RULE – Form
+    ════════════════════════════════════════════════════════════════════════ -->
+    <record id="view_lead_assignment_rule_form" model="ir.ui.view">
+        <field name="name">lead.assignment.rule.form</field>
+        <field name="model">lead.assignment.rule</field>
+        <field name="arch" type="xml">
+            <form string="Lead Assignment Rule">
+                <header>
+                    <button name="action_assign_now"
+                            type="object"
+                            string="Assign Now"
+                            class="btn-primary"
+                            icon="fa-bolt"
+                            invisible="not id"
+                            confirm="This will immediately assign ALL currently unassigned leads using this rule's configuration. Continue?"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box"/>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Rule Name…" required="1"/>
+                        </h1>
+                    </div>
+
+                    <group>
+                        <group string="Configuration">
+                            <field name="active"/>
+                            <field name="sequence"/>
+                            <field name="assignment_type" widget="radio"/>
+                        </group>
+                        <group string="Member Options">
+                            <field name="include_team_leads"/>
+                        </group>
+                    </group>
+
+                    <!-- Selected Teams Config -->
+                    <group string="Bucket Configuration"
+                           invisible="assignment_type != 'selected_teams'">
+                        <group>
+                            <field name="bucket_size" string="Leads per Bucket"/>
+                            <field name="global_lead_counter" string="Leads Assigned So Far" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="team_ids" widget="many2many_tags"
+                                   options="{'no_create': True}"/>
+                        </group>
+                    </group>
+
+                    <!-- All Teams – informational -->
+                    <div class="alert alert-info mb-2"
+                         invisible="assignment_type != 'all_teams'">
+                        <i class="fa fa-info-circle me-1"/>
+                        Leads will be distributed across <strong>all active teams</strong>
+                        in alphabetical order using round-robin rotation.
+                        Within each team, members are assigned in round-robin order.
+                    </div>
+
+                    <!-- Source Rules Notebook -->
+                    <notebook>
+                        <page string="Source Rules" name="source_rules"
+                              invisible="assignment_type != 'source_based'">
+                            <field name="source_rule_ids" nolabel="1">
+                                <list string="Source Rules" editable="bottom">
+                                    <field name="source_id" required="1"
+                                           options="{'no_create': True}"/>
+                                    <field name="team_ids" widget="many2many_tags"
+                                           string="Teams"
+                                           options="{'no_create': True}"/>
+                                    <field name="source_counter" string="Leads Assigned" readonly="1"/>
+                                    <field name="active"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <page string="Selected Teams" name="selected_team_list"
+                              invisible="assignment_type != 'selected_teams'">
+                            <field name="team_ids" nolabel="1">
+                                <list string="Teams" editable="bottom">
+                                    <field name="name"/>
+                                    <field name="member_count" string="# Members"/>
+                                    <field name="active"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         LEAD ASSIGNMENT RULE – List
+    ════════════════════════════════════════════════════════════════════════ -->
+    <record id="view_lead_assignment_rule_list" model="ir.ui.view">
+        <field name="name">lead.assignment.rule.list</field>
+        <field name="model">lead.assignment.rule</field>
+        <field name="arch" type="xml">
+            <list string="Lead Assignment Rules" decoration-muted="not active">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="assignment_type"/>
+                <field name="include_team_leads"/>
+                <field name="bucket_size"
+                       invisible="assignment_type != 'selected_teams'"/>
+                <field name="global_lead_counter" string="Total Assigned"/>
+                <field name="active" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         LEAD ASSIGNMENT RULE – Search
+    ════════════════════════════════════════════════════════════════════════ -->
+    <record id="view_lead_assignment_rule_search" model="ir.ui.view">
+        <field name="name">lead.assignment.rule.search</field>
+        <field name="model">lead.assignment.rule</field>
+        <field name="arch" type="xml">
+            <search string="Search Rules">
+                <field name="name"/>
+                <field name="assignment_type"/>
+                <filter string="Active" name="active" domain="[('active','=',True)]"/>
+                <filter string="Archived" name="archived" domain="[('active','=',False)]"/>
+                <separator/>
+                <filter string="All Teams" name="all_teams"
+                        domain="[('assignment_type','=','all_teams')]"/>
+                <filter string="Selected Teams" name="selected_teams"
+                        domain="[('assignment_type','=','selected_teams')]"/>
+                <filter string="Source Based" name="source_based"
+                        domain="[('assignment_type','=','source_based')]"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         LEAD ASSIGNMENT RULE – Action
+    ════════════════════════════════════════════════════════════════════════ -->
+    <record id="action_lead_assignment_rule" model="ir.actions.act_window">
+        <field name="name">Lead Assignment Rules</field>
+        <field name="res_model">lead.assignment.rule</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first Lead Assignment Rule
+            </p>
+            <p>
+                Rules control how incoming leads are automatically
+                distributed to teams and team members.
+            </p>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         SOURCE ASSIGNMENT RULES – Standalone View
+    ════════════════════════════════════════════════════════════════════════ -->
+    <record id="view_lead_assignment_source_rule_list" model="ir.ui.view">
+        <field name="name">lead.assignment.source.rule.list</field>
+        <field name="model">lead.assignment.source.rule</field>
+        <field name="arch" type="xml">
+            <list string="Source Assignment Rules" editable="top"
+                  decoration-muted="not active">
+                <field name="source_id" required="1" options="{'no_create': True}"/>
+                <field name="rule_id" options="{'no_create': True}"/>
+                <field name="team_ids" widget="many2many_tags"
+                       options="{'no_create': True}"/>
+                <field name="source_counter" string="Leads Assigned" readonly="1"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_lead_assignment_source_rule_form" model="ir.ui.view">
+        <field name="name">lead.assignment.source.rule.form</field>
+        <field name="model">lead.assignment.source.rule</field>
+        <field name="arch" type="xml">
+            <form string="Source Assignment Rule">
+                <sheet>
+                    <group>
+                        <group string="Source Mapping">
+                            <field name="source_id" required="1"
+                                   options="{'no_create': True}"/>
+                            <field name="rule_id" required="1"
+                                   options="{'no_create': True}"/>
+                            <field name="active"/>
+                        </group>
+                        <group string="Statistics">
+                            <field name="source_counter" string="Leads Assigned (Counter)" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="Teams">
+                        <field name="team_ids" nolabel="1" widget="many2many_tags"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_lead_assignment_source_rule" model="ir.actions.act_window">
+        <field name="name">Source Assignment Rules</field>
+        <field name="res_model">lead.assignment.source.rule</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first Source Assignment Rule
+            </p>
+            <p>
+                Map lead sources (Facebook, Google, Website…) to specific
+                teams. When multiple teams are assigned to a source, leads
+                are distributed using round-robin.
+            </p>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         ASSIGNMENT HISTORY – Enhanced List View
+    ════════════════════════════════════════════════════════════════════════ -->
+    <record id="view_lead_assignment_history_list" model="ir.ui.view">
+        <field name="name">lead.assignment.history.list.extended</field>
+        <field name="model">lead.assignment.history</field>
+        <field name="arch" type="xml">
+            <list string="Assignment History" create="false" delete="false"
+                  default_order="assigned_date desc">
+                <field name="lead_id"/>
+                <field name="assigned_team_id" string="Team"/>
+                <field name="owner_id" string="Assigned To"/>
+                <field name="assignment_type" string="Type"/>
+                <field name="assignment_rule_id" string="Rule"/>
+                <field name="old_owner_id" string="Previous Owner" optional="hide"/>
+                <field name="old_team_id" string="Previous Team" optional="hide"/>
+                <field name="changed_by" string="Changed By"/>
+                <field name="assigned_date" string="Date"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_lead_assignment_history_form" model="ir.ui.view">
+        <field name="name">lead.assignment.history.form.extended</field>
+        <field name="model">lead.assignment.history</field>
+        <field name="arch" type="xml">
+            <form string="Assignment History" create="false">
+                <sheet>
+                    <group string="Assignment Details">
+                        <group>
+                            <field name="lead_id"/>
+                            <field name="assignment_type"/>
+                            <field name="assignment_rule_id"/>
+                            <field name="assigned_date"/>
+                        </group>
+                        <group>
+                            <field name="assigned_team_id" string="Assigned Team"/>
+                            <field name="owner_id" string="Assigned To"/>
+                            <field name="changed_by"/>
+                            <field name="assigned_by"/>
+                        </group>
+                    </group>
+                    <group string="Previous Values (Reassignment)">
+                        <group>
+                            <field name="old_team_id"/>
+                            <field name="old_owner_id"/>
+                        </group>
+                        <group>
+                            <field name="new_team_id"/>
+                            <field name="new_owner_id"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_lead_assignment_history_all" model="ir.actions.act_window">
+        <field name="name">Assignment History</field>
+        <field name="res_model">lead.assignment.history</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No assignment history yet.
+            </p>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         LEADS.LOGIC – Smart Button for Assignment History
+    ════════════════════════════════════════════════════════════════════════ -->
+    <record id="view_leads_logic_assignment_btn" model="ir.ui.view">
+        <field name="name">leads.logic.assignment.btn</field>
+        <field name="model">leads.logic</field>
+        <field name="inherit_id" ref="custom_leads_19.view_leads_logic_form"/>
+        <field name="arch" type="xml">
+            <div name="button_box" position="inside">
+                <button name="action_view_assignment_history"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-history">
+                    <field name="assignment_history_count"
+                           widget="statinfo"
+                           string="Assignments"/>
+                </button>
+            </div>
+        </field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         MENUS – CRM → Configuration
+    ════════════════════════════════════════════════════════════════════════ -->
+
+    <!-- Attach under existing Configuration menu (menu_leads_config) -->
+    <menuitem
+        id="menu_lead_assignment_rules"
+        name="Lead Assignment Rules"
+        parent="custom_leads_19.menu_leads_config"
+        action="action_lead_assignment_rule"
+        sequence="10"
+        groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager"/>
+
+    <menuitem
+        id="menu_lead_source_assignment_rules"
+        name="Source Assignment Rules"
+        parent="custom_leads_19.menu_leads_config"
+        action="action_lead_assignment_source_rule"
+        sequence="20"
+        groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager"/>
+
+    <menuitem
+        id="menu_lead_assignment_history"
+        name="Assignment History"
+        parent="custom_leads_19.menu_leads_config"
+        action="action_lead_assignment_history_all"
+        sequence="30"
+        groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager"/>
+
+</odoo>

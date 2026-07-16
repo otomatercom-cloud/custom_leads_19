@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="custom_leads_19.LeadDirectCall">
+        <!-- Intentionally empty: this action fires tel: and redirects immediately -->
+        <div/>
+    </t>
+</templates>

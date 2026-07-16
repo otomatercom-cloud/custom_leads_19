@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <!-- ─── Extend leads.logic Form: Add Re-Attempt Smart Button ─────── -->
+    <record id="view_leads_logic_reattempt_inherit" model="ir.ui.view">
+        <field name="name">leads.logic.reattempt.inherit</field>
+        <field name="model">leads.logic</field>
+        <field name="inherit_id" ref="custom_leads_19.view_leads_logic_form"/>
+        <field name="arch" type="xml">
+
+            <!-- Smart Button inside button_box -->
+            <div name="button_box" position="inside">
+                <button name="action_view_reattempts"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-refresh"
+                        invisible="reattempt_count_display == 0">
+                    <field name="reattempt_count_display"
+                           widget="statinfo"
+                           string="Re-Attempts"/>
+                </button>
+            </div>
+
+            <!-- Re-Attempt badge near title — pending indicator -->
+            <field name="name" position="after">
+                <div invisible="not has_pending_reattempt"
+                     style="display:inline-block; background:#fff3cd; border:1px solid #ffc107;
+                            border-radius:6px; padding:4px 10px; font-size:12px; font-weight:600;
+                            color:#856404; margin-left:8px;">
+                    ⚠️ Pending Re-Attempt
+                </div>
+            </field>
+
+        </field>
+    </record>
+
+    <!-- ─── Extend leads.logic List View: show re-attempt count ─────── -->
+    <record id="view_leads_logic_reattempt_list_inherit" model="ir.ui.view">
+        <field name="name">leads.logic.reattempt.list.inherit</field>
+        <field name="model">leads.logic</field>
+        <field name="inherit_id" ref="custom_leads_19.view_leads_logic_tree"/>
+        <field name="arch" type="xml">
+            <field name="last_update_date" position="after">
+                <field name="re_attempt_count" string="Re-Attempts" optional="show"/>
+                <field name="has_pending_reattempt" string="Pending RA" optional="show"/>
+            </field>
+        </field>
+    </record>
+
+</odoo>

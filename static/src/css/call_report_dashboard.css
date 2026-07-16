@@ -1,0 +1,268 @@
+/* Call Report Dashboard — plain CSS (Odoo 19: no SCSS in assets) */
+
+.o_call_report_dashboard {
+    height: 100%;
+    overflow-y: auto;
+    padding: 20px 24px 40px;
+    background: #f6f7fb;
+}
+
+/* ── Header ─────────────────────────────────────────────────────── */
+.o_crd_header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+.o_crd_kicker {
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #6366f1;
+    font-weight: 700;
+}
+.o_crd_header h1 {
+    margin: 2px 0 2px;
+    font-size: 24px;
+    font-weight: 700;
+    color: #111827;
+}
+.o_crd_header p {
+    margin: 0;
+    color: #6b7280;
+    font-size: 13px;
+}
+.o_crd_header_actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* ── Filter bar ─────────────────────────────────────────────────── */
+.o_crd_filterbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+    padding: 12px 14px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+}
+.o_crd_quick {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+.o_crd_dates {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.o_crd_dates label {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 600;
+    color: #6b7280;
+}
+.o_crd_dates input[type="date"] {
+    width: 150px;
+}
+
+/* ── Summary cards ──────────────────────────────────────────────── */
+.o_crd_cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+}
+.o_crd_card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 14px 16px;
+    position: relative;
+}
+.o_crd_card_icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    margin-bottom: 8px;
+    color: #ffffff;
+    background: #6366f1;
+}
+.o_crd_card_total .o_crd_card_icon { background: #6366f1; }
+.o_crd_card_connected .o_crd_card_icon { background: #10b981; }
+.o_crd_card_out .o_crd_card_icon { background: #f59e0b; }
+.o_crd_card_in .o_crd_card_icon { background: #3b82f6; }
+.o_crd_card_leads .o_crd_card_icon { background: #8b5cf6; }
+.o_crd_card_time .o_crd_card_icon { background: #64748b; }
+.o_crd_card_value {
+    font-size: 24px;
+    font-weight: 800;
+    color: #111827;
+    line-height: 1.1;
+}
+.o_crd_card_value_sm { font-size: 18px; }
+.o_crd_card_label {
+    font-size: 12px;
+    color: #6b7280;
+    margin-top: 2px;
+}
+
+/* ── Team blocks ────────────────────────────────────────────────── */
+.o_crd_team {
+    margin-top: 18px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+}
+.o_crd_team_header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 12px 16px;
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+}
+.o_crd_team_name {
+    font-weight: 700;
+    color: #111827;
+    font-size: 15px;
+}
+.o_crd_team_stats {
+    display: flex;
+    gap: 8px;
+}
+.o_crd_badge {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 999px;
+}
+.o_crd_badge_total { background: #eef2ff; color: #4f46e5; }
+.o_crd_badge_ok { background: #ecfdf5; color: #059669; }
+
+/* ── Table ──────────────────────────────────────────────────────── */
+.o_crd_table_wrap { overflow-x: auto; }
+.o_crd_table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    min-width: 900px;
+}
+.o_crd_table th {
+    text-align: left;
+    padding: 9px 12px;
+    background: #ffffff;
+    border-bottom: 2px solid #e5e7eb;
+    color: #6b7280;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+.o_crd_table td {
+    padding: 9px 12px;
+    border-bottom: 1px solid #f3f4f6;
+    white-space: nowrap;
+}
+.o_crd_num { text-align: center; }
+.o_crd_table td.o_crd_num { text-align: center; }
+.o_crd_row { cursor: pointer; transition: background 0.12s; }
+.o_crd_row:hover { background: #f5f7ff; }
+.o_crd_row_tl { background: #eef2ff; }
+.o_crd_row_tl:hover { background: #e0e7ff; }
+.o_crd_td_name { font-weight: 600; color: #111827; }
+.o_crd_tl_star { color: #f59e0b; margin-right: 4px; }
+.o_crd_muted { color: #9ca3af; font-size: 12px; }
+.o_crd_bold { font-weight: 700; }
+.o_crd_green { color: #059669; font-weight: 600; }
+.o_crd_red { color: #dc2626; }
+
+.o_crd_role {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 999px;
+}
+.o_crd_role_tl { background: #fef3c7; color: #b45309; }
+.o_crd_role_officer { background: #f3f4f6; color: #4b5563; }
+
+/* Connect-rate mini bar */
+.o_crd_rate {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    justify-content: flex-end;
+    min-width: 90px;
+}
+.o_crd_rate_bar {
+    width: 50px;
+    height: 6px;
+    background: #e5e7eb;
+    border-radius: 999px;
+    overflow: hidden;
+}
+.o_crd_rate_fill {
+    height: 100%;
+    background: #10b981;
+    border-radius: 999px;
+}
+.o_crd_rate span { font-size: 11px; color: #6b7280; }
+
+/* ── Empty / footnote ───────────────────────────────────────────── */
+.o_crd_empty {
+    margin-top: 24px;
+    padding: 40px;
+    text-align: center;
+    color: #9ca3af;
+    background: #ffffff;
+    border: 1px dashed #d1d5db;
+    border-radius: 12px;
+}
+.o_crd_empty p { margin-top: 10px; }
+.o_crd_footnote {
+    margin-top: 14px;
+    font-size: 12px;
+    color: #9ca3af;
+}
+
+/* ── Skeleton ───────────────────────────────────────────────────── */
+.o_crd_skeleton { margin-top: 16px; }
+.o_crd_skeleton_cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+}
+.o_crd_skeleton_card,
+.o_crd_skeleton_table {
+    background: linear-gradient(90deg, #eceef3 25%, #f5f6fa 50%, #eceef3 75%);
+    background-size: 200% 100%;
+    animation: o_crd_shimmer 1.2s infinite;
+    border-radius: 12px;
+}
+.o_crd_skeleton_card { height: 100px; }
+.o_crd_skeleton_table { height: 260px; margin-top: 16px; }
+@keyframes o_crd_shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* ── Mobile ─────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .o_call_report_dashboard { padding: 12px 12px 32px; }
+    .o_crd_header h1 { font-size: 20px; }
+    .o_crd_dates input[type="date"] { width: 130px; }
+}

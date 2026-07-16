@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_campaign_generate_wizard_form" model="ir.ui.view">
+        <field name="name">call.campaign.generate.wizard.form</field>
+        <field name="model">call.campaign.generate.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Generate Campaign">
+                <sheet>
+                    <!-- Type selector -->
+                    <div style="background:linear-gradient(135deg,#1e3a8a,#3b82f6);
+                                border-radius:12px;padding:20px;margin-bottom:20px;color:#fff;">
+                        <div style="font-size:13px;font-weight:700;opacity:0.8;margin-bottom:10px;
+                                    text-transform:uppercase;letter-spacing:1px;">
+                            📞 Generate Call Campaign
+                        </div>
+                        <field name="campaign_type" widget="radio" nolabel="1"
+                               style="color:#fff;"
+                               options="{'horizontal': false}"/>
+                    </div>
+
+                    <!-- Quality filter -->
+                    <group string="🏷️ Lead Qualities to Include"
+                           invisible="not show_quality">
+                        <field name="quality_values" widget="many2many_tags"
+                               nolabel="1"
+                               placeholder="Leave empty = all active qualities (hot, warm, follow_up, new…)"/>
+                        <field name="show_quality" invisible="1"/>
+                    </group>
+
+                    <!-- Date filter -->
+                    <group string="📅 Date Range (Lead Created)" invisible="not show_date">
+                        <group>
+                            <field name="date_from" string="From"/>
+                        </group>
+                        <group>
+                            <field name="date_to"   string="To"/>
+                        </group>
+                        <field name="show_date" invisible="1"/>
+                    </group>
+
+                    <!-- Options -->
+                    <group string="⚙️ Options">
+                        <group>
+                            <field name="max_leads"  string="Max Leads"/>
+                            <field name="batch_size" string="Batch Size (0 = no split)"/>
+                        </group>
+                        <group>
+                            <field name="auto_start" string="Start Campaign Immediately"/>
+                            <field name="for_self_only" string="My Leads Only"/>
+                        </group>
+                    </group>
+
+                    <!-- Info box -->
+                    <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;
+                                padding:14px;font-size:12px;color:#0369a1;line-height:1.7;">
+                        <b>📌 How it works:</b><br/>
+                        • <b>My Leads</b> — All your active leads, sorted by quality priority<br/>
+                        • <b>By Quality</b> — Only leads matching selected qualities<br/>
+                        • <b>By Date Added</b> — Leads added within the date range<br/>
+                        • <b>Daily Combined</b> — Today's new leads first, then older quality leads (best for daily calling)<br/>
+                        <br/>
+                        Campaigns with the same name won't be duplicated — safe to run every day.
+                    </div>
+                </sheet>
+                <footer>
+                    <button name="action_generate" string="🚀 Generate Campaign"
+                            type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action to open wizard -->
+    <record id="action_campaign_generate_wizard" model="ir.actions.act_window">
+        <field name="name">Generate Campaign</field>
+        <field name="res_model">call.campaign.generate.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

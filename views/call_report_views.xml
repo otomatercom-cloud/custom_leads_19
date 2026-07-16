@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         Call Report Dashboard (OWL client action)
+         ══════════════════════════════════════════════════════════════ -->
+    <record id="action_call_report_dashboard" model="ir.actions.client">
+        <field name="name">Call Report</field>
+        <field name="tag">custom_leads_19.call_report_dashboard</field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         lead.call.log — list / pivot / graph / search / form
+         (used for drill-down from the dashboard + native export)
+         ══════════════════════════════════════════════════════════════ -->
+    <record id="view_lead_call_log_list" model="ir.ui.view">
+        <field name="name">lead.call.log.list</field>
+        <field name="model">lead.call.log</field>
+        <field name="arch" type="xml">
+            <list string="Call Logs" create="false" default_order="call_time desc">
+                <field name="call_time"/>
+                <field name="user_id" string="Agent"/>
+                <field name="lead_id"/>
+                <field name="caller_number" optional="show"/>
+                <field name="call_type" optional="show"/>
+                <field name="call_status" optional="show"/>
+                <field name="duration" optional="show"/>
+                <field name="remarks" optional="hide"/>
+                <field name="has_recording" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_lead_call_log_form" model="ir.ui.view">
+        <field name="name">lead.call.log.form</field>
+        <field name="model">lead.call.log</field>
+        <field name="arch" type="xml">
+            <form string="Call Log" create="false">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="lead_id"/>
+                            <field name="user_id" string="Agent"/>
+                            <field name="call_time"/>
+                            <field name="call_type"/>
+                        </group>
+                        <group>
+                            <field name="caller_number"/>
+                            <field name="call_status"/>
+                            <field name="duration"/>
+                            <field name="recording_url" widget="url"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="remarks"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_lead_call_log_pivot" model="ir.ui.view">
+        <field name="name">lead.call.log.pivot</field>
+        <field name="model">lead.call.log</field>
+        <field name="arch" type="xml">
+            <pivot string="Call Analysis">
+                <field name="user_id" type="row"/>
+                <field name="call_time" interval="day" type="col"/>
+                <field name="id" type="measure" string="Calls"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_lead_call_log_graph" model="ir.ui.view">
+        <field name="name">lead.call.log.graph</field>
+        <field name="model">lead.call.log</field>
+        <field name="arch" type="xml">
+            <graph string="Calls by Agent" type="bar">
+                <field name="user_id" type="row"/>
+                <field name="id" type="measure" string="Calls"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="view_lead_call_log_search" model="ir.ui.view">
+        <field name="name">lead.call.log.search</field>
+        <field name="model">lead.call.log</field>
+        <field name="arch" type="xml">
+            <search string="Call Logs">
+                <field name="user_id" string="Agent"/>
+                <field name="lead_id"/>
+                <field name="caller_number"/>
+                <filter name="my_calls" string="My Calls"
+                        domain="[('user_id', '=', uid)]"/>
+                <separator/>
+                <filter name="filter_today" string="Today"
+                        domain="[('call_time', '&gt;=', datetime.datetime.combine(context_today(), datetime.time(0, 0, 0))), ('call_time', '&lt;=', datetime.datetime.combine(context_today(), datetime.time(23, 59, 59)))]"/>
+                <filter name="filter_call_time" string="Call Date"
+                        date="call_time"/>
+                <separator/>
+                <filter name="outgoing" string="Outgoing"
+                        domain="[('call_type', '=', 'outgoing')]"/>
+                <filter name="incoming" string="Incoming"
+                        domain="[('call_type', '=', 'incoming')]"/>
+                <separator/>
+                <filter name="group_agent" string="Agent"
+                        context="{'group_by': 'user_id'}"/>
+                <filter name="group_day" string="Call Day"
+                        context="{'group_by': 'call_time:day'}"/>
+                <filter name="group_type" string="Call Type"
+                        context="{'group_by': 'call_type'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_lead_call_log_report" model="ir.actions.act_window">
+        <field name="name">Call Logs</field>
+        <field name="res_model">lead.call.log</field>
+        <field name="view_mode">list,pivot,graph,form</field>
+        <field name="search_view_id" ref="view_lead_call_log_search"/>
+        <field name="context">{'search_default_filter_today': 1, 'search_default_group_agent': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No call logs yet</p>
+            <p>Calls made via Voxbay, Bonvoice, or the kanban call timer appear here.</p>
+        </field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         Menus
+         ══════════════════════════════════════════════════════════════ -->
+    <menuitem id="menu_call_report_dashboard"
+              name="Call Report"
+              parent="menu_leads_root"
+              action="action_call_report_dashboard"
+              sequence="3"
+              groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager,custom_leads_19.group_lead_branch_head,custom_leads_19.group_lead_team_lead,custom_leads_19.group_lead_users,custom_leads_19.group_lead_tele_callers"/>
+
+    <menuitem id="menu_lead_call_log_report"
+              name="Call Logs"
+              parent="menu_leads_root"
+              action="action_lead_call_log_report"
+              sequence="4"
+              groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager,custom_leads_19.group_lead_branch_head,custom_leads_19.group_lead_team_lead"/>
+
+</odoo>

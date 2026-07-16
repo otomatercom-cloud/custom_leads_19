@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- Daily Combined Campaign Auto-Generator — runs at 8:00 AM every day -->
+    <record id="ir_cron_auto_create_daily_campaigns" model="ir.cron">
+        <field name="name">Auto Create Daily Call Campaigns</field>
+        <field name="model_id" ref="model_call_campaign"/>
+        <field name="state">code</field>
+        <field name="code">model.auto_create_all_officer_campaigns()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="numbercall">-1</field>
+        <field name="active">True</field>
+        <field name="doall">False</field>
+        <field name="nextcall" eval="(datetime.now().replace(hour=8, minute=0, second=0) + timedelta(days=1)).strftime('%Y-%m-%d %H:%M:%S')"/>
+    </record>
+</odoo>

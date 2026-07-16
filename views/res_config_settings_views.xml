@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_res_config_settings_leads" model="ir.ui.view">
+        <field name="name">res.config.settings.leads</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app string="Leads" name="custom_leads_19" groups="custom_leads_19.group_super_admin">
+                    <block title="Voxbay Click-to-Call">
+                        <setting string="Voxbay UID">
+                            <field name="voxbay_uid"/>
+                        </setting>
+                        <setting string="Voxbay UPIN">
+                            <field name="voxbay_upin"/>
+                        </setting>
+                        <setting string="Caller ID (DID)">
+                            <field name="voxbay_callerid"/>
+                        </setting>
+                    </block>
+                    <block title="Bonvoice Click-to-Call">
+                        <setting string="Username">
+                            <field name="bonvoice_username"/>
+                        </setting>
+                        <setting string="Password">
+                            <field name="bonvoice_password" password="True"/>
+                        </setting>
+                        <setting string="API URL">
+                            <field name="bonvoice_url"/>
+                        </setting>
+                        <setting string="Leg A Caller ID">
+                            <field name="bonvoice_leg_a_caller_id"/>
+                        </setting>
+                        <setting string="Leg B Caller ID">
+                            <field name="bonvoice_leg_b_caller_id"/>
+                        </setting>
+                    </block>
+                    <block title="Meta WhatsApp">
+                        <setting string="Meta Verify Token">
+                            <field name="meta_verify_token"/>
+                        </setting>
+                        <setting string="Meta Page Access Token">
+                            <field name="meta_page_access_token"/>
+                        </setting>
+                    </block>
+                    <block title="Follow-Up Popup">
+                        <setting string="Enable Follow-Up Popup"
+                                 help="Show a popup with today's follow-ups when opening the Leads view.">
+                            <field name="enable_followup_popup"/>
+                        </setting>
+                    </block>
+                    <block title="Call Timer Popup">
+                        <setting string="Enable Call Timer Popup"
+                                 help="When ON: clicking Call opens the timer overlay with duration tracking and recording. When OFF: clicking Call directly dials via tel: link with no overlay.">
+                            <field name="enable_call_timer"/>
+                            <div class="text-muted ms-2" style="font-size:12px;margin-top:-6px;margin-bottom:8px;">
+                                Show countdown timer during calls
+                            </div>
+                            <field name="admission_batch_required"/>
+                            <div class="text-muted ms-2" style="font-size:12px;margin-top:-6px;">
+                                When ON — officers must pick a batch &amp; fee to confirm admission.<br/>
+                                When OFF — one click converts lead to admission (no batch/fee needed).
+                            </div>
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+</odoo>

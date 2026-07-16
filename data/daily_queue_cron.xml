@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="action_cron_rebuild_daily_queue" model="ir.actions.server">
+            <field name="name">Leads: Rebuild Daily Queue Each Morning</field>
+            <field name="model_id" ref="custom_leads_19.model_leads_logic"/>
+            <field name="state">code</field>
+            <field name="code">model.action_rebuild_daily_queues()</field>
+        </record>
+        <record id="ir_cron_rebuild_daily_lead_queues" model="ir.cron">
+            <field name="name">Leads: Rebuild Daily Queue Each Morning</field>
+            <field name="ir_actions_server_id" ref="action_cron_rebuild_daily_queue"/>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="active" eval="True"/>
+        </record>
+    </data>
+</odoo>

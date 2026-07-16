@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_allocation_tele_callers_form" model="ir.ui.view">
+        <field name="name">allocation.tele_callers.wizard.form</field>
+        <field name="model">allocation.tele_callers.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Assign Leads">
+                <sheet>
+                    <group>
+                        <field name="assign_to"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_add_assigned_user" string="Assign as Tele Caller" type="object" class="btn-primary"/>
+                    <button name="action_add_assign_to_lead_owner" string="Assign as Lead Owner" type="object" class="btn-secondary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_re_allocation_form" model="ir.ui.view">
+        <field name="name">re.allocation.leads.form</field>
+        <field name="model">re.allocation.leads</field>
+        <field name="arch" type="xml">
+            <form string="Re-Allocate Leads">
+                <sheet>
+                    <group>
+                        <field name="lead_owner_id"/>
+                        <field name="leads_ids" widget="many2many_tags"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="act_re_allocation" string="Re-Allocate" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_leads_funnel_wizard_form" model="ir.ui.view">
+        <field name="name">leads.funnel.wizard.form</field>
+        <field name="model">leads.funnel.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Lead Funnel">
+                <sheet>
+                    <group>
+                        <field name="lead_id" readonly="1"/>
+                    </group>
+
+                    <group string="Funnel Steps">
+                        <group>
+                            <field name="first_call" readonly="1"/>
+                            <button name="action_first_attempt" string="✅ First Attempt" type="object"
+                                    invisible="first_call" class="btn-primary btn-sm"/>
+                            <field name="whatsapp_intro" readonly="1"/>
+                            <button name="action_whatsapp" string="📲 Send WhatsApp" type="object"
+                                    invisible="whatsapp_intro" class="btn-secondary btn-sm"/>
+                        </group>
+                        <group>
+                            <field name="second_followup" readonly="1"/>
+                            <button name="action_second_followup" string="📞 2nd Follow Up" type="object"
+                                    invisible="second_followup" class="btn-secondary btn-sm"/>
+                            <field name="course_wise_webinar" readonly="1"/>
+                            <button name="action_course_wise_webinar" string="🎓 Webinar" type="object"
+                                    invisible="course_wise_webinar" class="btn-secondary btn-sm"/>
+                            <field name="testimonials" readonly="1"/>
+                            <button name="action_testimonials" string="⭐ Testimonials" type="object"
+                                    invisible="testimonials" class="btn-secondary btn-sm"/>
+                        </group>
+                    </group>
+
+                </sheet>
+                <footer>
+                    <button name="action_bypass" string="Open Lead Form" type="object" class="btn-secondary"/>
+                    <button string="Close" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

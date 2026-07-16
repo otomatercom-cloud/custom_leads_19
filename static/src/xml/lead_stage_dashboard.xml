@@ -1,0 +1,392 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+<t t-name="custom_leads_19.LeadStageDashboard">
+<div class="o_lead_stage_dashboard">
+
+    <!-- ── Header ──────────────────────────────────────────────────────── -->
+    <div class="o_lead_dashboard_header">
+        <div>
+            <div class="o_lead_dashboard_kicker">Leads Management</div>
+            <h1>Lead Dashboard</h1>
+            <p>Stage counts · My performance · Team rankings · Officer leaderboard</p>
+        </div>
+        <div class="o_lead_dashboard_actions">
+            <button type="button" class="btn btn-light" t-on-click="loadData" t-att-disabled="state.loading">
+                <i t-attf-class="fa {{ state.loading ? 'fa-spinner fa-spin' : 'fa-refresh' }} me-1"/>Refresh
+            </button>
+            <button type="button" class="btn btn-success" t-on-click="openCampaigns">
+                <i class="fa fa-phone me-1"/>Call Campaigns
+            </button>
+            <button type="button" class="btn btn-primary" t-on-click="openAnalysis">
+                <i class="fa fa-bar-chart me-1"/>Analysis
+            </button>
+        </div>
+    </div>
+
+    <!-- ── Skeleton ─────────────────────────────────────────────────────── -->
+    <t t-if="state.loading">
+        <div class="o_lead_skeleton_grid">
+            <t t-foreach="[1,2,3,4,5,6,7]" t-as="n" t-key="n">
+                <div class="o_lead_skeleton_card">
+                    <div class="o_lead_skeleton_line o_lead_skeleton_icon"/>
+                    <div class="o_lead_skeleton_line o_lead_skeleton_title"/>
+                    <div class="o_lead_skeleton_line o_lead_skeleton_count"/>
+                    <div class="o_lead_skeleton_line o_lead_skeleton_bar"/>
+                </div>
+            </t>
+        </div>
+        <div class="o_lead_skeleton_wide"><div class="o_lead_skeleton_line" style="height:200px;border-radius:10px;"/></div>
+        <div class="o_lead_skeleton_wide" style="margin-top:12px;"><div class="o_lead_skeleton_line" style="height:160px;border-radius:10px;"/></div>
+    </t>
+
+    <t t-else="">
+
+        <!-- ── My Daily Campaign Card ──────────────────────────────────── -->
+        <!-- ── Daily Campaign Section ──────────────────────────────── -->
+        <t t-if="state.campaignLoading">
+            <div class="o_daily_campaign_loading_bar">
+                <i class="fa fa-spinner fa-spin"/> Loading campaigns...
+            </div>
+        </t>
+
+        <t t-else="">
+            <!-- Own campaign card (all roles) -->
+            <t t-if="state.campaign">
+                <div class="o_daily_campaign_card">
+                    <div class="o_daily_campaign_left">
+                        <div class="o_daily_campaign_icon">📞</div>
+                        <div class="o_daily_campaign_info">
+                            <div class="o_daily_campaign_title">My Daily Call Campaign</div>
+                            <div class="o_daily_campaign_sub" t-esc="state.campaign.campaign_name"/>
+                        </div>
+                    </div>
+                    <div class="o_daily_campaign_stats">
+                        <div class="o_daily_campaign_stat">
+                            <span class="o_dcs_num" t-esc="state.campaign.pending"/>
+                            <span class="o_dcs_lbl">Pending</span>
+                        </div>
+                        <div class="o_daily_campaign_stat o_dcs_called">
+                            <span class="o_dcs_num" t-esc="state.campaign.called"/>
+                            <span class="o_dcs_lbl">Called</span>
+                        </div>
+                        <div class="o_daily_campaign_stat o_dcs_total">
+                            <span class="o_dcs_num" t-esc="state.campaign.total"/>
+                            <span class="o_dcs_lbl">Total</span>
+                        </div>
+                    </div>
+                    <div class="o_daily_campaign_action">
+                        <button class="o_daily_campaign_start_btn" t-on-click="startDailyCampaign"
+                                t-if="state.campaign.pending > 0">
+                            ▶ Start Calling
+                        </button>
+                        <span class="o_daily_campaign_done_badge" t-else="">
+                            ✅ All Done Today!
+                        </span>
+                    </div>
+                </div>
+            </t>
+
+            <!-- Team Lead / Manager panel -->
+            <t t-if="state.teamSummary and (state.role === 'tl' or state.role === 'manager')">
+                <div class="o_team_campaign_panel">
+                    <div class="o_team_campaign_header">
+                        <div class="o_team_campaign_title">
+                            <i class="fa fa-users"/> Team Daily Campaigns
+                            <span class="o_team_campaign_badge">
+                                <t t-esc="state.teamSummary.campaigns_created"/>/<t t-esc="state.teamSummary.total_officers"/> Created
+                            </span>
+                        </div>
+                        <button class="o_team_generate_btn"
+                                t-on-click="generateTeamCampaigns"
+                                t-att-disabled="state.generatingTeam">
+                            <t t-if="state.generatingTeam">
+                                <i class="fa fa-spinner fa-spin"/> Generating...
+                            </t>
+                            <t t-else="">
+                                <i class="fa fa-magic"/>
+                                <t t-if="state.role === 'manager'"> Generate All Officer Campaigns</t>
+                                <t t-else=""> Generate My Team's Campaigns</t>
+                            </t>
+                        </button>
+                    </div>
+
+                    <!-- Officer rows -->
+                    <div class="o_team_campaign_grid">
+                        <t t-foreach="state.teamSummary.officers" t-as="officer" t-key="officer.employee_id">
+                            <div class="o_team_officer_row"
+                                 t-att-class="{'o_team_officer_done': officer.has_campaign and officer.pending === 0}">
+                                <div class="o_team_officer_name">
+                                    <span class="o_team_officer_icon">
+                                        <t t-if="officer.has_campaign and officer.pending === 0">✅</t>
+                                        <t t-elif="officer.has_campaign">📞</t>
+                                        <t t-else="">⏳</t>
+                                    </span>
+                                    <t t-esc="officer.employee_name"/>
+                                </div>
+                                <t t-if="officer.has_campaign">
+                                    <div class="o_team_officer_stats">
+                                        <span class="o_team_stat_pill o_team_pill_pending">
+                                            <t t-esc="officer.pending"/> pending
+                                        </span>
+                                        <span class="o_team_stat_pill o_team_pill_called">
+                                            <t t-esc="officer.called"/> called
+                                        </span>
+                                        <span class="o_team_stat_pill">
+                                            <t t-esc="officer.total"/> total
+                                        </span>
+                                    </div>
+                                    <button class="o_team_open_btn"
+                                            t-on-click="() => this.openOfficerCampaign(officer.campaign_id)">
+                                        Open
+                                    </button>
+                                </t>
+                                <t t-else="">
+                                    <span class="o_team_no_campaign">No campaign yet</span>
+                                </t>
+                            </div>
+                        </t>
+                    </div>
+                </div>
+            </t>
+
+            <t t-if="state.campaignError and !state.campaign">
+                <div class="o_daily_campaign_error">⚠️ <t t-esc="state.campaignError"/></div>
+            </t>
+        </t>
+
+        <!-- ── Total panel ──────────────────────────────────────────────── -->
+        <div class="o_lead_total_panel">
+            <div><span>Total Leads</span><strong t-esc="state.total"/></div>
+            <small>Funnel · Prospects · RNR/DNP · Admissions · Re-Try · Alumni · Junk</small>
+        </div>
+
+        <!-- ── Stage cards ──────────────────────────────────────────────── -->
+        <div class="o_lead_stage_grid">
+            <t t-foreach="stages" t-as="stage" t-key="stage.key">
+                <button type="button" t-attf-class="o_lead_stage_card o_lead_stage_{{ stage.accent }}"
+                        t-on-click="() => this.openStage(stage.key)">
+                    <div class="o_lead_stage_card_top">
+                        <span class="o_lead_stage_icon"><i t-attf-class="fa {{ stage.icon }}"/></span>
+                        <span class="o_lead_stage_percent"><t t-esc="getPct(stage.key)"/>%</span>
+                    </div>
+                    <span class="o_lead_stage_label" t-esc="stage.label"/>
+                    <strong class="o_lead_stage_count" t-esc="getCount(stage.key)"/>
+                    <span class="o_lead_stage_caption" t-esc="stage.caption"/>
+                    <span class="o_lead_stage_bar"><span t-att-style="'width:'+getPct(stage.key)+'%'"/></span>
+                </button>
+            </t>
+        </div>
+
+        <!-- ══════════════════════════════════════════════════════════════
+             MY PERFORMANCE PANEL  (visible to every logged-in user)
+        ══════════════════════════════════════════════════════════════════ -->
+        <div class="o_lead_my_panel">
+            <div class="o_lead_my_panel_header">
+                <h2>📊 My Performance</h2>
+                <div class="o_lead_my_tabs">
+                    <button t-attf-class="o_lead_my_tab {{ state.myTab==='quality' ? 'active' : '' }}"
+                            t-on-click="() => this.setMyTab('quality')">Lead Quality</button>
+                    <button t-attf-class="o_lead_my_tab {{ state.myTab==='chart' ? 'active' : '' }}"
+                            t-on-click="() => this.setMyTab('chart')">Activity Chart</button>
+                </div>
+            </div>
+
+            <!-- Tab: Lead Quality counts -->
+            <t t-if="state.myTab === 'quality'">
+                <div class="o_lead_my_summary">
+                    <div class="o_lead_my_total_box">
+                        <span>My Total Leads</span>
+                        <strong t-esc="myTotalLeads"/>
+                    </div>
+                </div>
+                <t t-if="myQualityList.length">
+                    <div class="o_lead_quality_grid">
+                        <t t-foreach="myQualityList" t-as="q" t-key="q.key">
+                            <button type="button" class="o_lead_quality_pill"
+                                    t-on-click="() => this.openQualityLeads(q.key)">
+                                <span class="o_lead_quality_label" t-esc="q.label"/>
+                                <span class="o_lead_quality_count" t-esc="q.count"/>
+                            </button>
+                        </t>
+                    </div>
+                </t>
+                <t t-else="">
+                    <div class="o_lead_empty">No leads assigned yet.</div>
+                </t>
+            </t>
+
+            <!-- Tab: Day-wise activity bar chart (last 30 days) -->
+            <t t-if="state.myTab === 'chart'">
+                <div class="o_lead_chart_wrap">
+                    <div class="o_lead_chart_title">Leads Processed — Last 30 Days</div>
+                    <div class="o_lead_bar_chart">
+                        <t t-foreach="chartData" t-as="day" t-key="day.date">
+                            <div class="o_lead_bar_col">
+                                <div class="o_lead_bar_tip" t-if="day.count > 0" t-esc="day.count"/>
+                                <div class="o_lead_bar"
+                                     t-att-style="'height:' + Math.round(day.count/chartMax*100) + '%'"
+                                     t-attf-class="o_lead_bar {{ day.count > 0 ? 'o_bar_active' : '' }}"/>
+                                <div class="o_lead_bar_label" t-esc="day.label"/>
+                            </div>
+                        </t>
+                    </div>
+                </div>
+            </t>
+        </div>
+
+        <!-- ══════════════════════════════════════════════════════════════
+             TEAM + OFFICER SECTIONS  (Manager / Super Admin / Team Lead)
+        ══════════════════════════════════════════════════════════════════ -->
+        <t t-if="state.canSeeTeams">
+
+            <!-- Period toggle -->
+            <div class="o_lead_period_bar">
+                <span class="o_lead_period_label">Period:</span>
+                <div class="o_lead_period_tabs">
+                    <button t-attf-class="o_lead_period_btn {{ state.officerPeriod==='today' ? 'active':'' }}"
+                            t-on-click="() => this.setPeriod('today')">Today</button>
+                    <button t-attf-class="o_lead_period_btn {{ state.officerPeriod==='week' ? 'active':'' }}"
+                            t-on-click="() => this.setPeriod('week')">This Week</button>
+                    <button t-attf-class="o_lead_period_btn {{ state.officerPeriod==='month' ? 'active':'' }}"
+                            t-on-click="() => this.setPeriod('month')">This Month</button>
+                </div>
+            </div>
+
+            <!-- ── A. Team Performance ranked ───────────────────────────── -->
+            <t t-if="state.teamData.length">
+                <div class="o_lead_section_header">
+                    <h2>Team Performance</h2>
+                    <span class="o_lead_count_badge" t-esc="state.teamData.length + ' teams'"/>
+                </div>
+
+                <div class="o_lead_team_rank_grid">
+                    <t t-foreach="state.teamData" t-as="team" t-key="team.id">
+                        <div t-attf-class="o_lead_team_card {{ team.rank===1?'o_rank_gold':team.rank===2?'o_rank_silver':team.rank===3?'o_rank_bronze':'' }}">
+                            <!-- header -->
+                            <div class="o_lead_team_card_header">
+                                <div class="o_lead_team_rank_badge">
+                                    <t t-if="team.rank &lt;= 3"><span t-esc="medals[team.rank-1]" class="o_lead_medal"/></t>
+                                    <t t-else=""><span class="o_lead_rank_num" t-esc="'#'+team.rank"/></t>
+                                </div>
+                                <div class="o_lead_team_avatar"><t t-esc="team.name[0].toUpperCase()"/></div>
+                                <div class="o_lead_team_info">
+                                    <strong t-esc="team.name"/>
+                                    <span><t t-esc="team.member_count"/> officer(s) · <t t-esc="team.team_leads.join(', ')||'—'"/></span>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-secondary ms-auto"
+                                        t-on-click="() => this.openTeamLeads(team.id, null)">View All</button>
+                            </div>
+                            <!-- KPI row -->
+                            <div class="o_lead_team_kpi_row">
+                                <div class="o_lead_team_kpi o_lead_team_kpi_total" t-on-click="() => this.openTeamLeads(team.id,null)"><span>Total</span><strong t-esc="team.total"/></div>
+                                <div class="o_lead_team_kpi o_lead_team_kpi_admission" t-on-click="() => this.openTeamLeads(team.id,'admission_done')"><span>Admissions</span><strong t-esc="team.admissions"/></div>
+                                <div class="o_lead_team_kpi o_lead_team_kpi_prospect"  t-on-click="() => this.openTeamLeads(team.id,'prospects')"><span>Prospects</span><strong t-esc="team.prospects"/></div>
+                                <div class="o_lead_team_kpi o_lead_team_kpi_funnel"    t-on-click="() => this.openTeamLeads(team.id,'funnel')"><span>Funnel</span><strong t-esc="team.funnel"/></div>
+                                <div class="o_lead_team_kpi o_lead_team_kpi_rnr"       t-on-click="() => this.openTeamLeads(team.id,'rnr_dnp')"><span>RNR/DNP</span><strong t-esc="team.rnr_dnp"/></div>
+                                <div class="o_lead_team_kpi o_lead_team_kpi_junk"      t-on-click="() => this.openTeamLeads(team.id,'junk')"><span>Junk</span><strong t-esc="team.junk"/></div>
+                            </div>
+                            <!-- Conversion -->
+                            <div class="o_lead_team_conversion">
+                                <div class="o_lead_team_conversion_label">
+                                    <span>Conversion Rate</span><strong t-esc="team.conversion+'%'"/>
+                                </div>
+                                <div class="o_lead_team_conv_bar">
+                                    <div class="o_lead_team_conv_fill" t-att-style="'width:'+Math.min(team.conversion,100)+'%'"/>
+                                </div>
+                            </div>
+                            <!-- Officer mini-table: Admissions + Processed -->
+                            <t t-if="team.officers and team.officers.length">
+                                <div class="o_lead_officer_mini">
+                                    <div class="o_lead_officer_mini_head">
+                                        <span>Officer</span>
+                                        <span>Admissions</span>
+                                        <span>Processed</span>
+                                    </div>
+                                    <t t-foreach="teamOfficersSorted(team)" t-as="o" t-key="o.id">
+                                        <div class="o_lead_officer_mini_row"
+                                             t-on-click="() => this.openOfficerLeads(o.id, state.officerPeriod)">
+                                            <span class="o_lead_officer_name">
+                                                <t t-if="o_index &lt; 3"><t t-esc="medals[o_index]"/></t>
+                                                <t t-else=""><span class="o_lead_officer_rank" t-esc="'#'+(o_index+1)"/></t>
+                                                <t t-esc="o.name"/>
+                                            </span>
+                                            <span t-attf-class="o_lead_kpi_pill {{ officerAdm(o)>0?'o_pill_green':'' }}"
+                                                  t-esc="officerAdm(o)"/>
+                                            <span t-attf-class="o_lead_kpi_pill {{ officerProc(o)>0?'o_pill_blue':'' }}"
+                                                  t-esc="officerProc(o)"/>
+                                        </div>
+                                    </t>
+                                </div>
+                            </t>
+                        </div>
+                    </t>
+                </div>
+            </t>
+
+            <!-- ── B. Global Officer Leaderboard ────────────────────────── -->
+            <t t-if="state.officerData.length">
+                <div class="o_lead_section_header" style="margin-top:32px;">
+                    <h2>🏆 Best Admission Officers</h2>
+                    <span class="o_lead_count_badge" t-esc="state.officerData.length+' officers'"/>
+                </div>
+
+                <!-- Podium top 3 -->
+                <div class="o_lead_podium">
+                    <t t-foreach="sortedOfficers.slice(0,3)" t-as="o" t-key="o.id">
+                        <div t-attf-class="o_lead_podium_card o_podium_{{ o_index+1 }}"
+                             t-on-click="() => this.openOfficerLeads(o.id, state.officerPeriod)">
+                            <div class="o_lead_podium_medal" t-esc="medals[o_index]"/>
+                            <div class="o_lead_podium_name" t-esc="o.name"/>
+                            <div class="o_lead_podium_team" t-esc="o.team"/>
+                            <div class="o_lead_podium_score" t-esc="officerAdm(o)"/>
+                            <div class="o_lead_podium_period">admissions · <t t-esc="state.officerPeriod"/></div>
+                            <div class="o_lead_podium_sub">
+                                Processed: <b t-esc="officerProc(o)"/> ·
+                                All time: <b t-esc="o.adm_total"/>
+                            </div>
+                        </div>
+                    </t>
+                </div>
+
+                <!-- Full table -->
+                <div class="o_lead_lb_table">
+                    <div class="o_lead_lb_head">
+                        <span>#</span>
+                        <span>Officer</span>
+                        <span>Team</span>
+                        <span>Adm Today</span>
+                        <span>Adm Week</span>
+                        <span>Adm Month</span>
+                        <span>Proc Today</span>
+                        <span>Proc Week</span>
+                        <span>Proc Month</span>
+                        <span>All Time</span>
+                    </div>
+                    <t t-foreach="sortedOfficers" t-as="o" t-key="o.id">
+                        <div t-attf-class="o_lead_lb_row {{ o_index===0?'o_lb_gold':o_index===1?'o_lb_silver':o_index===2?'o_lb_bronze':'' }}"
+                             t-on-click="() => this.openOfficerLeads(o.id, state.officerPeriod)">
+                            <span class="o_lb_rank">
+                                <t t-if="o_index &lt; 3"><t t-esc="medals[o_index]"/></t>
+                                <t t-else=""><t t-esc="o_index+1"/></t>
+                            </span>
+                            <span class="o_lb_name" t-esc="o.name"/>
+                            <span class="o_lb_team" t-esc="o.team"/>
+                            <span t-attf-class="o_lead_kpi_pill {{ o.adm_today>0?'o_pill_green':'' }}"  t-esc="o.adm_today"/>
+                            <span t-attf-class="o_lead_kpi_pill {{ o.adm_week>0?'o_pill_green':'' }}"   t-esc="o.adm_week"/>
+                            <span t-attf-class="o_lead_kpi_pill o_pill_active {{ o.adm_month>0?'o_pill_green':'' }}" t-esc="o.adm_month"/>
+                            <span t-attf-class="o_lead_kpi_pill {{ o.proc_today>0?'o_pill_blue':'' }}"  t-esc="o.proc_today"/>
+                            <span t-attf-class="o_lead_kpi_pill {{ o.proc_week>0?'o_pill_blue':'' }}"   t-esc="o.proc_week"/>
+                            <span t-attf-class="o_lead_kpi_pill o_pill_active {{ o.proc_month>0?'o_pill_blue':'' }}" t-esc="o.proc_month"/>
+                            <span class="o_lb_total" t-esc="o.adm_total"/>
+                        </div>
+                    </t>
+                </div>
+            </t>
+
+        </t><!-- /canSeeTeams -->
+
+        <div class="o_lead_dashboard_footer">Click any card or row to open matching leads.</div>
+    </t><!-- /not loading -->
+</div>
+</t>
+</templates>

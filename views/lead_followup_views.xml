@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <!-- ─── List View ─────────────────────────────────────────────────── -->
+    <record id="view_lead_followup_list" model="ir.ui.view">
+        <field name="name">lead.followup.list</field>
+        <field name="model">lead.followup</field>
+        <field name="arch" type="xml">
+            <list string="Follow-Ups" default_order="next_followup_date asc"
+                  decoration-muted="status == 'done'"
+                  decoration-info="status == 'scheduled'">
+                <field name="next_followup_date"/>
+                <field name="lead_id"/>
+                <field name="lead_reference" optional="show"/>
+                <field name="phone_number" optional="show"/>
+                <field name="lead_owner_id" optional="hide"/>
+                <field name="user_id"/>
+                <field name="remarks"/>
+                <field name="status" widget="badge"
+                       decoration-info="status == 'scheduled'"
+                       decoration-success="status == 'done'"
+                       decoration-muted="status == 'cancelled'"/>
+                <button name="action_mark_done" string="Done" type="object"
+                        icon="fa-check" invisible="status != 'scheduled'"/>
+                <button name="action_open_lead" string="Open Lead" type="object"
+                        icon="fa-external-link"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ─── Form View ─────────────────────────────────────────────────── -->
+    <record id="view_lead_followup_form" model="ir.ui.view">
+        <field name="name">lead.followup.form</field>
+        <field name="model">lead.followup</field>
+        <field name="arch" type="xml">
+            <form string="Follow-Up">
+                <header>
+                    <button name="action_mark_done" string="Mark Done" type="object"
+                            class="btn-primary" invisible="status != 'scheduled'"/>
+                    <button name="action_open_lead" string="Open Lead" type="object"
+                            class="btn-secondary" invisible="not lead_id"/>
+                    <field name="status" widget="statusbar"
+                           statusbar_visible="scheduled,done,cancelled"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="lead_id" readonly="status != 'scheduled'"/>
+                            <field name="lead_reference" readonly="1"/>
+                            <field name="lead_owner_id" readonly="1"/>
+                            <field name="phone_number"/>
+                        </group>
+                        <group>
+                            <field name="next_followup_date"/>
+                            <field name="user_id" readonly="1"/>
+                            <field name="display_name" invisible="1"/>
+                        </group>
+                    </group>
+                    <group string="Remarks">
+                        <field name="remarks" nolabel="1" placeholder="Follow-up notes..."/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ─── Search View ─────────────────────────────────────────────────── -->
+    <record id="view_lead_followup_search" model="ir.ui.view">
+        <field name="name">lead.followup.search</field>
+        <field name="model">lead.followup</field>
+        <field name="arch" type="xml">
+            <search string="Follow-Ups">
+                <field name="lead_id"/>
+                <field name="lead_reference"/>
+                <field name="phone_number"/>
+                <field name="user_id"/>
+                <field name="remarks"/>
+                <filter string="Scheduled" name="scheduled"
+                        domain="[('status', '=', 'scheduled')]"/>
+                <filter string="Done" name="done"
+                        domain="[('status', '=', 'done')]"/>
+                <filter string="My Follow-Ups" name="my_followups"
+                        domain="[('user_id', '=', uid)]"/>
+                <separator/>
+                <filter string="Follow-Up Date" name="filter_followup_date"
+                        date="next_followup_date"/>
+                <group>
+                    <filter string="Lead" name="group_lead"
+                            context="{'group_by': 'lead_id'}"/>
+                    <filter string="Status" name="group_status"
+                            context="{'group_by': 'status'}"/>
+                    <filter string="Follow-Up By" name="group_user"
+                            context="{'group_by': 'user_id'}"/>
+                    <filter string="Date" name="group_date"
+                            context="{'group_by': 'next_followup_date:day'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ─── Actions ───────────────────────────────────────────────────── -->
+    <record id="action_lead_followup" model="ir.actions.act_window">
+        <field name="name">Follow-Ups</field>
+        <field name="res_model">lead.followup</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_lead_followup_search"/>
+        <field name="context">{'search_default_scheduled': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No follow-ups yet.
+            </p>
+            <p>
+                Schedule follow-ups from a lead using the <b>Follow Up</b> button.
+            </p>
+        </field>
+    </record>
+
+    <record id="action_lead_followup_today" model="ir.actions.server">
+        <field name="name">Today's Follow-Ups</field>
+        <field name="model_id" ref="model_lead_followup"/>
+        <field name="state">code</field>
+        <field name="code">action = model.action_view_today_followups()</field>
+    </record>
+
+    <!-- ─── Menus ─────────────────────────────────────────────────────── -->
+    <menuitem id="menu_leads_followups"
+              name="Follow-Ups"
+              parent="menu_leads_root"
+              action="action_lead_followup"
+              sequence="2"
+              groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager,custom_leads_19.group_lead_team_lead,custom_leads_19.group_lead_users,custom_leads_19.group_lead_tele_callers,custom_leads_19.group_lead_digital_team,custom_leads_19.group_lead_digital_head,custom_leads_19.group_lead_branch_head,custom_leads_19.group_crash_head,custom_leads_19.group_crash_user"/>
+
+    <menuitem id="menu_leads_followups_today"
+              name="Today's Follow-Ups"
+              parent="menu_leads_root"
+              action="action_lead_followup_today"
+              sequence="3"
+              groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager,custom_leads_19.group_lead_team_lead,custom_leads_19.group_lead_users,custom_leads_19.group_lead_tele_callers,custom_leads_19.group_lead_digital_team,custom_leads_19.group_lead_digital_head,custom_leads_19.group_lead_branch_head,custom_leads_19.group_crash_head,custom_leads_19.group_crash_user"/>
+
+</odoo>

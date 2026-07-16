@@ -1,0 +1,448 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+<t t-name="custom_leads_19.CallCampaignDashboard">
+<div class="o_cc_dashboard">
+
+    <!-- ══ HEADER ════════════════════════════════════════════════════════ -->
+    <div class="o_cc_header">
+        <div class="o_cc_header_left">
+            <div class="o_cc_header_icon"><i class="fa fa-phone"/></div>
+            <div>
+                <h1 class="o_cc_title">Call Center</h1>
+                <div class="o_cc_subtitle">Campaign Management Dashboard</div>
+            </div>
+        </div>
+        <div class="o_cc_header_right">
+            <div class="o_cc_search_wrap">
+                <i class="fa fa-search o_cc_search_icon"/>
+                <input class="o_cc_search" placeholder="Search campaigns..."
+                       t-on-input="onSearchInput" t-att-value="state.search"/>
+            </div>
+            <t t-if="isAdminRole">
+                <button class="o_cc_generate_btn" t-on-click="openGenerateModal">
+                    <i class="fa fa-magic"/> Generate
+                </button>
+                <button class="o_cc_start_all_btn"
+                        t-if="state.stats.draft > 0"
+                        t-att-disabled="state.startingAll"
+                        t-on-click="startAllDrafts">
+                    <t t-if="state.startingAll"><i class="fa fa-spinner fa-spin"/> Starting...</t>
+                    <t t-else=""><i class="fa fa-play-circle"/> Start All (<t t-esc="state.stats.draft"/>)</t>
+                </button>
+                <button class="o_cc_new_btn" t-on-click="createNew">
+                    <i class="fa fa-plus"/> New
+                </button>
+            </t>
+            <button class="o_cc_mobile_menu_btn" t-on-click="toggleMobileMenu">
+                <i class="fa fa-bars"/>
+            </button>
+        </div>
+    </div>
+
+    <!-- Mobile drawer -->
+    <div class="o_cc_mobile_drawer" t-att-class="{'o_cc_mobile_drawer_open': state.mobileMenuOpen}">
+        <button class="o_cc_drawer_tab" t-att-class="{'o_cc_tab_active': state.filter === 'all'}"     t-on-click="onSetFilter('all')">All</button>
+        <button class="o_cc_drawer_tab" t-att-class="{'o_cc_tab_active': state.filter === 'running'}" t-on-click="onSetFilter('running')">🟢 Running</button>
+        <button class="o_cc_drawer_tab" t-att-class="{'o_cc_tab_active': state.filter === 'draft'}"   t-on-click="onSetFilter('draft')">📝 Draft</button>
+        <button class="o_cc_drawer_tab" t-att-class="{'o_cc_tab_active': state.filter === 'done'}"    t-on-click="onSetFilter('done')">✅ Done</button>
+        <button class="o_cc_drawer_tab" t-att-class="{'o_cc_tab_active': state.filter === 'mine'}"    t-on-click="onSetFilter('mine')">👤 Mine</button>
+        <t t-if="isAdminRole">
+            <button class="o_cc_drawer_tab o_cc_drawer_generate" t-on-click="openGenerateModal"><i class="fa fa-magic"/> Generate</button>
+            <button class="o_cc_drawer_tab o_cc_drawer_start_all" t-if="state.stats.draft > 0" t-on-click="startAllDrafts"><i class="fa fa-play-circle"/> Start All</button>
+            <button class="o_cc_drawer_tab o_cc_drawer_new" t-on-click="createNew"><i class="fa fa-plus"/> New Campaign</button>
+        </t>
+    </div>
+
+    <!-- ══ LOADING ═══════════════════════════════════════════════════════ -->
+    <t t-if="state.loading">
+        <div class="o_cc_loading">
+            <i class="fa fa-spinner fa-spin fa-2x"/>
+            <p>Loading Call Center...</p>
+        </div>
+    </t>
+
+    <t t-else="">
+
+        <!-- ══ STATS ═════════════════════════════════════════════════════ -->
+        <div class="o_cc_stats_row">
+            <div class="o_cc_stat_card o_cc_stat_total"   t-on-click="onSetFilter('all')"><div class="o_cc_stat_icon"><i class="fa fa-list"/></div><div class="o_cc_stat_info"><div class="o_cc_stat_num" t-esc="state.stats.total"/><div class="o_cc_stat_lbl">Total Campaigns</div></div></div>
+            <div class="o_cc_stat_card o_cc_stat_running" t-on-click="onSetFilter('running')"><div class="o_cc_stat_icon"><i class="fa fa-play-circle"/></div><div class="o_cc_stat_info"><div class="o_cc_stat_num" t-esc="state.stats.running"/><div class="o_cc_stat_lbl">Running</div></div></div>
+            <div class="o_cc_stat_card o_cc_stat_draft"   t-on-click="onSetFilter('draft')"><div class="o_cc_stat_icon"><i class="fa fa-pencil"/></div><div class="o_cc_stat_info"><div class="o_cc_stat_num" t-esc="state.stats.draft"/><div class="o_cc_stat_lbl">Draft</div></div></div>
+            <div class="o_cc_stat_card o_cc_stat_done"    t-on-click="onSetFilter('done')"><div class="o_cc_stat_icon"><i class="fa fa-check-circle"/></div><div class="o_cc_stat_info"><div class="o_cc_stat_num" t-esc="state.stats.done"/><div class="o_cc_stat_lbl">Completed</div></div></div>
+            <div class="o_cc_stat_card o_cc_stat_leads"><div class="o_cc_stat_icon"><i class="fa fa-users"/></div><div class="o_cc_stat_info"><div class="o_cc_stat_num" t-esc="state.stats.total_leads"/><div class="o_cc_stat_lbl">Total Leads</div></div></div>
+            <div class="o_cc_stat_card o_cc_stat_called"><div class="o_cc_stat_icon"><i class="fa fa-phone"/></div><div class="o_cc_stat_info"><div class="o_cc_stat_num" t-esc="state.stats.total_called"/><div class="o_cc_stat_lbl">Calls Made</div></div></div>
+            <div class="o_cc_stat_card o_cc_stat_pending"><div class="o_cc_stat_icon"><i class="fa fa-clock-o"/></div><div class="o_cc_stat_info"><div class="o_cc_stat_num" t-esc="state.stats.total_pending"/><div class="o_cc_stat_lbl">Pending Calls</div></div></div>
+        </div>
+
+        <!-- Overall progress bar -->
+        <div class="o_cc_overall_progress">
+            <div class="o_cc_op_label">
+                <span>Overall Progress</span>
+                <span><t t-esc="state.stats.total_called"/> / <t t-esc="state.stats.total_leads"/> calls (<t t-esc="overallPct()"/>%)</span>
+            </div>
+            <div class="o_cc_op_track"><div class="o_cc_op_bar" t-attf-style="width:{{overallPct()}}%"/></div>
+        </div>
+
+        <!-- ══ OFFICER / TL BREAKDOWN ════════════════════════════════════ -->
+        <t t-if="isAdminRole and state.officerBreakdown.length">
+            <div class="o_cc_section">
+                <div class="o_cc_section_header">
+                    <div class="o_cc_section_title"><i class="fa fa-users"/> Officer Performance</div>
+                    <span class="o_cc_section_badge" t-esc="state.officerBreakdown.length + ' officers'"/>
+                </div>
+                <div class="o_cc_officer_grid">
+                    <t t-foreach="state.officerBreakdown" t-as="o" t-key="o.employee_id">
+                        <div class="o_cc_officer_card">
+                            <div class="o_cc_officer_top">
+                                <div class="o_cc_officer_avatar"><t t-esc="o.employee_name[0].toUpperCase()"/></div>
+                                <div class="o_cc_officer_info">
+                                    <div class="o_cc_officer_name" t-esc="o.employee_name"/>
+                                    <div class="o_cc_officer_meta">
+                                        <span class="o_cc_opill o_cc_opill_total" t-esc="o.total_campaigns + ' campaigns'"/>
+                                    </div>
+                                </div>
+                                <div class="o_cc_officer_pct"
+                                     t-att-class="{'o_cc_pct_high': o.pct >= 70, 'o_cc_pct_mid': o.pct >= 40 and o.pct &lt; 70, 'o_cc_pct_low': o.pct &lt; 40}">
+                                    <t t-esc="o.pct"/>%
+                                </div>
+                            </div>
+                            <div class="o_cc_officer_bar_track"><div class="o_cc_officer_bar" t-attf-style="width:{{o.pct}}%"/></div>
+                            <div class="o_cc_officer_stats">
+                                <div class="o_cc_ostat"><span class="o_cc_ostat_num o_cc_ostat_called"  t-esc="o.called"/><span class="o_cc_ostat_lbl">Called</span></div>
+                                <div class="o_cc_ostat"><span class="o_cc_ostat_num o_cc_ostat_pending" t-esc="o.pending"/><span class="o_cc_ostat_lbl">Pending</span></div>
+                                <div class="o_cc_ostat"><span class="o_cc_ostat_num o_cc_ostat_leads"   t-esc="o.total_leads"/><span class="o_cc_ostat_lbl">Leads</span></div>
+                                <div class="o_cc_ostat"><span class="o_cc_ostat_num o_cc_ostat_done"    t-esc="o.completed"/><span class="o_cc_ostat_lbl">Done</span></div>
+                                <div class="o_cc_ostat"><span class="o_cc_ostat_num o_cc_ostat_running" t-esc="o.running"/><span class="o_cc_ostat_lbl">Running</span></div>
+                            </div>
+                        </div>
+                    </t>
+                </div>
+            </div>
+        </t>
+
+        <!-- ══ CAMPAIGN LIST ══════════════════════════════════════════════ -->
+        <div class="o_cc_section">
+            <div class="o_cc_section_header">
+                <div class="o_cc_section_title"><i class="fa fa-list-alt"/> Campaigns</div>
+                <div class="o_cc_filter_tabs">
+                    <button class="o_cc_tab" t-att-class="{'o_cc_tab_active': state.filter === 'all'}"     t-on-click="onSetFilter('all')">All</button>
+                    <button class="o_cc_tab" t-att-class="{'o_cc_tab_active': state.filter === 'running'}" t-on-click="onSetFilter('running')">🟢 Running</button>
+                    <button class="o_cc_tab" t-att-class="{'o_cc_tab_active': state.filter === 'draft'}"   t-on-click="onSetFilter('draft')">📝 Draft</button>
+                    <button class="o_cc_tab" t-att-class="{'o_cc_tab_active': state.filter === 'done'}"    t-on-click="onSetFilter('done')">✅ Done</button>
+                    <button class="o_cc_tab" t-att-class="{'o_cc_tab_active': state.filter === 'mine'}"    t-on-click="onSetFilter('mine')">👤 Mine</button>
+                </div>
+            </div>
+
+            <t t-if="filteredCampaigns.length === 0">
+                <div class="o_cc_empty">
+                    <div class="o_cc_empty_icon">📋</div>
+                    <h3>No campaigns found</h3>
+                    <p>Generate campaigns to get started.</p>
+                    <button class="o_cc_generate_btn" t-if="isAdminRole" t-on-click="openGenerateModal">
+                        <i class="fa fa-magic"/> Generate Campaigns
+                    </button>
+                </div>
+            </t>
+            <t t-else="">
+                <div class="o_cc_grid">
+                    <t t-foreach="filteredCampaigns" t-as="c" t-key="c.id">
+                        <div class="o_cc_card" t-att-class="{'o_cc_card_running': c.state === 'running', 'o_cc_card_done': c.state === 'done'}">
+                            <div class="o_cc_card_header">
+                                <div class="o_cc_card_name" t-esc="c.name"/>
+                                <span class="o_cc_badge" t-att-class="stateClass(c.state)" t-esc="stateLabel(c.state)"/>
+                            </div>
+                            <div class="o_cc_card_meta">
+                                <i class="fa fa-user"/> <t t-esc="c.created_by"/>
+                                <span class="o_cc_card_date"><i class="fa fa-calendar"/> <t t-esc="c.date"/></span>
+                            </div>
+                            <div class="o_cc_progress_wrap">
+                                <div class="o_cc_progress_bar" t-attf-style="width:{{progressPct(c)}}%;background:{{c.state === 'done' ? '#22c55e' : '#2563eb'}}"/>
+                            </div>
+                            <div class="o_cc_progress_label">
+                                <span t-esc="c.called"/> / <span t-esc="c.total"/> called (<span t-esc="progressPct(c)"/>%)
+                            </div>
+                            <div class="o_cc_card_stats">
+                                <div class="o_cc_cs"><span class="o_cc_cs_num o_cc_cs_pending" t-esc="c.pending"/><span class="o_cc_cs_lbl">Pending</span></div>
+                                <div class="o_cc_cs"><span class="o_cc_cs_num o_cc_cs_called"  t-esc="c.called"/><span class="o_cc_cs_lbl">Called</span></div>
+                                <div class="o_cc_cs"><span class="o_cc_cs_num" t-esc="c.total"/><span class="o_cc_cs_lbl">Total</span></div>
+                            </div>
+                            <div class="o_cc_card_actions">
+                                <button class="o_cc_btn_primary"   t-on-click="() => this.openRunner(c.id, c.name)"  t-if="c.state === 'running'"><i class="fa fa-phone"/> Start Calling</button>
+                                <button class="o_cc_btn_start"     t-if="c.state === 'draft'" t-on-click="() => this.startSingle(c.id)"><i class="fa fa-play"/> Start</button>
+                                <button class="o_cc_btn_secondary" t-on-click="() => this.openForm(c.id)"><i class="fa fa-eye"/> View</button>
+                            </div>
+                        </div>
+                    </t>
+                </div>
+            </t>
+        </div>
+
+    </t><!-- /loading -->
+
+    <!-- ══ GENERATE MODAL ════════════════════════════════════════════════ -->
+    <t t-if="state.showGenerateModal">
+        <div class="o_cc_modal_overlay" t-on-click="closeGenerateModal">
+            <div class="o_cc_modal o_cc_gen_modal" t-on-click.stop="">
+
+                <div class="o_cc_modal_header">
+                    <h2><i class="fa fa-magic"/> Generate Campaigns</h2>
+                    <button class="o_cc_modal_close" t-on-click="closeGenerateModal"><i class="fa fa-times"/></button>
+                </div>
+
+                <!-- ── Result screen ── -->
+                <t t-if="state.generateResult">
+                    <div class="o_cc_modal_body">
+                        <div class="o_cc_gen_summary_row">
+                            <div class="o_cc_gen_summary_card o_cc_gen_created">
+                                <div class="o_cc_gen_summary_num" t-esc="state.generateResult.created"/>
+                                <div class="o_cc_gen_summary_lbl">✅ Created</div>
+                            </div>
+                            <div class="o_cc_gen_summary_card o_cc_gen_deleted">
+                                <div class="o_cc_gen_summary_num" t-esc="state.generateResult.deleted"/>
+                                <div class="o_cc_gen_summary_lbl">🗑️ Removed</div>
+                            </div>
+                            <div class="o_cc_gen_summary_card o_cc_gen_skipped">
+                                <div class="o_cc_gen_summary_num" t-esc="state.generateResult.skipped"/>
+                                <div class="o_cc_gen_summary_lbl">⏭ Skipped</div>
+                            </div>
+                            <div class="o_cc_gen_summary_card o_cc_gen_batch">
+                                <div class="o_cc_gen_summary_num" t-esc="state.generateResult.total_employees"/>
+                                <div class="o_cc_gen_summary_lbl">👥 People</div>
+                            </div>
+                        </div>
+                        <t t-if="state.generateResult.officers and state.generateResult.officers.length">
+                            <table class="o_cc_gen_table">
+                                <thead><tr><th>Name</th><th>Leads</th><th>Campaigns</th><th>Status</th></tr></thead>
+                                <tbody>
+                                    <t t-foreach="state.generateResult.officers" t-as="o" t-key="o.name">
+                                        <tr>
+                                            <td t-esc="o.name"/>
+                                            <td t-esc="o.leads"/>
+                                            <td t-esc="o.campaigns || 0"/>
+                                            <td t-esc="o.status"/>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </t>
+                    </div>
+                    <div class="o_cc_modal_footer">
+                        <button class="o_cc_btn_primary" t-on-click="closeGenerateModal"><i class="fa fa-check"/> Done</button>
+                        <button class="o_cc_btn_secondary" t-on-click="() => { this.state.generateResult = null; }">← Back</button>
+                    </div>
+                </t>
+
+                <!-- ── Config screen ── -->
+                <t t-else="">
+                    <div class="o_cc_modal_body">
+
+                        <!-- Step 1: Type -->
+                        <div class="o_cc_gen_step">
+                            <div class="o_cc_gen_step_title">1 · Campaign Type</div>
+                            <div class="o_cc_gen_type_grid">
+                                <label t-att-class="{'o_cc_type_card': true, 'o_cc_type_active': state.genType === 'combined'}">
+                                    <input type="radio" name="genType" value="combined"
+                                           t-att-checked="state.genType === 'combined'"
+                                           t-on-change="onGenTypeChange"/>
+                                    <span class="o_cc_type_icon">⚡</span>
+                                    <span class="o_cc_type_label">Daily Combined</span>
+                                    <span class="o_cc_type_desc">Today's new leads first, then older quality leads</span>
+                                </label>
+                                <label t-att-class="{'o_cc_type_card': true, 'o_cc_type_active': state.genType === 'all_leads'}">
+                                    <input type="radio" name="genType" value="all_leads"
+                                           t-att-checked="state.genType === 'all_leads'"
+                                           t-on-change="onGenTypeChange"/>
+                                    <span class="o_cc_type_icon">📋</span>
+                                    <span class="o_cc_type_label">All Active Leads</span>
+                                    <span class="o_cc_type_desc">Every active lead sorted by quality</span>
+                                </label>
+                                <label t-att-class="{'o_cc_type_card': true, 'o_cc_type_active': state.genType === 'quality'}">
+                                    <input type="radio" name="genType" value="quality"
+                                           t-att-checked="state.genType === 'quality'"
+                                           t-on-change="onGenTypeChange"/>
+                                    <span class="o_cc_type_icon">🏷️</span>
+                                    <span class="o_cc_type_label">By Lead Quality</span>
+                                    <span class="o_cc_type_desc">Pick specific qualities below</span>
+                                </label>
+                                <label t-att-class="{'o_cc_type_card': true, 'o_cc_type_active': state.genType === 'date'}">
+                                    <input type="radio" name="genType" value="date"
+                                           t-att-checked="state.genType === 'date'"
+                                           t-on-change="onGenTypeChange"/>
+                                    <span class="o_cc_type_icon">📅</span>
+                                    <span class="o_cc_type_label">By Date Added</span>
+                                    <span class="o_cc_type_desc">Leads added within a date range</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Member selection -->
+                        <div class="o_cc_gen_step" t-if="state.availableMembers.length > 1">
+                            <div class="o_cc_gen_step_title">
+                                2 · Select Members
+                                <span class="o_cc_gen_step_actions">
+                                    <a t-on-click="selectAllMembers">All</a> ·
+                                    <a t-on-click="clearAllMembers">None</a>
+                                </span>
+                            </div>
+                            <t t-if="state.membersLoading">
+                                <div class="o_cc_members_loading">
+                                    <i class="fa fa-spinner fa-spin"/> Loading members...
+                                </div>
+                            </t>
+                            <t t-else="">
+                                <div class="o_cc_member_grid">
+                                    <t t-foreach="state.availableMembers" t-as="m" t-key="m.id">
+                                        <button class="o_cc_member_chip"
+                                                t-att-class="{'o_cc_member_active': isMemberSelected(m.id), 'o_cc_member_tl': m.is_tl}"
+                                                t-on-click="() => this.toggleMember(m.id)">
+                                            <span class="o_cc_member_avatar">
+                                                <t t-esc="m.name[0].toUpperCase()"/>
+                                            </span>
+                                            <span class="o_cc_member_info">
+                                                <span class="o_cc_member_name" t-esc="m.name"/>
+                                                <span class="o_cc_member_meta">
+                                                    <t t-if="m.is_tl">👑 TL · </t>
+                                                    <t t-esc="m.lead_count"/> leads
+                                                </span>
+                                            </span>
+                                        </button>
+                                    </t>
+                                </div>
+                                <div class="o_cc_member_selected_count">
+                                    <t t-esc="state.selectedMemberIds.length"/> of
+                                    <t t-esc="state.availableMembers.length"/> selected
+                                </div>
+                            </t>
+                        </div>
+
+                        <!-- Step 3: Quality chips (shown for quality / combined) -->
+                        <div class="o_cc_gen_step"
+                             t-if="state.genType === 'quality' or state.genType === 'combined'">
+                            <div class="o_cc_gen_step_title">
+                                2 · Lead Qualities to Include
+                                <span class="o_cc_gen_step_actions">
+                                    <a t-on-click="selectAllQualities">All</a> ·
+                                    <a t-on-click="clearAllQualities">None</a>
+                                </span>
+                            </div>
+                            <div class="o_cc_quality_chips">
+                                <t t-foreach="qualityOptions" t-as="q" t-key="q.value">
+                                    <button class="o_cc_quality_chip"
+                                            t-att-class="{'o_cc_chip_active': isQualitySelected(q.value)}"
+                                            t-on-click="() => this.toggleQuality(q.value)"
+                                            t-esc="q.label"/>
+                                </t>
+                            </div>
+                        </div>
+
+                        <!-- Step: Source chips (always available — leave empty for all sources) -->
+                        <div class="o_cc_gen_step" t-if="state.availableSources.length">
+                            <div class="o_cc_gen_step_title">
+                                2 · Lead Source
+                                <span class="o_cc_gen_step_actions">
+                                    <a t-on-click="selectAllSources">All</a> ·
+                                    <a t-on-click="clearAllSources">Clear</a>
+                                </span>
+                            </div>
+                            <t t-if="state.sourcesLoading">
+                                <div class="o_cc_members_loading">
+                                    <i class="fa fa-spinner fa-spin"/> Loading sources...
+                                </div>
+                            </t>
+                            <t t-else="">
+                                <div class="o_cc_quality_chips">
+                                    <t t-foreach="state.availableSources" t-as="src" t-key="src.id">
+                                        <button class="o_cc_quality_chip"
+                                                t-att-class="{'o_cc_chip_active': isSourceSelected(src.id)}"
+                                                t-on-click="() => this.toggleSource(src.id)"
+                                                t-esc="src.name"/>
+                                    </t>
+                                </div>
+                                <div class="o_cc_member_selected_count" t-if="!state.genSourceIds.length">
+                                    No source selected — every source will be included
+                                </div>
+                                <div class="o_cc_member_selected_count" t-else="">
+                                    <t t-esc="state.genSourceIds.length"/> of
+                                    <t t-esc="state.availableSources.length"/> selected
+                                </div>
+                            </t>
+                        </div>
+
+                        <!-- Step 2 (date): Date range -->
+                        <div class="o_cc_gen_step" t-if="state.genType === 'date'">
+                            <div class="o_cc_gen_step_title">3 · Date Range (Lead Created)</div>
+                            <div class="o_cc_gen_date_row">
+                                <div>
+                                    <label>From</label>
+                                    <input type="date" class="o_cc_gen_date_input"
+                                           t-att-value="state.genDateFrom"
+                                           t-on-change="onGenDateFromChange"/>
+                                </div>
+                                <div>
+                                    <label>To</label>
+                                    <input type="date" class="o_cc_gen_date_input"
+                                           t-att-value="state.genDateTo"
+                                           t-on-change="onGenDateToChange"/>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Options -->
+                        <div class="o_cc_gen_step">
+                            <div class="o_cc_gen_step_title">4 · Options</div>
+                            <div class="o_cc_gen_options_grid">
+                                <div class="o_cc_gen_opt_field">
+                                    <label>Max Leads per Campaign</label>
+                                    <input type="number" class="o_cc_gen_input" min="1" max="500"
+                                           t-att-value="state.genMaxLeads"
+                                           t-on-input="onGenMaxLeadsInput"/>
+                                </div>
+                                <div class="o_cc_gen_opt_checks">
+                                    <label class="o_cc_gen_check_label">
+                                        <input type="checkbox"
+                                               t-att-checked="state.genIncludeTL"
+                                               t-on-change="onGenIncludeTLChange"/>
+                                        Include Team Leads
+                                    </label>
+                                    <label class="o_cc_gen_check_label o_cc_check_danger">
+                                        <input type="checkbox"
+                                               t-att-checked="state.genClearExisting"
+                                               t-on-change="onGenClearChange"/>
+                                        🗑️ Remove existing campaigns first
+                                    </label>
+                                    <label class="o_cc_gen_check_label">
+                                        <input type="checkbox"
+                                               t-att-checked="state.genAutoStart"
+                                               t-on-change="onGenAutoStartChange"/>
+                                        ▶ Start campaigns immediately
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Warning if clear is checked -->
+                        <t t-if="state.genClearExisting">
+                            <div class="o_cc_gen_warn">
+                                ⚠️ All today's non-completed campaigns will be deleted before generating new ones.
+                            </div>
+                        </t>
+
+                    </div>
+                    <div class="o_cc_modal_footer">
+                        <button class="o_cc_btn_secondary" t-on-click="closeGenerateModal">Cancel</button>
+                        <button class="o_cc_btn_generate"
+                                t-att-disabled="state.generating"
+                                t-on-click="confirmGenerate">
+                            <t t-if="state.generating"><i class="fa fa-spinner fa-spin"/> Generating...</t>
+                            <t t-else=""><i class="fa fa-magic"/> Generate Now</t>
+                        </button>
+                    </div>
+                </t>
+
+            </div>
+        </div>
+    </t>
+
+</div>
+</t>
+</templates>

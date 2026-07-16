@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="action_lead_stage_dashboard" model="ir.actions.client">
+        <field name="name">Lead Dashboard</field>
+        <field name="tag">custom_leads_19.lead_stage_dashboard</field>
+    </record>
+
+    <record id="view_leads_stage_dashboard_graph" model="ir.ui.view">
+        <field name="name">leads.logic.stage.dashboard.graph</field>
+        <field name="model">leads.logic</field>
+        <field name="arch" type="xml">
+            <graph string="Lead Stage Dashboard" type="bar">
+                <field name="lead_stage_category" type="row"/>
+                <field name="id" type="measure" string="Leads"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="view_leads_stage_dashboard_pivot" model="ir.ui.view">
+        <field name="name">leads.logic.stage.dashboard.pivot</field>
+        <field name="model">leads.logic</field>
+        <field name="arch" type="xml">
+            <pivot string="Lead Stage Analysis">
+                <field name="lead_stage_category" type="row"/>
+                <field name="leads_source" type="col"/>
+                <field name="id" type="measure" string="Leads"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="action_lead_stage_analysis" model="ir.actions.act_window">
+        <field name="name">Lead Stage Analysis</field>
+        <field name="res_model">leads.logic</field>
+        <field name="view_mode">graph,pivot,list</field>
+        <field name="domain">[('lead_stage_category', 'in', ['funnel', 'prospects', 'rnr_dnp', 'admission_done', 're_try', 'alumni', 'junk'])]</field>
+        <field name="context">{'group_by': 'lead_stage_category'}</field>
+    </record>
+
+    <menuitem id="menu_leads_dashboard" name="Dashboard" parent="menu_leads_root"
+              action="action_lead_stage_dashboard" sequence="0"
+              groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager,custom_leads_19.group_lead_team_lead,custom_leads_19.group_lead_users,custom_leads_19.group_lead_tele_callers,custom_leads_19.group_lead_digital_team,custom_leads_19.group_lead_digital_head,custom_leads_19.group_lead_branch_head,custom_leads_19.group_crash_head,custom_leads_19.group_crash_user"/>
+
+    <menuitem id="menu_leads_stage_analysis" name="Stage Analysis" parent="menu_leads_root"
+              action="action_lead_stage_analysis" sequence="2"
+              groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager,custom_leads_19.group_lead_team_lead"/>
+</odoo>

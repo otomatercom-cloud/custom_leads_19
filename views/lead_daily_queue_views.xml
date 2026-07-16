@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <!-- ─── Today's Queue action — officer sees only their own leads ─────── -->
+    <record id="action_my_daily_queue" model="ir.actions.act_window">
+        <field name="name">My Queue Today</field>
+        <field name="res_model">leads.logic</field>
+        <field name="view_mode">kanban,list</field>
+        <field name="domain">[
+            ('daily_queue_date', '=', context_today()),
+            ('lead_owner.user_id', '=', uid)
+        ]</field>
+        <field name="context">{
+            'default_order': 'daily_call_done asc, daily_call_sequence asc, daily_queue_priority asc, id asc'
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Your queue for today is empty.
+            </p>
+            <p>
+                Go to <b>Settings → Technical → Scheduled Actions</b> and run
+                <b>"Leads: Rebuild Daily Queue Each Morning"</b> manually to populate today's queue.
+            </p>
+        </field>
+    </record>
+
+    <!-- ─── All officer queues — manager/team lead view ─────────────────── -->
+    <record id="action_leads_today_queue" model="ir.actions.act_window">
+        <field name="name">All Officer Queues</field>
+        <field name="res_model">leads.logic</field>
+        <field name="view_mode">kanban,list</field>
+        <field name="domain">[('daily_queue_date', '=', context_today())]</field>
+        <field name="context">{
+            'default_order': 'daily_call_done asc, daily_call_sequence asc, id asc'
+        }</field>
+    </record>
+
+    <!-- ─── My Queue Today menu — visible to Admission Officers, Team Lead, Manager ── -->
+<!--    <menuitem id="menu_leads_my_queue"-->
+<!--              name="My Queue Today"-->
+<!--              parent="menu_leads_root"-->
+<!--              action="action_my_daily_queue"-->
+<!--              groups="custom_leads_19.group_lead_users,custom_leads_19.group_lead_team_lead,custom_leads_19.group_lead_manager,custom_leads_19.group_super_admin,custom_leads_19.group_lead_tele_callers"-->
+<!--              sequence="3"/>-->
+
+    <!-- ─── All Queues menu — visible to Team Lead and Manager only ───────── -->
+<!--    <menuitem id="menu_leads_all_queues"-->
+<!--              name="All Officer Queues"-->
+<!--              parent="menu_leads_root"-->
+<!--              action="action_leads_today_queue"-->
+<!--              groups="custom_leads_19.group_lead_team_lead,custom_leads_19.group_lead_manager,custom_leads_19.group_super_admin"-->
+<!--              sequence="4"/>-->
+
+
+    <!-- ─── Queue Dashboard action (Team Lead / Manager) ─────────────────── -->
+    <record id="action_queue_dashboard" model="ir.actions.client">
+        <field name="name">Queue Dashboard</field>
+        <field name="tag">custom_leads_19.queue_dashboard</field>
+    </record>
+
+    <!-- ─── Queue Dashboard menu ─────────────────────────────────────────── -->
+<!--    <menuitem id="menu_leads_queue_dashboard"-->
+<!--              name="Queue Dashboard"-->
+<!--              parent="menu_leads_root"-->
+<!--              action="action_queue_dashboard"-->
+<!--              groups="custom_leads_19.group_lead_team_lead,custom_leads_19.group_lead_manager,custom_leads_19.group_super_admin"-->
+<!--              sequence="6"/>-->
+
+</odoo>

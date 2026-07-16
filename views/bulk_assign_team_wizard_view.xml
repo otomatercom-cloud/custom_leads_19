@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <!-- ─── Bulk Assign to Team Wizard – Form ────────────────────────────── -->
+    <record id="view_bulk_assign_team_wizard_form" model="ir.ui.view">
+        <field name="name">bulk.assign.team.wizard.form</field>
+        <field name="model">bulk.assign.team.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Bulk Assign to Team">
+                <sheet>
+                    <div class="alert alert-info mb-3" role="alert">
+                        <field name="lead_count" nolabel="1" readonly="1" class="fw-bold"/>
+                        lead(s) selected for assignment.
+                    </div>
+
+                    <group>
+                        <group string="Team">
+                            <field name="team_id" options="{'no_create': True}"/>
+                            <field name="include_team_leads"/>
+                        </group>
+                        <group string="Assignment Mode">
+                            <field name="assign_mode" widget="radio"/>
+                            <field name="employee_id"
+                                   options="{'no_create': True}"
+                                   invisible="assign_mode != 'specific_member'"
+                                   required="assign_mode == 'specific_member'"/>
+                        </group>
+                    </group>
+
+                    <group string="Leads to be Assigned">
+                        <field name="lead_ids" nolabel="1" readonly="1" widget="many2many_tags"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_assign"
+                            type="object"
+                            string="Assign"
+                            class="btn-primary"
+                            icon="fa-users"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- ─── Button on leads list view toolbar (Action menu) ─────────────── -->
+    <record id="action_server_bulk_assign_team" model="ir.actions.server">
+        <field name="name">Bulk Assign to Team</field>
+        <field name="model_id" ref="custom_leads_19.model_leads_logic"/>
+        <field name="binding_model_id" ref="custom_leads_19.model_leads_logic"/>
+        <field name="binding_view_types">list,kanban</field>
+        <field name="state">code</field>
+        <field name="code">
+action = {
+    'type': 'ir.actions.act_window',
+    'name': 'Bulk Assign to Team',
+    'res_model': 'bulk.assign.team.wizard',
+    'view_mode': 'form',
+    'target': 'new',
+    'context': {'active_ids': records.ids, 'active_model': 'leads.logic'},
+}
+        </field>
+    </record>
+
+</odoo>

@@ -1,0 +1,613 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- ─── List View ─────────────────────────────────────────────────── -->
+    <record id="view_leads_logic_tree" model="ir.ui.view">
+        <field name="name">leads.logic.list</field>
+        <field name="model">leads.logic</field>
+        <field name="arch" type="xml">
+            <list string="Leads" default_order="id desc"
+                  decoration-danger="lead_quality in ['not_responding','not_reachable','bad_lead','wrong_number','not_enquiry']"
+                  decoration-success="lead_quality in ['admission','waiting_for_admission']"
+                  decoration-warning="lead_quality in ['hot','warm']">
+                <field name="reference_no" optional="show"/>
+                <field name="name"/>
+                <field name="masked_phone" string="Mobile"/>
+                <field name="leads_source"/>
+                <field name="lead_quality"/>
+                <field name="attendance_percentage" string="Attend %" optional="show"/>
+                <field name="lead_stage_category" optional="show"/>
+                <field name="lead_owner"/>
+                <field name="team_id" optional="show" string="Team"/>
+                <field name="lead_creator_id" optional="show"/>
+                <field name="next_follow_up_date" optional="show"/>
+                <field name="date_of_adding" optional="show"/>
+                <field name="last_update_date" optional="show"/>
+                <field name="company_id" groups="base.group_multi_company" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ─── Form View ─────────────────────────────────────────────────── -->
+    <record id="view_leads_logic_form" model="ir.ui.view">
+        <field name="name">leads.logic.form</field>
+        <field name="model">leads.logic</field>
+        <field name="arch" type="xml">
+            <form string="Lead" class="o_leads_phone_form">
+                <!-- Status Bar -->
+                <header class="o_lead_form_header">
+                    <button name="act_attempt_to_connect" string="🎯 First Attempt" type="object"
+                            class="btn-primary" invisible="state != 'new'"/>
+                    <button name="act_connected" string="✅ Connected" type="object"
+                            class="btn-success" invisible="state == 'qualified'"/>
+                    <button name="act_not_connected" string="📵 Not Connected" type="object"
+                            class="btn-warning" invisible="state == 'qualified'"/>
+                    <button name="action_voxbay_call" string="📞 Voxbay Call" type="object"/>
+                    <button name="action_bonvoice_call" string="📞 BV Call" type="object"/>
+                    <button name="action_open_funnel_wizard" string="🔵 Funnel" type="object"/>
+                    <button name="action_open_confirm_wizard" string="👁 Open Lead" type="object"/>
+                    <button name="action_add_followup" string="⏰ Follow Up" type="object"/>
+                    <button name="action_add_call_log" string="📋 Log Call" type="object"/>
+                    <button name="act_lost_lead" string="❌ Lost" type="object"
+                            class="btn-danger" invisible="state == 'lost'"/>
+                    <button name="action_open_convert_wizard" string="Convert" type="object"
+                            class="btn-primary"
+                            invisible="lead_quality in ['admission','waiting_for_admission'] or student_profile_created"/>
+                    <button name="action_open_admission_wizard" string="Admission" type="object"
+                            class="btn-success"
+                            invisible="student_profile_created or lead_quality not in ['waiting_for_admission','hot','warm']"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="new,in_progress,qualified,lost"/>
+                </header>
+
+                <sheet>
+                    <!-- Top action buttons -->
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_student" type="object" class="oe_stat_button" icon="fa-graduation-cap"
+                                invisible="not student_id">
+                            <field name="student_id" widget="statinfo" string="Student"/>
+                        </button>
+                        <button name="whatsapp_click_button" type="object" class="oe_stat_button" icon="fa-whatsapp">
+                            <span>WhatsApp</span>
+                        </button>
+                        <button name="action_open_webinar_wizard" type="object" class="oe_stat_button" icon="fa-video-camera">
+                            <span>Webinar</span>
+                        </button>
+                        <button name="action_toggle_phone" type="object" class="oe_stat_button" icon="fa-eye">
+                            <span>Show Phone</span>
+                        </button>
+                        <button name="action_toggle_marketing_info" type="object" class="oe_stat_button" icon="fa-bar-chart">
+                            <field name="marketing_button_label"/>
+                        </button>
+                    </div>
+
+                    <div class="oe_title">
+                        <h1><field name="name" placeholder="Lead Name"/></h1>
+                    </div>
+
+                    <!-- Date Info Strip -->
+                    <div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:16px; padding:10px 14px; background:#f0f4ff; border-radius:8px; border:1px solid #d0daf5;">
+                        <div style="display:flex; align-items:center; gap:6px; background:#fff; border:1px solid #c5d0ee; border-radius:6px; padding:5px 12px;">
+                            <i class="fa fa-calendar-plus-o" style="color:#7c8ec7; font-size:13px;"/>
+                            <span style="font-size:11px; color:#888; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Added</span>
+                            <span style="font-size:13px; color:#333; font-weight:700; margin-left:2px;">
+                                <field name="date_of_adding" readonly="1" nolabel="1"/>
+                            </span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:6px; background:#fff; border:1px solid #c5d0ee; border-radius:6px; padding:5px 12px;">
+                            <i class="fa fa-refresh" style="color:#7c8ec7; font-size:13px;"/>
+                            <span style="font-size:11px; color:#888; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Last Updated</span>
+                            <span style="font-size:13px; color:#333; font-weight:700; margin-left:2px;">
+                                <field name="last_update_date" readonly="1" nolabel="1"/>
+                            </span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:6px; background:#fff; border:1px solid #c5d0ee; border-radius:6px; padding:5px 12px;">
+                            <i class="fa fa-user-plus" style="color:#7c8ec7; font-size:13px;"/>
+                            <span style="font-size:11px; color:#888; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Assigned</span>
+                            <span style="font-size:13px; color:#333; font-weight:700; margin-left:2px;">
+                                <field name="assigned_date" readonly="1" nolabel="1"/>
+                            </span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:6px; background:#fff; border:1px solid #ffd0a0; border-radius:6px; padding:5px 12px;">
+                            <i class="fa fa-bell" style="color:#f0a030; font-size:13px;"/>
+                            <span style="font-size:11px; color:#888; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Next Follow Up</span>
+                            <span style="font-size:13px; color:#e07800; font-weight:700; margin-left:2px;">
+                                <field name="next_follow_up_date" readonly="1" nolabel="1"/>
+                            </span>
+                        </div>
+                    </div>
+
+                    <group>
+                        <group string="Basic Information">
+                            <field name="reference_no"/>
+                            <field name="leads_source"/>
+                            <field name="phone_number"/>
+                            <field name="masked_phone" string="Masked Phone" readonly="1"/>
+                            <field name="phone_number_second"/>
+                            <field name="parent_number"/>
+                            <field name="email_address"/>
+                            <field name="lead_quality" readonly="attendance_percentage &gt; 0"/>
+                            <field name="attendance_percentage" string="Attendance %"/>
+                            <field name="lead_stage_category" readonly="1"/>
+                        </group>
+                        <group string="Assignment">
+                            <field name="lead_creator_id" readonly="1"/>
+                            <field name="lead_owner"/>
+                            <field name="team_id" readonly="1" string="Team"/>
+                            <field name="tele_caller_id"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+
+                            <field name="admission_status"/>
+                            <field name="admission_date" invisible="not admission_status"/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <group string="Lead Details">
+                            <field name="course_inter" widget="many2many_tags"/>
+                            <field name="academic_year_of_course_attend"/>
+                            <field name="academic_year"/>
+<!--                            <field name="course_type"/>-->
+<!--                            <field name="lead_qualification"/>-->
+<!--                            <field name="mode_of_study"/>-->
+                            <field name="district"/>
+                            <field name="country"/>
+                            <field name="place"/>
+                            <field name="college_name"/>
+                            <field name="stream"/>
+                            <field name="batch_preference"/>
+                        </group>
+                        <group string="Source / Campaign">
+                            <field name="digital_lead"/>
+                            <field name="digital_lead_source" invisible="not digital_lead"/>
+                            <field name="digital_head_id" invisible="not digital_lead"/>
+                            <field name="platform"/>
+                            <field name="incoming_source_checking"/>
+                            <field name="incoming_source" invisible="not incoming_source_checking"/>
+                            <field name="campaign"/>
+                            <field name="transitions"/>
+                            <field name="crash_lead"/>
+                        </group>
+                    </group>
+
+                    <group string="Referral">
+                        <group>
+                            <field name="referred_by"/>
+                            <field name="referred_by_id"/>
+                            <field name="referred_by_name"/>
+                            <field name="referred_by_number"/>
+                            <field name="referred_teacher"/>
+                            <field name="lead_referral_staff_id"/>
+                        </group>
+                        <group>
+                            <field name="expected_joining_date"/>
+                            <field name="closing_date"/>
+                            <field name="zoom_schedule_dt"/>
+                            <field name="walkin_schedule_dt"/>
+                            <field name="probability"/>
+                        </group>
+                    </group>
+
+
+
+                    <!-- Admission Info -->
+                    <group string="Admission Details">
+                        <group>
+                            <field name="admission_batch" string="Batch"/>
+                            <field name="admission_branch" string="Branch"/>
+                            <field name="admission_course" string="Course"/>
+                            <field name="student_name"/>
+                            <field name="student_id" readonly="1"/>
+                            <field name="student_profile_created"/>
+                        </group>
+                        <group>
+                            <field name="receipt_no"/>
+                            <field name="admission_amount"/>
+                            <field name="date_of_receipt"/>
+                            <field name="admission_fee_paid"/>
+                        </group>
+                    </group>
+
+                    <!-- Sales Progress -->
+                    <div invisible="hide_marketing_stages" class="o_field_widget" style="width:100%;overflow-x:auto;">
+                        <div style="font-weight:700;font-size:13px;color:#555;margin-bottom:4px;">SALES GUIDE</div>
+                        <field name="progress_html" widget="html" readonly="1" nolabel="1"/>
+                    </div>
+
+                    <!-- Touch Points -->
+                    <notebook>
+
+                        <!-- ══ Response ══════════════════════════════════════ -->
+                        <page string="Response">
+                            <group>
+                                <field name="call_response" nolabel="1" placeholder="Type response here..." style="min-height:80px;"/>
+                                <field name="not_response_note" invisible="lead_quality not in ['not_responding','not_reachable']"/>
+                                <field name="lost_reason" invisible="state != 'lost'"/>
+                            </group>
+                        </page>
+
+                        <!-- ══ Touch Points ══════════════════════════════════════ -->
+                        <page string="Touch Points">
+                            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;padding:8px 0;">
+
+                                <div class="track-stage-card">
+                                    <div class="track-stage-header"><span class="stage-icon">📞</span> Stage 1</div>
+                                    <div class="track-item-row"><field name="first_call" nolabel="1"/><span style="flex:1;font-size:13px;color:#374151;">First Call</span><field name="first_call_dt" nolabel="1" readonly="1"/></div>
+                                    <div class="track-item-row"><field name="whatsapp_intro" nolabel="1"/><span style="flex:1;font-size:13px;color:#374151;">WhatsApp Intro</span><field name="whatsapp_date" nolabel="1" readonly="1"/></div>
+                                    <div class="track-item-row"><field name="webinar_invite_sent" nolabel="1"/><span style="flex:1;font-size:13px;color:#374151;">Webinar Invite</span><field name="webinar_invite_sent_on" nolabel="1" readonly="1"/></div>
+                                </div>
+
+                                <div class="track-stage-card">
+                                    <div class="track-stage-header"><span class="stage-icon">📚</span> Stage 2 – 4</div>
+                                    <div class="track-item-row"><field name="second_followup" nolabel="1"/><span style="flex:1;font-size:13px;color:#374151;">2nd Follow-up</span><field name="second_followup_dt" nolabel="1" readonly="1"/></div>
+                                    <div class="track-item-row"><field name="results_highlights" nolabel="1"/><span style="flex:1;font-size:13px;color:#374151;">Results Highlights</span></div>
+                                    <div class="track-item-row"><field name="testimonials" nolabel="1"/><span style="flex:1;font-size:13px;color:#374151;">Testimonials</span><field name="testimonials_dt" nolabel="1" readonly="1"/></div>
+                                    <div class="track-item-row"><field name="course_wise_webinar" nolabel="1"/><span style="flex:1;font-size:13px;color:#374151;">Course Webinar</span><field name="course_wise_webinar_dt" nolabel="1" readonly="1"/></div>
+                                </div>
+
+                                <div class="track-stage-card">
+                                    <div class="track-stage-header"><span class="stage-icon">🏆</span> Stage 5 – 7</div>
+                                    <div class="track-item-row"><field name="third_follow_up" nolabel="1"/><span style="flex:1;font-size:13px;color:#374151;">3rd Follow-up</span><field name="third_follow_up_dt" nolabel="1" readonly="1"/></div>
+                                    <div class="track-item-row"><field name="fourth_follow_up" nolabel="1"/><span style="flex:1;font-size:13px;color:#374151;">4th Follow-up</span><field name="fourth_follow_up_dt" nolabel="1" readonly="1"/></div>
+                                    <div class="track-item-row"><field name="placements" nolabel="1"/><span style="flex:1;font-size:13px;color:#374151;">Placements</span></div>
+                                    <div class="track-item-row"><field name="closing" nolabel="1"/><span style="flex:1;font-size:13px;color:#374151;">Closing</span><field name="closing_dt" nolabel="1" readonly="1"/></div>
+                                </div>
+
+                            </div>
+                        </page>
+
+                        <page string="Call History">
+                            <field name="call_log_ids">
+                                <list>
+                                    <field name="call_time"/>
+                                    <field name="user_id"/>
+                                    <field name="call_type"/>
+                                    <field name="call_status"/>
+                                    <field name="duration"/>
+                                    <field name="remarks"/>
+                                    <field name="has_recording" column_invisible="1"/>
+                                    <button name="action_upload_recording"
+                                            type="object"
+                                            string="📎 Upload Recording"
+                                            class="btn-sm btn-secondary"
+                                            invisible="has_recording"/>
+                                    <button name="action_upload_recording"
+                                            type="object"
+                                            string="🔄 Replace Recording"
+                                            class="btn-sm btn-secondary"
+                                            invisible="not has_recording"/>
+                                </list>
+                                <form string="Call Log">
+                                    <sheet>
+                                        <group>
+                                            <group>
+                                                <field name="call_time"/>
+                                                <field name="user_id"/>
+                                                <field name="call_type"/>
+                                                <field name="duration"/>
+                                            </group>
+                                            <group>
+                                                <field name="call_status"/>
+                                                <field name="caller_number"/>
+                                                <field name="recording_url" widget="url"/>
+                                            </group>
+                                        </group>
+                                        <group string="Remarks">
+                                            <field name="remarks" nolabel="1"/>
+                                        </group>
+
+                                        <!-- Recording player -->
+                                        <div invisible="not has_recording"
+                                             style="margin-top:12px;padding:14px 16px;
+                                                    background:#f0fdf4;border:1px solid #86efac;
+                                                    border-radius:12px;">
+                                            <div style="font-size:12px;color:#16a34a;
+                                                        font-weight:700;margin-bottom:8px;">
+                                                🎙️ Call Recording
+                                            </div>
+                                            <field name="recording"
+                                                   filename="recording_filename"
+                                                   widget="binary"
+                                                   string="Recording File"/>
+                                            <div style="margin-top:8px;font-size:11px;
+                                                        color:#64748b;">
+                                                File: <field name="recording_filename" readonly="1" nolabel="1"/>
+                                            </div>
+                                        </div>
+
+                                        <!-- Upload if no recording -->
+                                        <div invisible="has_recording"
+                                             style="margin-top:12px;padding:14px 16px;
+                                                    background:#fafafa;border:1px dashed #cbd5e1;
+                                                    border-radius:12px;text-align:center;">
+                                            <div style="color:#94a3b8;font-size:13px;
+                                                        margin-bottom:10px;">
+                                                No recording attached yet
+                                            </div>
+                                            <button name="action_upload_recording"
+                                                    type="object"
+                                                    string="📎 Upload Recording"
+                                                    class="btn-primary"/>
+                                        </div>
+
+                                        <field name="has_recording" invisible="1"/>
+                                    </sheet>
+                                </form>
+                            </field>
+                        </page>
+
+                        <page string="Follow-Ups">
+                            <field name="followup_ids">
+                                <list>
+                                    <field name="next_followup_date"/>
+                                    <field name="user_id"/>
+                                    <field name="remarks"/>
+                                    <field name="status"/>
+                                    <button name="action_mark_done" string="Mark Done" type="object"
+                                            invisible="status == 'done'" class="btn-sm btn-success"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <page string="Responses">
+                            <field name="response_ids">
+                                <list editable="bottom">
+                                    <field name="response_time" readonly="1"/>
+                                    <field name="user_id" readonly="1"/>
+                                    <field name="comment"/>
+                                    <field name="is_editable" invisible="1"/>
+                                    <button name="action_enable_edit" string="Edit" type="object"
+                                            invisible="is_editable" class="btn-sm"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <page string="History">
+                            <group string="Assignment History">
+                                <field name="assignment_history_ids" readonly="1">
+                                    <list>
+                                        <field name="assigned_date"/>
+                                        <field name="owner_id"/>
+                                        <field name="assigned_by"/>
+                                    </list>
+                                </field>
+                            </group>
+                            <group string="Quality History">
+                                <field name="quality_history_ids" readonly="1">
+                                    <list>
+                                        <field name="change_date"/>
+                                        <field name="lead_quality"/>
+                                        <field name="user_id"/>
+                                    </list>
+                                </field>
+                            </group>
+                            <group string="Open History">
+                                <field name="open_history_ids" readonly="1">
+                                    <list>
+                                        <field name="opened_on"/>
+                                        <field name="user_id"/>
+                                        <field name="ip_address"/>
+                                        <field name="remarks"/>
+                                    </list>
+                                </field>
+                            </group>
+                        </page>
+
+                        <page string="Call Responses">
+                            <field name="call_responses" widget="many2many_tags"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ─── Kanban View ────────────────────────────────────────────────── -->
+    <record id="view_leads_logic_kanban" model="ir.ui.view">
+        <field name="name">leads.logic.kanban</field>
+        <field name="model">leads.logic</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="lead_quality"
+                    default_order="daily_call_done asc, daily_call_sequence asc, id asc"
+                    class="o_kanban_small_column o_leads_professional_kanban">
+                <field name="name"/>
+                <field name="reference_no"/>
+                <field name="phone_number"/>
+                <field name="masked_phone"/>
+                <field name="lead_quality"/>
+                <field name="lead_stage_category"/>
+                <field name="lead_owner"/>
+                <field name="leads_source"/>
+                <field name="next_follow_up_date"/>
+                <field name="date_of_adding"/>
+                <field name="truncated_call_response"/>
+                <field name="admission_status"/>
+                <field name="daily_call_done"/>
+                <field name="daily_call_sequence"/>
+                <field name="daily_queue_date"/>
+                <field name="daily_call_count"/>
+                <templates>
+                    <t t-name="card">
+                        <div t-attf-class="oe_kanban_global_click o_lead_kanban_card o_lead_kanban_stage_#{record.lead_stage_category.raw_value || 'none'}">
+                            <div class="o_lead_kanban_accent"/>
+
+                            <!-- Card Header -->
+                            <div class="o_lead_kanban_header">
+                                <div class="o_lead_kanban_title_block">
+                                    <div class="o_lead_kanban_ref">
+                                        <field name="reference_no"/>
+                                    </div>
+                                    <strong class="o_lead_kanban_name">
+                                        <field name="name"/>
+                                    </strong>
+                                </div>
+                                <span class="o_lead_kanban_stage">
+                                    <field name="lead_stage_category"/>
+                                </span>
+                            </div>
+
+                            <!-- Quality badge -->
+                            <div class="o_lead_kanban_quality">
+                                <i class="fa fa-tag"/>
+                                <field name="lead_quality"/>
+                            </div>
+
+                            <!-- Details -->
+                            <div class="o_lead_kanban_details">
+                                <div class="o_lead_kanban_detail">
+                                    <i class="fa fa-phone"/>
+                                    <field name="masked_phone"/>
+                                </div>
+                                <div class="o_lead_kanban_detail">
+                                    <i class="fa fa-bullhorn"/>
+                                    <field name="leads_source"/>
+                                </div>
+                                <div class="o_lead_kanban_detail">
+                                    <i class="fa fa-user"/>
+                                    <field name="lead_owner"/>
+                                </div>
+                                <div class="o_lead_kanban_detail" t-if="record.next_follow_up_date.raw_value">
+                                    <i class="fa fa-calendar"/>
+                                    <field name="next_follow_up_date"/>
+                                </div>
+                                <div class="o_lead_kanban_detail o_lead_last_response"
+                                     t-if="record.truncated_call_response.raw_value">
+                                    <i class="fa fa-comment-o"/>
+                                    <span t-esc="record.truncated_call_response.raw_value"/>
+                                </div>
+                            </div>
+
+                            <!-- ─── Quick Action Buttons ─────────────────── -->
+                            <div class="o_lead_kanban_quick_actions"
+                                 onclick="event.stopPropagation();">
+                                <button class="o_lead_quick_btn o_lead_quick_response"
+                                        title="Log Response"
+                                        type="object" name="action_kanban_quick_response">
+                                    <i class="fa fa-comment"/> Response
+                                </button>
+                                <button class="o_lead_quick_btn o_lead_quick_quality"
+                                        title="Change Lead Quality"
+                                        type="object" name="action_kanban_quick_quality">
+                                    <i class="fa fa-tag"/> Quality
+                                </button>
+                                <button class="o_lead_quick_btn o_lead_quick_followup"
+                                        title="Schedule Follow Up"
+                                        type="object" name="action_kanban_quick_followup">
+                                    <i class="fa fa-clock-o"/> Follow Up
+                                </button>
+                            </div>
+
+                            <!-- Daily queue status badge -->
+                            <div t-if="record.daily_queue_date.raw_value"
+                                 class="o_lead_kanban_queue_status"
+                                 onclick="event.stopPropagation();">
+                                <span t-if="record.daily_call_done.raw_value == true"
+                                      class="o_lead_queue_badge o_lead_queue_done">
+                                    <i class="fa fa-check-circle"/> Called today
+                                </span>
+                                <span t-if="record.daily_call_done.raw_value == false"
+                                      class="o_lead_queue_badge o_lead_queue_pending">
+                                    <i class="fa fa-circle-o"/> In queue
+                                </span>
+                            </div>
+
+                            <!-- Footer -->
+                            <div class="o_lead_kanban_footer">
+                                <span>
+                                    <i class="fa fa-clock-o"/>
+                                    <field name="date_of_adding"/>
+                                </span>
+                                <div class="o_lead_kanban_footer_actions">
+                                    <button class="o_lead_kanban_call"
+                                            onclick="event.stopPropagation();"
+                                            type="object" name="action_kanban_start_call"
+                                            t-if="record.phone_number.raw_value">
+                                        <i class="fa fa-phone"/> Call
+                                    </button>
+                                    <!-- Mark called and rotate (queue mode) -->
+                                    <button class="o_lead_kanban_mark_called"
+                                            onclick="event.stopPropagation();"
+                                            type="object" name="action_mark_called_rotate"
+                                            t-if="record.daily_queue_date.raw_value &amp;&amp; record.daily_call_done.raw_value == false"
+                                            title="Mark as called and move to end of queue">
+                                        <i class="fa fa-check"/> Done
+                                    </button>
+                                    <!-- Skip in queue -->
+                                    <button class="o_lead_kanban_skip"
+                                            onclick="event.stopPropagation();"
+                                            type="object" name="action_queue_skip"
+                                            t-if="record.daily_queue_date.raw_value &amp;&amp; record.daily_call_done.raw_value == false"
+                                            title="Skip — move to end of queue">
+                                        <i class="fa fa-forward"/> Skip
+                                    </button>
+                                    <span class="o_lead_kanban_open">
+                                        Open <i class="fa fa-chevron-right"/>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- ─── Search View ────────────────────────────────────────────────── -->
+    <record id="view_leads_logic_search" model="ir.ui.view">
+        <field name="name">leads.logic.search</field>
+        <field name="model">leads.logic</field>
+        <field name="arch" type="xml">
+            <search string="Leads">
+                <field name="name"/>
+                <field name="phone_number"/>
+                <field name="leads_source"/>
+                <field name="lead_owner"/>
+                <field name="team_id" string="Team"/>
+                <field name="lead_creator_id"/>
+                <field name="tele_caller_id"/>
+                <filter string="My Created Leads" name="filter_my_created_leads"
+                        domain="[('lead_creator_id', '=', uid)]"/>
+                <!-- ── Daily Queue Filters ──────────────────────────────── -->
+                <filter string="Today's Queue" name="filter_today_queue"
+                        domain="[('daily_queue_date', '=', context_today())]"/>
+                <filter string="Uncalled First" name="uncalled_first"
+                        domain="[('daily_call_done', '=', False), ('daily_queue_date', '=', context_today())]"/>
+                <filter string="Called Today" name="filter_called_today"
+                        domain="[('daily_call_done', '=', True), ('daily_queue_date', '=', context_today())]"/>
+                <filter string="My Queue Today" name="filter_my_queue_today"
+                        domain="[('daily_queue_date', '=', context_today())]"/>
+                <separator/>
+                <group>
+                    <filter string="Team" name="group_team"
+                            context="{'group_by': 'team_id'}"/>
+                    <filter string="Lead Creator" name="group_lead_creator"
+                            context="{'group_by': 'lead_creator_id'}"/>
+                    <filter string="Lead Quality" name="group_lead_quality"
+                            context="{'group_by': 'lead_quality'}"/>
+                    <filter string="Queue Status" name="group_queue_status"
+                            context="{'group_by': 'daily_call_done'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ─── Action ────────────────────────────────────────────────────── -->
+    <record id="action_leads_logic" model="ir.actions.act_window">
+        <field name="name">Leads</field>
+        <field name="res_model">leads.logic</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="search_view_id" ref="view_leads_logic_search"/>
+        <field name="context">{'search_default_filter_my': 0}</field>
+    </record>
+
+    <!-- ─── Menu ──────────────────────────────────────────────────────── -->
+    <menuitem id="menu_leads_root" name="Leads Management" sequence="10" web_icon="custom_leads_19,static/description/icon.png" groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager,custom_leads_19.group_lead_team_lead,custom_leads_19.group_lead_users,custom_leads_19.group_lead_tele_callers,custom_leads_19.group_lead_digital_team,custom_leads_19.group_lead_digital_head,custom_leads_19.group_lead_branch_head,custom_leads_19.group_crash_head,custom_leads_19.group_crash_user"/>
+
+    <menuitem id="menu_leads_leads" name="Leads" parent="menu_leads_root" action="action_leads_logic" sequence="1" groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager,custom_leads_19.group_lead_team_lead,custom_leads_19.group_lead_users,custom_leads_19.group_lead_tele_callers,custom_leads_19.group_lead_digital_team,custom_leads_19.group_lead_digital_head,custom_leads_19.group_lead_branch_head,custom_leads_19.group_crash_head,custom_leads_19.group_crash_user"/>
+
+    <menuitem id="menu_leads_config" name="Configuration" parent="menu_leads_root" sequence="50" groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager"/>
+
+    <menuitem id="menu_leads_source" name="Lead Sources" parent="menu_leads_config" action="action_leads_source" sequence="1" groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager"/>
+
+    <menuitem id="menu_course_interested" name="Courses" parent="menu_leads_config" action="action_course_interested" sequence="2" groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager"/>
+</odoo>

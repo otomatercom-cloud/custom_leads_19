@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="custom_leads_19.ReattemptDashboard">
+        <div class="o_reattempt_dashboard">
+
+            <!-- ── Header ─────────────────────────────────────────── -->
+            <div class="o_reattempt_header">
+                <div class="o_reattempt_header_left">
+                    <div class="o_reattempt_header_icon">
+                        <i class="fa fa-refresh"/>
+                    </div>
+                    <div>
+                        <h1 class="o_reattempt_title">Re-Attempt Management</h1>
+                        <p class="o_reattempt_subtitle">Track and manage all lead re-attempt requests</p>
+                    </div>
+                </div>
+                <div class="o_reattempt_header_right">
+                    <button class="o_reattempt_btn_all" t-on-click="openAll">
+                        <i class="fa fa-list-ul"/> View All Requests
+                    </button>
+                </div>
+            </div>
+
+            <!-- ── Loading ────────────────────────────────────────── -->
+            <t t-if="state.loading">
+                <div class="o_reattempt_loading">
+                    <div class="o_reattempt_spinner">
+                        <i class="fa fa-circle-o-notch fa-spin fa-2x"/>
+                    </div>
+                    <span>Loading dashboard data…</span>
+                </div>
+            </t>
+
+            <!-- ── Error ──────────────────────────────────────────── -->
+            <t t-elif="state.error">
+                <div class="o_reattempt_error">
+                    <i class="fa fa-exclamation-triangle fa-2x"/>
+                    <span>Failed to load dashboard. Please refresh the page.</span>
+                </div>
+            </t>
+
+            <!-- ── Main Content ───────────────────────────────────── -->
+            <t t-else="">
+
+                <!-- KPI Cards Row -->
+                <div class="o_reattempt_kpi_row">
+
+                    <!-- Pending Review -->
+                    <div class="o_reattempt_kpi o_kpi_pending" t-on-click="openPending">
+                        <div class="o_kpi_inner">
+                            <div class="o_kpi_icon_wrap o_kpi_icon_pending">
+                                <i class="fa fa-clock-o"/>
+                            </div>
+                            <div class="o_kpi_data">
+                                <div class="o_kpi_count" t-esc="state.pending"/>
+                                <div class="o_kpi_label">Pending Review</div>
+                            </div>
+                        </div>
+                        <div class="o_kpi_footer">
+                            <span>Click to view <i class="fa fa-arrow-right"/></span>
+                        </div>
+                    </div>
+
+                    <!-- Approved -->
+                    <div class="o_reattempt_kpi o_kpi_approved" t-on-click="openApproved">
+                        <div class="o_kpi_inner">
+                            <div class="o_kpi_icon_wrap o_kpi_icon_approved">
+                                <i class="fa fa-check-circle"/>
+                            </div>
+                            <div class="o_kpi_data">
+                                <div class="o_kpi_count" t-esc="state.approved"/>
+                                <div class="o_kpi_label">Approved</div>
+                            </div>
+                        </div>
+                        <div class="o_kpi_footer">
+                            <span>Click to view <i class="fa fa-arrow-right"/></span>
+                        </div>
+                    </div>
+
+                    <!-- Assigned -->
+                    <div class="o_reattempt_kpi o_kpi_assigned" t-on-click="openAssigned">
+                        <div class="o_kpi_inner">
+                            <div class="o_kpi_icon_wrap o_kpi_icon_assigned">
+                                <i class="fa fa-user-plus"/>
+                            </div>
+                            <div class="o_kpi_data">
+                                <div class="o_kpi_count" t-esc="state.assigned"/>
+                                <div class="o_kpi_label">Assigned</div>
+                            </div>
+                        </div>
+                        <div class="o_kpi_footer">
+                            <span>Click to view <i class="fa fa-arrow-right"/></span>
+                        </div>
+                    </div>
+
+                    <!-- Rejected -->
+                    <div class="o_reattempt_kpi o_kpi_rejected" t-on-click="openRejected">
+                        <div class="o_kpi_inner">
+                            <div class="o_kpi_icon_wrap o_kpi_icon_rejected">
+                                <i class="fa fa-times-circle"/>
+                            </div>
+                            <div class="o_kpi_data">
+                                <div class="o_kpi_count" t-esc="state.rejected"/>
+                                <div class="o_kpi_label">Rejected</div>
+                            </div>
+                        </div>
+                        <div class="o_kpi_footer">
+                            <span>Click to view <i class="fa fa-arrow-right"/></span>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- ── Summary Row ──────────────────────────────────── -->
+                <div class="o_reattempt_summary_row">
+
+                    <!-- Total Card -->
+                    <div class="o_reattempt_summary_card o_summary_total" t-on-click="openAll">
+                        <div class="o_summary_icon"><i class="fa fa-database"/></div>
+                        <div class="o_summary_body">
+                            <div class="o_summary_value" t-esc="state.total"/>
+                            <div class="o_summary_label">Total Requests</div>
+                        </div>
+                    </div>
+
+                    <!-- Conversion Rate -->
+                    <div class="o_reattempt_summary_card o_summary_conversion">
+                        <div class="o_summary_icon"><i class="fa fa-line-chart"/></div>
+                        <div class="o_summary_body">
+                            <div class="o_summary_value">
+                                <t t-esc="state.conversionPct"/>%
+                            </div>
+                            <div class="o_summary_label">Conversion Rate</div>
+                        </div>
+                        <!-- Progress bar -->
+                        <div class="o_conv_bar_track">
+                            <div class="o_conv_bar_fill"
+                                 t-attf-style="width: {{ state.conversionPct }}%;"/>
+                        </div>
+                    </div>
+
+                    <!-- Status Breakdown Inline Bar -->
+                    <div class="o_reattempt_summary_card o_summary_breakdown">
+                        <div class="o_summary_icon"><i class="fa fa-pie-chart"/></div>
+                        <div class="o_summary_body" style="flex:1;">
+                            <div class="o_summary_label" style="margin-bottom:10px;">Status Breakdown</div>
+                            <t t-if="state.total > 0">
+                                <div class="o_breakdown_bar">
+                                    <t t-if="state.pending > 0">
+                                        <div class="o_bar_seg o_bar_pending"
+                                             t-attf-style="width:{{ Math.round((state.pending/state.total)*100) }}%"
+                                             t-attf-title="Pending: {{ state.pending }}"/>
+                                    </t>
+                                    <t t-if="state.approved > 0">
+                                        <div class="o_bar_seg o_bar_approved"
+                                             t-attf-style="width:{{ Math.round((state.approved/state.total)*100) }}%"
+                                             t-attf-title="Approved: {{ state.approved }}"/>
+                                    </t>
+                                    <t t-if="state.assigned > 0">
+                                        <div class="o_bar_seg o_bar_assigned"
+                                             t-attf-style="width:{{ Math.round((state.assigned/state.total)*100) }}%"
+                                             t-attf-title="Assigned: {{ state.assigned }}"/>
+                                    </t>
+                                    <t t-if="state.rejected > 0">
+                                        <div class="o_bar_seg o_bar_rejected"
+                                             t-attf-style="width:{{ Math.round((state.rejected/state.total)*100) }}%"
+                                             t-attf-title="Rejected: {{ state.rejected }}"/>
+                                    </t>
+                                </div>
+                                <div class="o_breakdown_legend">
+                                    <span class="o_legend_dot o_dot_pending"/>
+                                    <span class="o_legend_text">Pending (<t t-esc="state.pending"/>)</span>
+                                    <span class="o_legend_dot o_dot_approved"/>
+                                    <span class="o_legend_text">Approved (<t t-esc="state.approved"/>)</span>
+                                    <span class="o_legend_dot o_dot_assigned"/>
+                                    <span class="o_legend_text">Assigned (<t t-esc="state.assigned"/>)</span>
+                                    <span class="o_legend_dot o_dot_rejected"/>
+                                    <span class="o_legend_text">Rejected (<t t-esc="state.rejected"/>)</span>
+                                </div>
+                            </t>
+                            <t t-else="">
+                                <div class="o_breakdown_empty">No records found</div>
+                            </t>
+                        </div>
+                    </div>
+
+                </div>
+
+            </t>
+        </div>
+    </t>
+
+</templates>

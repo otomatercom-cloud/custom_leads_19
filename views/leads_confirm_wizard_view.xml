@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- Confirm Wizard -->
+    <record id="view_leads_confirm_wizard_form" model="ir.ui.view">
+        <field name="name">leads.confirm.wizard.form</field>
+        <field name="model">leads.confirm.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Open Lead">
+                <sheet>
+                    <div invisible="not today_followup_message" class="alert alert-warning">
+                        <strong>📋 Today's Follow-ups:</strong>
+                        <field name="today_followup_message" readonly="1"/>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="name" readonly="1"/>
+                            <field name="phone_number" readonly="1"/>
+                            <field name="lead_quality" readonly="1"/>
+                            <field name="lead_owner_id" readonly="1"/>
+                            <field name="created_by_id" readonly="1"/>
+                        </group>
+                        <group string="Touch Points">
+                            <field name="first_call_dt" readonly="1"/>
+                            <field name="whatsapp_date" readonly="1"/>
+                            <field name="zoom_schedule_dt" readonly="1"/>
+                            <field name="walkin_schedule_dt" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="Team Lead Message">
+                        <field name="team_lead_remarks" nolabel="1"/>
+                        <button name="action_save_remarks" string="Save Message" type="object" class="btn-sm btn-secondary"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_confirm" string="Open Lead" type="object" class="btn-primary"/>
+                    <button name="action_schedule_meeting" string="Schedule Meeting" type="object" class="btn-secondary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

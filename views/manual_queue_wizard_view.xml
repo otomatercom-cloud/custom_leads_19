@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <!-- ─── Manual Queue Wizard View ──────────────────────────────────────── -->
+    <record id="view_manual_queue_assign_wizard" model="ir.ui.view">
+        <field name="name">manual.queue.assign.wizard.form</field>
+        <field name="model">manual.queue.assign.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Assign Daily Queue">
+                <sheet>
+
+                    <!-- Header summary badges -->
+                    <div class="o_queue_wizard_header" style="margin-bottom: 16px;">
+                        <h3 style="margin: 0 0 12px 0; font-weight: 500;">
+                            Assign Daily Call Queue
+                        </h3>
+                    </div>
+
+                    <!-- Step 1: Officer + Date + Filter -->
+                    <group string="Step 1 — Select Officer &amp; Filters" col="4">
+                        <field name="officer_id" options="{'no_create': True}"/>
+                        <field name="queue_date"/>
+                        <field name="filter_quality" widget="select"/>
+                        <field name="replace_existing"/>
+                    </group>
+
+                    <!-- Load button -->
+                    <div style="margin: 8px 0 16px 0;">
+                        <button name="action_load_leads"
+                                type="object"
+                                string="Load Leads"
+                                class="btn-primary"
+                                icon="fa-refresh"/>
+                    </div>
+
+                    <!-- Step 2: Leads table (shown after loading) -->
+                    <group string="Step 2 — Select Leads for Queue"
+                           invisible="not line_ids">
+
+                        <!-- Summary row -->
+                        <div class="o_queue_summary_row"
+                             style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:12px; padding:10px; background:#f8f8f8; border-radius:6px;">
+                            <span><b>Total loaded:</b> <field name="total_leads" readonly="1" nolabel="1"/></span>
+                            <span><b>Selected:</b> <field name="selected_count" readonly="1" nolabel="1"/></span>
+                            <span style="color:#D85A30;"><b>🔥 Hot:</b> <field name="hot_count" readonly="1" nolabel="1"/></span>
+                            <span style="color:#BA7517;"><b>🌞 Warm:</b> <field name="warm_count" readonly="1" nolabel="1"/></span>
+                            <span style="color:#185FA5;"><b>❄️ Cold:</b> <field name="cold_count" readonly="1" nolabel="1"/></span>
+                            <span style="color:#888780;"><b>🔕 RNR:</b> <field name="rnr_count" readonly="1" nolabel="1"/></span>
+                            <span style="color:#6c757d;"><b>Other:</b> <field name="other_count" readonly="1" nolabel="1"/></span>
+                        </div>
+
+                        <!-- Select / Deselect all buttons -->
+                        <div style="margin-bottom:8px; display:flex; gap:8px;">
+                            <button name="action_select_all"
+                                    type="object"
+                                    string="Select All"
+                                    class="btn-secondary"
+                                    icon="fa-check-square-o"/>
+                            <button name="action_deselect_all"
+                                    type="object"
+                                    string="Deselect All"
+                                    class="btn-secondary"
+                                    icon="fa-square-o"/>
+                        </div>
+
+                        <!-- Lead lines -->
+                        <field name="line_ids" nolabel="1">
+                            <list editable="bottom" decoration-muted="not selected">
+                                <field name="selected" widget="boolean_toggle"/>
+                                <field name="queue_priority" string="Priority #" readonly="1"/>
+                                <field name="lead_quality" readonly="1" widget="badge"
+                                       decoration-danger="lead_quality in ['not_responding','not_reachable','not_attended','wrong_number','not_interested']"
+                                       decoration-success="lead_quality in ['hot','warm','already_joined']"
+                                       decoration-warning="lead_quality in ['cold','call_later','follow_up']"/>
+                                <field name="lead_name" readonly="1"/>
+                                <field name="phone_number" readonly="1"/>
+                                <field name="next_follow_up_date" readonly="1"/>
+                            </list>
+                        </field>
+
+                    </group>
+
+                </sheet>
+
+                <footer>
+                    <button name="action_assign_queue"
+                            type="object"
+                            string="Assign Queue"
+                            class="btn-primary"
+                            icon="fa-calendar-check-o"
+                            invisible="not line_ids"/>
+                    <button string="Cancel"
+                            class="btn-secondary"
+                            special="cancel"/>
+                </footer>
+
+            </form>
+        </field>
+    </record>
+
+    <!-- ─── Action to open the wizard ────────────────────────────────────── -->
+    <record id="action_manual_queue_assign_wizard" model="ir.actions.act_window">
+        <field name="name">Assign Queue to Officer</field>
+        <field name="res_model">manual.queue.assign.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <!-- ─── Button on leads list/kanban toolbar ──────────────────────────── -->
+    <!-- Inherit the main leads action to add a server action button -->
+    <record id="action_server_assign_queue_manual" model="ir.actions.server">
+        <field name="name">Assign Queue Manually</field>
+        <field name="model_id" ref="custom_leads_19.model_leads_logic"/>
+        <field name="binding_model_id" ref="custom_leads_19.model_leads_logic"/>
+        <field name="binding_view_types">list,kanban</field>
+        <field name="state">code</field>
+        <field name="code">
+action = {
+    'type': 'ir.actions.act_window',
+    'name': 'Assign Queue to Officer',
+    'res_model': 'manual.queue.assign.wizard',
+    'view_mode': 'form',
+    'target': 'new',
+    'context': {},
+}
+        </field>
+    </record>
+
+    <!-- ─── Menu entry — Team Lead / Manager queue builder ──────────────── -->
+<!--    <menuitem id="menu_leads_assign_queue"-->
+<!--              name="Assign Queue"-->
+<!--              parent="menu_leads_root"-->
+<!--              action="action_manual_queue_assign_wizard"-->
+<!--              groups="custom_leads_19.group_lead_team_lead,custom_leads_19.group_lead_manager,custom_leads_19.group_super_admin"-->
+<!--              sequence="5"/>-->
+
+</odoo>

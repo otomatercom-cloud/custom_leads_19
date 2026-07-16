@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <!-- ─── Re-Attempt Dashboard Action ──────────────────────────────── -->
+    <record id="action_reattempt_dashboard" model="ir.actions.client">
+        <field name="name">Re-Attempt Dashboard</field>
+        <field name="tag">custom_leads_19.reattempt_dashboard</field>
+    </record>
+
+    <menuitem id="menu_reattempt_dashboard"
+              name="Re-Attempt Dashboard"
+              parent="menu_reattempt_root"
+              action="action_reattempt_dashboard"
+              sequence="0"/>
+
+    <!-- ─── Re-Attempt Pivot for Dashboard backing ───────────────────── -->
+    <record id="view_reattempt_dashboard_pivot" model="ir.ui.view">
+        <field name="name">otomater.lead.reattempt.dashboard.pivot</field>
+        <field name="model">otomater.lead.reattempt</field>
+        <field name="arch" type="xml">
+            <pivot string="Re-Attempt Summary">
+                <field name="review_status" type="row"/>
+                <field name="duplicate_type" type="col"/>
+                <field name="id" type="measure" string="Count"/>
+            </pivot>
+        </field>
+    </record>
+
+</odoo>

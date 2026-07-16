@@ -1,0 +1,506 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <!-- ─── List View ─────────────────────────────────────────────────── -->
+    <record id="view_reattempt_list" model="ir.ui.view">
+        <field name="name">otomater.lead.reattempt.list</field>
+        <field name="model">otomater.lead.reattempt</field>
+        <field name="arch" type="xml">
+            <list string="Re-Attempt Requests"
+                  default_order="request_date desc"
+                  decoration-warning="review_status == 'pending_review'"
+                  decoration-success="review_status == 'approved'"
+                  decoration-info="review_status == 'assigned'"
+                  decoration-danger="review_status == 'rejected'">
+                <header>
+                    <button name="action_bulk_approve" string="Approve Selected"
+                            type="object" class="btn btn-primary"
+                            groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager,custom_leads_19.group_lead_branch_head,custom_leads_19.group_lead_team_lead"
+                            confirm="Approve all selected Pending Review re-attempts? Records in other statuses will be skipped."/>
+                </header>
+                <field name="name"/>
+                <field name="lead_id"/>
+                <field name="mobile"/>
+                <field name="email"/>
+                <field name="duplicate_type"/>
+                <field name="existing_owner_id"/>
+                <field name="requested_owner_id"/>
+                <field name="old_source_id" string="Old Source" optional="show"/>
+                <field name="source_id" string="New Source" optional="show"/>
+                <field name="review_status"
+                       widget="badge"
+                       decoration-warning="review_status == 'pending_review'"
+                       decoration-success="review_status == 'approved'"
+                       decoration-info="review_status == 'assigned'"
+                       decoration-danger="review_status == 'rejected'"/>
+                <field name="team_lead_id" optional="show"/>
+                <field name="admission_officer_id" optional="show"/>
+                <field name="request_date"/>
+                <field name="priority" widget="priority" optional="show"/>
+                <field name="re_attempt_count" optional="show"/>
+                <field name="company_id" groups="base.group_multi_company" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+
+    <!-- ─── Admission Officer List View ───────────────────────────────── -->
+    <record id="view_reattempt_officer_list" model="ir.ui.view">
+        <field name="name">otomater.lead.reattempt.officer.list</field>
+        <field name="model">otomater.lead.reattempt</field>
+        <field name="arch" type="xml">
+            <list string="My Re-Attempt Leads"
+                  default_order="request_date desc"
+                  decoration-warning="review_status == 'pending_review'"
+                  decoration-success="review_status == 'approved'"
+                  decoration-info="review_status == 'assigned'"
+                  decoration-danger="review_status == 'rejected'">
+                <field name="name" string="Reference"/>
+                <field name="lead_id" string="Lead"/>
+                <field name="mobile"/>
+                <field name="email"/>
+                <field name="duplicate_type" string="Duplicate Type"/>
+                <field name="old_source_id" string="Old Source" optional="show"/>
+                <field name="source_id" string="New Source" optional="show"/>
+                <field name="existing_owner_id" string="Previous Owner" optional="show"/>
+                <field name="requested_owner_id" string="Requested By"/>
+                <field name="review_status"
+                       widget="badge"
+                       decoration-warning="review_status == 'pending_review'"
+                       decoration-success="review_status == 'approved'"
+                       decoration-info="review_status == 'assigned'"
+                       decoration-danger="review_status == 'rejected'"/>
+                <field name="request_date" string="Request Date" optional="show"/>
+                <field name="assignment_date" string="Assigned On"/>
+                <field name="priority" widget="priority" optional="show"/>
+                <field name="re_attempt_count" string="# Attempts" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ─── Form View ─────────────────────────────────────────────────── -->
+    <record id="view_reattempt_form" model="ir.ui.view">
+        <field name="name">otomater.lead.reattempt.form</field>
+        <field name="model">otomater.lead.reattempt</field>
+        <field name="arch" type="xml">
+            <form string="Re-Attempt Request">
+                <header>
+                    <!-- Team Lead Actions -->
+                    <button name="action_approve"
+                            string="✅ Approve"
+                            type="object"
+                            class="btn-success"
+                            invisible="review_status != 'pending_review'"
+                            groups="custom_leads_19.group_reattempt_teamlead,custom_leads_19.group_reattempt_manager"/>
+                    <button name="action_assign_officer"
+                            string="📋 Assign Officer"
+                            type="object"
+                            class="btn-primary"
+                            invisible="review_status not in ('pending_review','approved')"
+                            groups="custom_leads_19.group_reattempt_teamlead,custom_leads_19.group_reattempt_manager"/>
+                    <button name="action_reject"
+                            string="❌ Reject"
+                            type="object"
+                            class="btn-danger"
+                            invisible="review_status == 'rejected'"
+                            groups="custom_leads_19.group_reattempt_teamlead,custom_leads_19.group_reattempt_manager"/>
+                    <button name="action_reset_to_draft"
+                            string="🔄 Reset to Draft"
+                            type="object"
+                            invisible="review_status == 'pending_review'"
+                            groups="custom_leads_19.group_reattempt_teamlead,custom_leads_19.group_reattempt_manager"/>
+
+                    <!-- Admission Officer Actions -->
+                    <button name="action_add_note"
+                            string="💬 Add Note"
+                            type="object"
+                            invisible="review_status != 'assigned'"
+                            groups="custom_leads_19.group_reattempt_user"/>
+                    <button name="action_schedule_followup"
+                            string="⏰ Schedule Follow-Up"
+                            type="object"
+                            invisible="review_status != 'assigned'"
+                            groups="custom_leads_19.group_reattempt_user"/>
+                    <button name="action_mark_completed"
+                            string="✅ Mark Completed"
+                            type="object"
+                            class="btn-secondary"
+                            invisible="review_status != 'assigned'"
+                            groups="custom_leads_19.group_reattempt_user"/>
+
+                    <field name="review_status" widget="statusbar"
+                           statusbar_visible="pending_review,approved,assigned,rejected"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_open_lead"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-external-link"
+                                invisible="not lead_id">
+                            <span>View Lead</span>
+                        </button>
+                    </div>
+
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+
+                    <group>
+                        <group string="Lead Information">
+                            <field name="lead_id" readonly="1"/>
+                            <field name="mobile" readonly="1"/>
+                            <field name="email" readonly="1"/>
+                            <field name="duplicate_type" readonly="1"/>
+                            <field name="re_attempt_count" readonly="1"/>
+                        </group>
+                        <group string="Ownership">
+                            <field name="existing_owner_id" readonly="1"/>
+                            <field name="requested_owner_id" readonly="1"/>
+                            <field name="priority" widget="priority"/>
+                        </group>
+                    </group>
+
+                    <group string="Source Change">
+                        <group string="Current / Old Source">
+                            <field name="old_source_id" readonly="1" string="Old Source"/>
+                        </group>
+                        <group string="Requested New Source">
+                            <field name="source_id" string="New Source"
+                                   placeholder="Select new source to apply on approval..."
+                                   invisible="review_status in ('approved','assigned','rejected')"/>
+                            <field name="source_id" string="New Source" readonly="1"
+                                   invisible="review_status not in ('approved','assigned','rejected')"/>
+                        </group>
+                    </group>
+
+                    <group string="Course Interest">
+                        <field name="course_id" widget="many2many_tags" nolabel="1"/>
+                    </group>
+
+                    <group string="Remarks">
+                        <field name="remarks" nolabel="1" placeholder="Enter remarks or notes here..."/>
+                    </group>
+
+                    <notebook>
+                        <page string="Review Details" name="review_details">
+                            <group>
+                                <group string="Review">
+                                    <field name="team_lead_id" readonly="1"/>
+                                    <field name="request_date" readonly="1"/>
+                                    <field name="review_date" readonly="1"/>
+                                </group>
+                                <group string="Assignment">
+                                    <!-- Editable when status allows it -->
+                                    <field name="admission_officer_id"
+                                           invisible="review_status not in ('pending_review','approved')"
+                                           groups="custom_leads_19.group_reattempt_teamlead,custom_leads_19.group_reattempt_manager"/>
+                                    <!-- Read-only display when already assigned/rejected -->
+                                    <field name="admission_officer_id"
+                                           readonly="1"
+                                           invisible="review_status in ('pending_review','approved')"
+                                           groups="custom_leads_19.group_reattempt_teamlead,custom_leads_19.group_reattempt_manager"/>
+                                    <field name="assignment_date" readonly="1"/>
+                                </group>
+                            </group>
+                            <group string="Rejection" invisible="review_status != 'rejected'">
+                                <field name="rejection_reason" readonly="1" nolabel="1"/>
+                            </group>
+                        </page>
+                        <page string="Company" name="company_page" groups="base.group_multi_company">
+                            <group>
+                                <field name="company_id"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ─── Search View ───────────────────────────────────────────────── -->
+    <record id="view_reattempt_search" model="ir.ui.view">
+        <field name="name">otomater.lead.reattempt.search</field>
+        <field name="model">otomater.lead.reattempt</field>
+        <field name="arch" type="xml">
+            <search string="Search Re-Attempts">
+                <field name="name"/>
+                <field name="mobile"/>
+                <field name="email"/>
+
+                <filter name="pending_review" string="Pending Review"
+                        domain="[('review_status','=','pending_review')]"/>
+                <filter name="approved" string="Approved"
+                        domain="[('review_status','=','approved')]"/>
+                <filter name="assigned" string="Assigned"
+                        domain="[('review_status','=','assigned')]"/>
+                <filter name="rejected" string="Rejected"
+                        domain="[('review_status','=','rejected')]"/>
+
+                <separator/>
+                <filter name="assigned_to_me" string="Assigned to Me"
+                        domain="[('admission_officer_id','=',uid)]"/>
+
+                <separator/>
+                <filter name="duplicate_phone" string="Phone Duplicate"
+                        domain="[('duplicate_type','=','phone')]"/>
+                <filter name="duplicate_email" string="Email Duplicate"
+                        domain="[('duplicate_type','=','email')]"/>
+                <filter name="duplicate_both" string="Both Duplicate"
+                        domain="[('duplicate_type','=','both')]"/>
+
+                <group>
+                    <filter name="group_status" string="Status"
+                            context="{'group_by': 'review_status'}"/>
+                    <filter name="group_duplicate" string="Duplicate Type"
+                            context="{'group_by': 'duplicate_type'}"/>
+                    <filter name="group_date" string="Request Date"
+                            context="{'group_by': 'request_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ─── Kanban View ───────────────────────────────────────────────── -->
+    <record id="view_reattempt_kanban" model="ir.ui.view">
+        <field name="name">otomater.lead.reattempt.kanban</field>
+        <field name="model">otomater.lead.reattempt</field>
+        <field name="arch" type="xml">
+            <kanban string="Re-Attempt Requests"
+                    default_group_by="review_status"
+                    class="o_kanban_small_column">
+                <field name="name"/>
+                <field name="lead_id"/>
+                <field name="mobile"/>
+                <field name="review_status"/>
+                <field name="existing_owner_id"/>
+                <field name="requested_owner_id"/>
+                <field name="admission_officer_id"/>
+                <field name="duplicate_type"/>
+                <field name="priority"/>
+                <field name="request_date"/>
+                <field name="re_attempt_count"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="oe_kanban_card oe_kanban_global_click">
+                            <div class="o_kanban_record_top">
+                                <div class="o_kanban_record_headings">
+                                    <strong class="o_kanban_record_title">
+                                        <field name="name"/>
+                                    </strong>
+                                </div>
+                                <field name="priority" widget="priority"/>
+                            </div>
+                            <div class="o_kanban_record_body">
+                                <div><i class="fa fa-user"/> <field name="lead_id"/></div>
+                                <div invisible="not mobile"><i class="fa fa-phone"/> <field name="mobile"/></div>
+                                <div><span class="badge rounded-pill text-bg-info"><field name="duplicate_type"/></span></div>
+                            </div>
+                            <div class="o_kanban_record_bottom">
+                                <div class="oe_kanban_bottom_left">
+                                    <field name="requested_owner_id" widget="many2one_avatar_employee"/>
+                                </div>
+                                <div class="oe_kanban_bottom_right">
+                                    <span class="text-muted" style="font-size:11px;">
+                                        <field name="request_date" widget="date"/>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- ─── Pivot View ────────────────────────────────────────────────── -->
+    <record id="view_reattempt_pivot" model="ir.ui.view">
+        <field name="name">otomater.lead.reattempt.pivot</field>
+        <field name="model">otomater.lead.reattempt</field>
+        <field name="arch" type="xml">
+            <pivot string="Re-Attempt Analysis">
+                <field name="review_status" type="row"/>
+                <field name="duplicate_type" type="col"/>
+                <field name="id" type="measure" string="Count"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- ─── Graph View ────────────────────────────────────────────────── -->
+    <record id="view_reattempt_graph" model="ir.ui.view">
+        <field name="name">otomater.lead.reattempt.graph</field>
+        <field name="model">otomater.lead.reattempt</field>
+        <field name="arch" type="xml">
+            <graph string="Re-Attempt Analysis" type="bar">
+                <field name="review_status" type="row"/>
+                <field name="id" type="measure" string="Count"/>
+            </graph>
+        </field>
+    </record>
+
+    <!-- ─── Actions ───────────────────────────────────────────────────── -->
+    <record id="action_reattempt_pending" model="ir.actions.act_window">
+        <field name="name">Pending Review</field>
+        <field name="res_model">otomater.lead.reattempt</field>
+        <field name="view_mode">list,form,kanban</field>
+        <field name="domain">[('review_status','=','pending_review')]</field>
+        <field name="context">{'search_default_pending_review': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No pending re-attempt requests.
+            </p>
+        </field>
+    </record>
+
+    <record id="action_reattempt_approved" model="ir.actions.act_window">
+        <field name="name">Approved</field>
+        <field name="res_model">otomater.lead.reattempt</field>
+        <field name="view_mode">list,form,kanban</field>
+        <field name="domain">[('review_status','=','approved')]</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No approved requests.</p>
+        </field>
+    </record>
+
+    <record id="action_reattempt_assigned" model="ir.actions.act_window">
+        <field name="name">Assigned</field>
+        <field name="res_model">otomater.lead.reattempt</field>
+        <field name="view_mode">list,form,kanban</field>
+        <field name="domain">[('review_status','=','assigned')]</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No assigned requests.</p>
+        </field>
+    </record>
+
+    <record id="action_reattempt_rejected" model="ir.actions.act_window">
+        <field name="name">Rejected</field>
+        <field name="res_model">otomater.lead.reattempt</field>
+        <field name="view_mode">list,form,kanban</field>
+        <field name="domain">[('review_status','=','rejected')]</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No rejected requests.</p>
+        </field>
+    </record>
+
+    <record id="action_reattempt_all" model="ir.actions.act_window">
+        <field name="name">All Re-Attempts</field>
+        <field name="res_model">otomater.lead.reattempt</field>
+        <field name="view_mode">list,kanban,form,pivot,graph</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No re-attempt requests found.
+            </p>
+            <p>Re-Attempt requests are created automatically when a duplicate lead is detected.</p>
+        </field>
+    </record>
+
+
+    <!-- ─── Admission Officer: My Re-Attempts ─────────────────────────── -->
+    <record id="action_reattempt_my_assigned" model="ir.actions.act_window">
+        <field name="name">My Re-Attempt Leads</field>
+        <field name="res_model">otomater.lead.reattempt</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('admission_officer_id', '=', uid), ('review_status', '=', 'assigned')]</field>
+        <field name="context">{'default_review_status': 'assigned'}</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('view_reattempt_officer_list')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('view_reattempt_form')})]"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No re-attempt leads assigned to you yet.
+            </p>
+            <p>Re-attempt leads assigned to you will appear here, most recent first.</p>
+        </field>
+    </record>
+
+    <!-- ─── Rejection Wizard View ─────────────────────────────────────── -->
+    <record id="view_reattempt_reject_wizard_form" model="ir.ui.view">
+        <field name="name">reattempt.reject.wizard.form</field>
+        <field name="model">reattempt.reject.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Reject Re-Attempt">
+                <group>
+                    <field name="reattempt_id" invisible="1"/>
+                    <field name="rejection_reason"
+                           placeholder="Please provide a detailed reason for rejection..."
+                           required="1"
+                           nolabel="1"
+                           style="min-height:100px;"/>
+                </group>
+                <footer>
+                    <button name="action_confirm_reject"
+                            string="Confirm Rejection"
+                            type="object"
+                            class="btn-danger"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- ─── Menus ─────────────────────────────────────────────────────── -->
+    <menuitem id="menu_reattempt_root"
+              name="Re-Attempt Management"
+              parent="menu_leads_root"
+              sequence="15"
+              groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager,custom_leads_19.group_lead_team_lead,custom_leads_19.group_lead_users,custom_leads_19.group_lead_tele_callers,custom_leads_19.group_lead_digital_team,custom_leads_19.group_lead_digital_head,custom_leads_19.group_lead_branch_head,custom_leads_19.group_crash_head,custom_leads_19.group_crash_user"/>
+
+    <menuitem id="menu_reattempt_pending"
+              name="Pending Review"
+              parent="menu_reattempt_root"
+              action="action_reattempt_pending"
+              sequence="1"
+              groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager,custom_leads_19.group_lead_team_lead"/>
+
+    <menuitem id="menu_reattempt_approved"
+              name="Approved"
+              parent="menu_reattempt_root"
+              action="action_reattempt_approved"
+              sequence="2"
+              groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager,custom_leads_19.group_lead_team_lead"/>
+
+    <menuitem id="menu_reattempt_assigned"
+              name="Assigned"
+              parent="menu_reattempt_root"
+              action="action_reattempt_assigned"
+              sequence="3"
+              groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager,custom_leads_19.group_lead_team_lead"/>
+
+    <menuitem id="menu_reattempt_rejected"
+              name="Rejected"
+              parent="menu_reattempt_root"
+              action="action_reattempt_rejected"
+              sequence="4"
+              groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager,custom_leads_19.group_lead_team_lead"/>
+
+    <menuitem id="menu_reattempt_all"
+              name="All Re-Attempts"
+              parent="menu_reattempt_root"
+              action="action_reattempt_all"
+              sequence="5"
+              groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager,custom_leads_19.group_lead_team_lead"/>
+
+
+    <!-- ─── Admission Officer Menu ────────────────────────────────────── -->
+    <menuitem id="menu_reattempt_my_assigned"
+              name="My Re-Attempt Leads"
+              parent="menu_reattempt_root"
+              action="action_reattempt_my_assigned"
+              groups="custom_leads_19.group_reattempt_user"
+              sequence="0"/>
+
+
+    <!-- Bulk approve from the Actions cog menu (multi-select) -->
+    <record id="server_action_reattempt_bulk_approve" model="ir.actions.server">
+        <field name="name">Approve Selected Re-Attempts</field>
+        <field name="model_id" ref="model_otomater_lead_reattempt"/>
+        <field name="binding_model_id" ref="model_otomater_lead_reattempt"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">action = records.action_bulk_approve()</field>
+        <field name="groups_id" eval="[(4, ref('custom_leads_19.group_super_admin')), (4, ref('custom_leads_19.group_lead_manager')), (4, ref('custom_leads_19.group_lead_branch_head')), (4, ref('custom_leads_19.group_lead_team_lead'))]"/>
+    </record>
+</odoo>

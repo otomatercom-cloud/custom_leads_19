@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+<t t-name="custom_leads_19.QueueDashboard">
+    <div class="o_queue_dashboard o_action">
+
+        <!-- Header -->
+        <div class="o_queue_dash_header d-flex align-items-center justify-content-between px-4 py-3"
+             style="background:#fff; border-bottom:1px solid #e0e0e0;">
+            <h4 class="mb-0" style="font-weight:600;">
+                📋 Daily Call Queue Dashboard
+            </h4>
+            <div class="d-flex gap-2">
+                <button class="btn btn-primary btn-sm" t-on-click="openAssignWizard">
+                    ➕ Assign Queue
+                </button>
+                <button class="btn btn-outline-secondary btn-sm" t-on-click="loadData">
+                    🔄 Refresh
+                </button>
+                <button class="btn btn-outline-primary btn-sm" t-on-click="openAllQueues">
+                    👁 View All Queues
+                </button>
+            </div>
+        </div>
+
+        <!-- Loading -->
+        <t t-if="state.loading">
+            <div class="text-center py-5 text-muted">
+                <i class="fa fa-spinner fa-spin fa-2x"/>
+                <p class="mt-2">Loading queue data…</p>
+            </div>
+        </t>
+
+        <!-- Error -->
+        <t t-elif="state.error">
+            <div class="alert alert-danger m-4" t-esc="state.error"/>
+        </t>
+
+        <!-- Content -->
+        <t t-elif="state.data">
+            <div class="o_queue_dash_body p-4">
+
+                <!-- Top summary cards -->
+                <div class="row g-3 mb-4">
+                    <div class="col-12 col-md-4">
+                        <div class="card border-0 shadow-sm text-center py-3">
+                            <div style="font-size:2rem; font-weight:700; color:#0d6efd;">
+                                <t t-esc="state.data.total_assigned"/>
+                            </div>
+                            <div class="text-muted small">Total Assigned Today</div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <div class="card border-0 shadow-sm text-center py-3">
+                            <div style="font-size:2rem; font-weight:700; color:#198754;">
+                                <t t-esc="state.data.total_completed"/>
+                            </div>
+                            <div class="text-muted small">Calls Completed</div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <div class="card border-0 shadow-sm text-center py-3">
+                            <div style="font-size:2rem; font-weight:700; color:#dc3545;">
+                                <t t-esc="state.data.total_remaining"/>
+                            </div>
+                            <div class="text-muted small">Remaining Calls</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Per-officer table -->
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white d-flex align-items-center"
+                         style="border-bottom:1px solid #eee;">
+                        <span style="font-weight:600;">Officer Queue Progress — <t t-esc="state.data.date"/></span>
+                    </div>
+                    <div class="card-body p-0">
+                        <t t-if="!state.data.officers.length">
+                            <div class="text-center text-muted py-4">
+                                No queues assigned for today yet.
+                            </div>
+                        </t>
+                        <t t-else="">
+                            <table class="table table-hover mb-0" style="font-size:0.9rem;">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Officer</th>
+                                        <th class="text-center">Assigned</th>
+                                        <th class="text-center">Completed</th>
+                                        <th class="text-center">Remaining</th>
+                                        <th style="min-width:160px;">Progress</th>
+                                        <th>Quality Breakdown</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="state.data.officers" t-as="officer" t-key="officer.name">
+                                        <tr>
+                                            <td style="font-weight:500;">
+                                                <i class="fa fa-user-circle me-1 text-secondary"/>
+                                                <t t-esc="officer.name"/>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="badge bg-primary rounded-pill">
+                                                    <t t-esc="officer.assigned"/>
+                                                </span>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="badge bg-success rounded-pill">
+                                                    <t t-esc="officer.completed"/>
+                                                </span>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="badge bg-danger rounded-pill">
+                                                    <t t-esc="officer.remaining"/>
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <div class="progress flex-grow-1" style="height:10px;">
+                                                        <div class="progress-bar bg-success"
+                                                             t-attf-style="width:{{ officer.pct }}%"/>
+                                                    </div>
+                                                    <span class="text-muted" style="min-width:34px; font-size:0.8rem;">
+                                                        <t t-esc="officer.pct"/>%
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex flex-wrap gap-1">
+                                                    <t t-foreach="Object.entries(officer.by_quality)" t-as="entry" t-key="entry[0]">
+                                                        <span class="badge rounded-pill"
+                                                              t-attf-style="background:{{ _qualityColor(entry[0]) }}; color:#fff; font-size:0.75rem;">
+                                                            <t t-esc="entry[0]"/>: <t t-esc="entry[1]"/>
+                                                        </span>
+                                                    </t>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </t>
+                    </div>
+                </div>
+
+            </div>
+        </t>
+
+    </div>
+</t>
+
+</templates>

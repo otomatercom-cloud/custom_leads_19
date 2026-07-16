@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+<t t-name="custom_leads_19.CallCampaignRunner">
+<div class="o_campaign_runner">
+
+    <!-- Loading -->
+    <t t-if="state.loading">
+        <div class="o_campaign_loading">
+            <i class="fa fa-spinner fa-spin fa-2x"/>
+            <p>Loading campaign...</p>
+        </div>
+    </t>
+
+    <t t-else="">
+
+        <!-- ── HEADER ─────────────────────────────────────────────── -->
+        <div class="o_campaign_header">
+            <div class="o_campaign_header_left">
+                <button class="o_campaign_back_btn" t-on-click="onBackToCampaign">
+                    <i class="fa fa-arrow-left"/>
+                    <span class="o_campaign_back_label"> Back</span>
+                </button>
+                <!-- Mobile: leads list toggle -->
+                <button class="o_campaign_sidebar_toggle" t-on-click="toggleSidebar">
+                    <i class="fa fa-list"/>
+                    <span t-esc="' ' + state.currentIndex + 1 + '/' + state.total"/>
+                </button>
+                <div class="o_campaign_title">
+                    <i class="fa fa-phone o_campaign_title_icon"/>
+                    <span t-esc="state.campaignName"/>
+                </div>
+            </div>
+            <div class="o_campaign_header_stats">
+                <div class="o_campaign_stat o_campaign_stat_done">
+                    <span class="o_stat_num" t-esc="state.calledCount"/>
+                    <span class="o_stat_lbl">Called</span>
+                </div>
+                <div class="o_campaign_stat o_campaign_stat_pending">
+                    <span class="o_stat_num" t-esc="state.total - state.calledCount"/>
+                    <span class="o_stat_lbl">Pending</span>
+                </div>
+                <div class="o_campaign_stat o_campaign_stat_total">
+                    <span class="o_stat_num" t-esc="state.total"/>
+                    <span class="o_stat_lbl">Total</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress bar -->
+        <div class="o_campaign_progress_wrap">
+            <div class="o_campaign_progress_bar" t-attf-style="width:{{progress}}%"/>
+        </div>
+
+        <!-- ── ALL DONE ───────────────────────────────────────────── -->
+        <t t-if="state.done and state.total > 0">
+            <div class="o_campaign_done_screen">
+                <div class="o_campaign_done_icon">🎉</div>
+                <h2>Campaign Completed!</h2>
+                <p>All <t t-esc="state.total"/> leads have been called.</p>
+                <button class="o_campaign_submit_btn" t-on-click="onBackToCampaign"
+                        style="width:auto;padding:12px 32px;">
+                    Back to Campaign
+                </button>
+            </div>
+        </t>
+        <t t-elif="state.done and state.total === 0">
+            <div class="o_campaign_done_screen">
+                <div class="o_campaign_done_icon">📋</div>
+                <h2>No Leads Found</h2>
+                <p>This campaign has no leads assigned yet.</p>
+                <button class="o_campaign_submit_btn" t-on-click="onBackToCampaign"
+                        style="width:auto;padding:12px 32px;">
+                    Back to Campaign
+                </button>
+            </div>
+        </t>
+
+        <t t-else="">
+        <div class="o_campaign_body">
+
+            <!-- ── Sidebar overlay (mobile) ───────────────────────── -->
+            <div class="o_campaign_sidebar_overlay"
+                 t-att-class="{'o_campaign_sidebar_open': state.showSidebar}"
+                 t-on-click="toggleSidebar"/>
+
+            <!-- ── Sidebar ────────────────────────────────────────── -->
+            <div class="o_campaign_sidebar"
+                 t-att-class="{'o_campaign_sidebar_open': state.showSidebar}">
+                <div class="o_campaign_sidebar_title">
+                    All Leads
+                    <button class="o_campaign_sidebar_close" t-on-click="toggleSidebar">
+                        <i class="fa fa-times"/>
+                    </button>
+                </div>
+                <div class="o_campaign_lead_list">
+                    <t t-foreach="state.leads" t-as="lead" t-key="lead.id">
+                        <div class="o_campaign_lead_item"
+                             t-att-class="{
+                                 'o_campaign_lead_active': lead_index === state.currentIndex,
+                                 'o_campaign_lead_called': lead.called
+                             }"
+                             t-on-click="() => { this.onSelectLead(lead_index); this.state.showSidebar = false; }">
+                            <div class="o_campaign_lead_num" t-esc="lead_index + 1"/>
+                            <div class="o_campaign_lead_info">
+                                <div class="o_campaign_lead_name" t-esc="lead.name"/>
+                                <div class="o_campaign_lead_phone" t-esc="lead.phone"/>
+                            </div>
+                            <div class="o_campaign_lead_status">
+                                <t t-if="lead.called">
+                                    <span class="o_campaign_badge_done">✓</span>
+                                </t>
+                                <t t-else="">
+                                    <span class="o_campaign_badge_pending">•</span>
+                                </t>
+                            </div>
+                        </div>
+                    </t>
+                </div>
+            </div>
+
+            <!-- ── Main caller panel ──────────────────────────────── -->
+            <div class="o_campaign_caller">
+                <t t-if="currentLead">
+
+                    <!-- Lead card top -->
+                    <div class="o_campaign_lead_card">
+                        <div class="o_campaign_lead_card_top">
+                            <div class="o_campaign_lead_card_ref" t-esc="currentLead.reference"/>
+                            <div class="o_campaign_lead_card_name" t-esc="currentLead.name"/>
+                            <div class="o_campaign_lead_card_phone">
+                                <i class="fa fa-phone"/> <t t-esc="currentLead.phone"/>
+                            </div>
+                            <t t-if="currentLead.course">
+                                <div class="o_campaign_lead_card_course">
+                                    🎓 <t t-esc="currentLead.course"/>
+                                </div>
+                            </t>
+                            <div class="o_campaign_lead_card_quality">
+                                <span class="o_campaign_quality_badge" t-esc="currentLead.quality_label"/>
+                            </div>
+                            <t t-if="currentLead.lead_owner">
+                                <div class="o_campaign_lead_card_owner">
+                                    <i class="fa fa-user"/> <t t-esc="currentLead.lead_owner"/>
+                                </div>
+                            </t>
+                            <t t-if="currentLead.call_response">
+                                <div class="o_campaign_lead_card_prev_response">
+                                    <span class="o_campaign_prev_response_label">Last Response</span>
+                                    <span t-esc="currentLead.call_response"/>
+                                </div>
+                            </t>
+                        </div>
+
+                        <!-- Call button -->
+                        <t t-if="!state.showResponseForm">
+                            <div class="o_campaign_call_action">
+                                <button class="o_campaign_call_btn"
+                                        t-att-class="{'o_campaign_lead_already_called': currentLead.called}"
+                                        t-on-click="onClickCall">
+                                    <i class="fa fa-phone fa-2x"/>
+                                    <span t-if="!currentLead.called">Call Now</span>
+                                    <span t-else="">Call Again</span>
+                                </button>
+                                <div class="o_campaign_call_number" t-esc="currentLead.phone"/>
+
+                                <!-- Quick action buttons -->
+                                <div class="o_campaign_quick_actions">
+                                    <button class="o_campaign_wa_btn" t-on-click="onWhatsApp"
+                                            t-att-title="'WhatsApp: ' + currentLead.phone">
+                                        <i class="fa fa-whatsapp"/> WhatsApp
+                                    </button>
+                                    <button class="o_campaign_view_lead_btn" t-on-click="onViewLead">
+                                        <i class="fa fa-eye"/> View Lead
+                                    </button>
+                                </div>
+
+                                <button class="o_campaign_skip_btn" t-on-click="onSkip"
+                                        t-if="state.total - state.calledCount > 1">
+                                    Skip →
+                                </button>
+                            </div>
+                        </t>
+
+                        <!-- Response form -->
+                        <t t-if="state.showResponseForm">
+                            <div class="o_campaign_response_form">
+                                <div class="o_campaign_response_title">📋 Log Response</div>
+
+                                <div class="o_campaign_form_group">
+                                    <label>Lead Quality</label>
+                                    <select class="o_campaign_select" t-on-change="onQualityChange">
+                                        <t t-foreach="qualityOptions" t-as="opt" t-key="opt.value">
+                                            <option t-att-value="opt.value"
+                                                    t-att-selected="opt.value === state.selectedQuality"
+                                                    t-esc="opt.label"/>
+                                        </t>
+                                    </select>
+                                </div>
+
+                                <div class="o_campaign_form_group">
+                                    <label>Response / Notes</label>
+                                    <textarea class="o_campaign_textarea"
+                                              placeholder="What was the response?"
+                                              t-att-value="state.responseText"
+                                              t-on-input="onResponseInput"
+                                              rows="3"/>
+                                </div>
+
+                                <!-- ── Follow-Up Section ── -->
+                                <div class="o_campaign_followup_section">
+                                    <label class="o_campaign_followup_toggle">
+                                        <input type="checkbox"
+                                               t-att-checked="state.scheduleFollowup"
+                                               t-on-change="onToggleFollowup"/>
+                                        <span class="o_campaign_followup_toggle_label">📅 Schedule a Follow-Up</span>
+                                    </label>
+
+                                    <t t-if="state.scheduleFollowup">
+                                        <div class="o_campaign_followup_fields">
+                                            <div class="o_campaign_form_group">
+                                                <label>Follow-Up Date &amp; Time</label>
+                                                <input type="datetime-local"
+                                                       class="o_campaign_datetime_input"
+                                                       t-att-value="state.followupDate"
+                                                       t-on-change="onFollowupDateChange"/>
+                                            </div>
+                                            <div class="o_campaign_form_group">
+                                                <label>Follow-Up Notes</label>
+                                                <textarea class="o_campaign_textarea"
+                                                          placeholder="Reason, callback details, what to discuss…"
+                                                          t-att-value="state.followupNotes"
+                                                          t-on-input="onFollowupNotesInput"
+                                                          rows="2"/>
+                                            </div>
+                                        </div>
+                                    </t>
+                                </div>
+
+                                <div class="o_campaign_response_actions">
+                                    <button class="o_campaign_submit_btn"
+                                            t-on-click="onSubmitResponse"
+                                            t-att-disabled="state.submitting">
+                                        <t t-if="state.submitting">
+                                            <i class="fa fa-spinner fa-spin"/> Saving...
+                                        </t>
+                                        <t t-else="">✅ Submit &amp; Next</t>
+                                    </button>
+                                    <button class="o_campaign_skip_btn" t-on-click="onSkip">
+                                        Skip
+                                    </button>
+                                </div>
+                            </div>
+                        </t>
+                    </div>
+
+                    <div class="o_campaign_position">
+                        Lead <t t-esc="state.currentIndex + 1"/> of <t t-esc="state.total"/>
+                    </div>
+                </t>
+            </div>
+
+        </div>
+        </t>
+    </t>
+</div>
+</t>
+</templates>
