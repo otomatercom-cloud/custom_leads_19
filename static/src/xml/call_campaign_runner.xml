@@ -11,6 +11,17 @@
         </div>
     </t>
 
+    <!-- Load failed (bad network) — never show a blank screen -->
+    <t t-elif="state.loadError">
+        <div class="o_campaign_loading">
+            <i class="fa fa-wifi fa-2x" style="color:#dc2626;"/>
+            <p t-esc="state.loadError"/>
+            <button type="button" class="btn btn-primary" t-on-click="loadLeads">
+                <i class="fa fa-refresh me-1"/>Retry
+            </button>
+        </div>
+    </t>
+
     <t t-else="">
 
         <!-- ── HEADER ─────────────────────────────────────────────── -->
@@ -240,7 +251,10 @@
                                     <button class="o_campaign_submit_btn"
                                             t-on-click="onSubmitResponse"
                                             t-att-disabled="state.submitting">
-                                        <t t-if="state.submitting">
+                                        <t t-if="state.retrying">
+                                            <i class="fa fa-wifi"/> Retrying…
+                                        </t>
+                                        <t t-elif="state.submitting">
                                             <i class="fa fa-spinner fa-spin"/> Saving...
                                         </t>
                                         <t t-else="">✅ Submit &amp; Next</t>

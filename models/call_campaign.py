@@ -165,8 +165,21 @@ class CallCampaign(models.Model):
 
     @api.model
     def submit_call_response(self, campaign_id, lead_id, quality, response,
-                             followup_date=False, followup_notes=""):
-        """Save quality + response, mark lead as called, optionally schedule follow-up."""
+                             followup_date=False, followup_notes="",
+                             submission_uid=False):
+        """Save quality + response, mark lead as called, optionally schedule
+        follow-up.
+
+        submission_uid makes this IDEMPOTENT: the runner sends the same uid
+        on every retry of the same response. If a previous attempt already
+        went through (network reply was lost on the officer's phone), the
+        replay is detected via the call log's call_uuid and nothing is
+        saved a second time."""
+        if submission_uid:
+            already = self.env['lead.call.log'].sudo().search_count(
+                [('call_uuid', '=', submission_uid)])
+            if already:
+                return True  # replay of an already-saved submission
         lead = self.env['leads.logic'].browse(lead_id)
         vals = {'campaign_call_done': True}
         if quality:
@@ -190,6 +203,7 @@ class CallCampaign(models.Model):
         self.env['lead.call.log'].sudo().create({
             'lead_id': lead.id,
             'user_id': self.env.uid,
+            'call_uuid': submission_uid or False,
             'call_time': fields.Datetime.now(),
             'call_type': 'outgoing',
             'call_status': 'no_answer' if quality in _NOT_CONNECTED

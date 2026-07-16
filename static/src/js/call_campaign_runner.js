@@ -44,7 +44,14 @@ class CallCampaignRunner extends Component {
             scheduleFollowup: false,
             followupDate: "",
             followupNotes: "",
+            loadError: "",
+            retrying: false,
         });
+        // Idempotency key for the in-flight submission — stays the same
+        // across retries of the SAME response so the server can dedupe,
+        // regenerated only after a confirmed success or when moving to a
+        // different lead.
+        this.submissionUid = null;
 
         const params = this.props.action.params || {};
         let campaignId = params.campaign_id;
@@ -67,6 +74,20 @@ class CallCampaignRunner extends Component {
     }
 
     async loadLeads() {
+        this.state.loading = true;
+        this.state.loadError = "";
+        try {
+            await this._loadLeadsInner();
+        } catch (err) {
+            console.error("Campaign load failed", err);
+            this.state.loading = false;
+            this.state.loadError =
+                "Couldn't load the campaign — the connection failed or was " +
+                "interrupted. Check your network and tap Retry.";
+        }
+    }
+
+    async _loadLeadsInner() {
         const data = await this.orm.call("call.campaign", "get_campaign_leads", [this.campaignId]);
         this.state.leads = data.leads;
         this.state.campaignName = data.campaign_name;
@@ -210,15 +231,48 @@ class CallCampaignRunner extends Component {
         }
 
         this.state.submitting = true;
+        // One idempotency key per response — reused across every retry of
+        // this same submission so a "request succeeded but reply was lost"
+        // situation can never save the response twice on the server.
+        if (!this.submissionUid || this.submissionUidLeadId !== lead.id) {
+            this.submissionUid =
+                (window.crypto && window.crypto.randomUUID)
+                    ? window.crypto.randomUUID()
+                    : "sub-" + Date.now() + "-" + Math.random().toString(36).slice(2);
+            this.submissionUidLeadId = lead.id;
+        }
+        const args = [
+            this.campaignId,
+            lead.id,
+            this.state.selectedQuality,
+            this.state.responseText,
+            this.state.scheduleFollowup ? this.state.followupDate : false,
+            this.state.scheduleFollowup ? this.state.followupNotes : "",
+            this.submissionUid,
+        ];
         try {
-            await this.orm.call("call.campaign", "submit_call_response", [
-                this.campaignId,
-                lead.id,
-                this.state.selectedQuality,
-                this.state.responseText,
-                this.state.scheduleFollowup ? this.state.followupDate : false,
-                this.state.scheduleFollowup ? this.state.followupNotes : "",
-            ]);
+            // Up to 3 attempts with short backoff — mobile networks drop
+            // single requests all the time; a silent quick retry usually
+            // saves the officer from ever seeing an error.
+            let lastError = null;
+            let ok = false;
+            for (let attempt = 1; attempt <= 3 && !ok; attempt++) {
+                try {
+                    await this.orm.call("call.campaign", "submit_call_response", args);
+                    ok = true;
+                } catch (err) {
+                    lastError = err;
+                    if (attempt < 3) {
+                        this.state.retrying = true;
+                        await new Promise(r => setTimeout(r, attempt * 1500));
+                    }
+                }
+            }
+            this.state.retrying = false;
+            if (!ok) {
+                throw lastError;
+            }
+            this.submissionUid = null; // confirmed saved — next response gets a fresh key
 
             // Update local state
             this.state.leads[this.state.currentIndex].called = true;
@@ -248,7 +302,13 @@ class CallCampaignRunner extends Component {
                 }
             }
         } catch (e) {
-            this.notification.add("Error saving response: " + e.message, { type: "danger" });
+            this.state.retrying = false;
+            this.notification.add(
+                "Couldn't save the response after 3 attempts — your notes are " +
+                "still here. Check your network and press Submit again (it " +
+                "will not be saved twice).",
+                { type: "danger", sticky: true }
+            );
         } finally {
             this.state.submitting = false;
         }
