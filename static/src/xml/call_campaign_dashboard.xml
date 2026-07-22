@@ -92,7 +92,7 @@
                 </div>
                 <div class="o_cc_officer_grid">
                     <t t-foreach="state.officerBreakdown" t-as="o" t-key="o.employee_id">
-                        <div class="o_cc_officer_card">
+                        <div class="o_cc_officer_card" t-on-click="() => this.openOfficerDetail(o.employee_id)">
                             <div class="o_cc_officer_top">
                                 <div class="o_cc_officer_avatar"><t t-esc="o.employee_name[0].toUpperCase()"/></div>
                                 <div class="o_cc_officer_info">
@@ -439,6 +439,98 @@
                     </div>
                 </t>
 
+            </div>
+        </div>
+    </t>
+
+    <!-- ══ OFFICER LEAD DETAIL MODAL ═══════════════════════════════════════ -->
+    <t t-if="state.showOfficerDetail">
+        <div class="o_cc_modal_overlay" t-on-click="closeOfficerDetail">
+            <div class="o_cc_modal o_cc_officer_detail_modal" t-on-click.stop="">
+                <div class="o_cc_modal_header">
+                    <h2>
+                        <i class="fa fa-user"/>
+                        <t t-esc="state.officerDetail and state.officerDetail.employee_name or ''"/>
+                        — Lead Detail
+                    </h2>
+                    <button class="o_cc_modal_close" t-on-click="closeOfficerDetail"><i class="fa fa-times"/></button>
+                </div>
+                <div class="o_cc_modal_body">
+                    <div class="o_cc_od_tabs">
+                        <button type="button"
+                                t-attf-class="btn btn-sm {{ state.officerDetailMode === 'called' ? 'btn-primary' : 'btn-outline-primary' }}"
+                                t-on-click="() => this.setOfficerDetailMode('called')">
+                            <i class="fa fa-phone me-1"/>Called
+                        </button>
+                        <button type="button"
+                                t-attf-class="btn btn-sm {{ state.officerDetailMode === 'assigned' ? 'btn-primary' : 'btn-outline-primary' }}"
+                                t-on-click="() => this.setOfficerDetailMode('assigned')">
+                            <i class="fa fa-address-book me-1"/>Assigned
+                        </button>
+                        <button type="button" class="btn btn-sm btn-success ms-auto"
+                                t-att-disabled="!state.officerDetail or !state.officerDetail.total"
+                                t-on-click="exportOfficerDetail">
+                            <i class="fa fa-file-excel-o me-1"/>Export
+                        </button>
+                    </div>
+
+                    <t t-if="state.officerDetailLoading">
+                        <div class="o_cc_od_loading">
+                            <i class="fa fa-spinner fa-spin fa-2x"/>
+                            <p>Loading leads...</p>
+                        </div>
+                    </t>
+                    <t t-else="">
+                        <div class="o_cc_od_summary" t-if="state.officerDetail">
+                            <span class="o_cc_od_badge o_cc_od_badge_total">
+                                <t t-esc="state.officerDetail.total"/> leads
+                            </span>
+                            <span class="o_cc_od_badge o_cc_od_badge_ok">
+                                <t t-esc="state.officerDetail.admitted"/> admitted
+                            </span>
+                        </div>
+
+                        <div t-if="state.officerDetail and !state.officerDetail.rows.length" class="o_cc_od_empty">
+                            <i class="fa fa-inbox fa-2x"/>
+                            <p>No leads found for this view.</p>
+                        </div>
+
+                        <div t-else="" class="o_cc_od_table_wrap">
+                            <table class="o_cc_od_table">
+                                <thead>
+                                    <tr>
+                                        <th class="o_cc_od_th_name">Lead Name</th>
+                                        <th>Phone</th>
+                                        <th>Current Quality</th>
+                                        <th>Quality Set By Officer</th>
+                                        <th>Changed On</th>
+                                        <th>Last Called</th>
+                                        <th class="o_cc_od_num">Admission</th>
+                                        <th>Admission Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="(state.officerDetail and state.officerDetail.rows) or []" t-as="lrow" t-key="lrow.lead_id">
+                                        <tr class="o_cc_od_row">
+                                            <td class="o_cc_od_td_name" t-esc="lrow.name"/>
+                                            <td t-esc="lrow.phone"/>
+                                            <td t-esc="lrow.current_quality"/>
+                                            <td t-esc="lrow.quality_set_by_officer"/>
+                                            <td class="o_cc_od_muted" t-esc="lrow.quality_changed_on"/>
+                                            <td class="o_cc_od_muted" t-esc="lrow.last_called_on"/>
+                                            <td class="o_cc_od_num">
+                                                <span t-attf-class="o_cc_od_badge {{ lrow.admission_status ? 'o_cc_od_badge_ok' : 'o_cc_od_badge_total' }}">
+                                                    <t t-esc="lrow.admission_status ? 'Yes' : 'No'"/>
+                                                </span>
+                                            </td>
+                                            <td class="o_cc_od_muted" t-esc="lrow.admission_date"/>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </div>
+                    </t>
+                </div>
             </div>
         </div>
     </t>

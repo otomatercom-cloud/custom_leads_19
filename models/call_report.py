@@ -323,6 +323,122 @@ class LeadCallLogReport(models.Model):
         }
 
     # ------------------------------------------------------------------
+    # Officer drill-down: lead-level detail (called or assigned)
+    # ------------------------------------------------------------------
+    @api.model
+    def get_officer_lead_detail(self, employee_id, mode='called'):
+        """Lead-level detail for one officer, for the Officer Performance
+        drill-down.
+
+        mode='called'   -> every lead that has a lead.call.log row logged
+                            by this officer (i.e. they actually called it).
+        mode='assigned' -> every lead currently owned by this officer
+                            (leads.logic.lead_owner), called or not.
+
+        Each row reports: the lead's CURRENT quality, the quality this
+        specific officer last set on it (from lead.quality.history — quality
+        changes made by other officers/TLs on the same lead are not counted
+        here), when they last called it, and whether it has since resulted
+        in an admission.
+        """
+        employee = self.env['hr.employee'].sudo().browse(employee_id)
+        if not employee.exists():
+            return {'employee_name': '', 'mode': mode, 'total': 0,
+                    'admitted': 0, 'rows': []}
+        user = employee.user_id
+
+        # Same visibility rule as get_call_report: managers/super/branch
+        # heads see everyone, a TL sees their own team, an officer sees
+        # only themself.
+        scope, _teams, allowed_user_ids = self._report_scope()
+        if allowed_user_ids is not None:
+            if not user or user.id not in allowed_user_ids:
+                return {'employee_name': employee.name, 'mode': mode,
+                        'total': 0, 'admitted': 0, 'rows': [],
+                        'error': 'not_authorized'}
+
+        Lead = self.env['leads.logic'].sudo()
+        if mode == 'assigned':
+            leads = Lead.search([('lead_owner', '=', employee.id)])
+        else:
+            if not user:
+                return {'employee_name': employee.name, 'mode': mode,
+                        'total': 0, 'admitted': 0, 'rows': []}
+            log_lead_ids = self.sudo().search(
+                [('user_id', '=', user.id)]).mapped('lead_id').ids
+            leads = Lead.browse(log_lead_ids)
+
+        if not leads:
+            return {'employee_name': employee.name, 'mode': mode,
+                    'total': 0, 'admitted': 0, 'rows': []}
+
+        # Last call this officer made on each lead (only if they have a
+        # linked user — otherwise there's nothing to match in the log).
+        last_call = {}
+        if user:
+            logs = self.sudo().search_read(
+                [('lead_id', 'in', leads.ids), ('user_id', '=', user.id)],
+                ['lead_id', 'call_time', 'call_status'], order='call_time asc')
+            for l in logs:
+                last_call[l['lead_id'][0]] = {
+                    'call_time': l['call_time'],
+                    'call_status': l.get('call_status') or '',
+                }
+
+        # Latest quality *this officer* set on each lead (not whoever set it
+        # last overall — history rows are per-user, so this is naturally
+        # scoped to their own changes already).
+        last_quality = {}
+        if user:
+            hist = self.env['lead.quality.history'].sudo().search_read(
+                [('lead_id', 'in', leads.ids), ('user_id', '=', user.id)],
+                ['lead_id', 'lead_quality', 'change_date'], order='change_date asc')
+            for h in hist:
+                last_quality[h['lead_id'][0]] = {
+                    'quality': h['lead_quality'],
+                    'date': h['change_date'],
+                }
+
+        quality_labels = dict(Lead._fields['lead_quality'].selection)
+
+        rows = []
+        for lead in leads:
+            lq = last_quality.get(lead.id)
+            lc = last_call.get(lead.id)
+            phone = lead.phone_number or ''
+            masked_phone = ('XXXXXX' + phone[-4:]) if len(phone) >= 10 else (phone or '')
+            rows.append({
+                'lead_id': lead.id,
+                'name': lead.name,
+                'phone': masked_phone,
+                'current_quality': quality_labels.get(lead.lead_quality, lead.lead_quality or '—'),
+                'quality_set_by_officer': (
+                    quality_labels.get(lq['quality'], lq['quality']) if lq else '—'),
+                'quality_changed_on': (
+                    fields.Datetime.to_string(lq['date']) if lq else ''),
+                'last_called_on': (
+                    fields.Datetime.to_string(lc['call_time']) if lc else ''),
+                'call_status': lc['call_status'] if lc else '',
+                'admission_status': bool(lead.admission_status),
+                'admission_date': (
+                    fields.Datetime.to_string(lead.admission_date)
+                    if lead.admission_date else ''),
+            })
+
+        # Most recently touched (by call or quality change) first
+        rows.sort(
+            key=lambda r: r['quality_changed_on'] or r['last_called_on'] or '',
+            reverse=True)
+
+        return {
+            'employee_name': employee.name,
+            'mode': mode,
+            'total': len(rows),
+            'admitted': sum(1 for r in rows if r['admission_status']),
+            'rows': rows,
+        }
+
+    # ------------------------------------------------------------------
     # Flat rows for XLSX export (same visibility rules)
     # ------------------------------------------------------------------
     @api.model

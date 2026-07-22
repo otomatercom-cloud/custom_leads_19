@@ -60,6 +60,12 @@ class CallCampaignDashboard extends Component {
             // Other
             startingAll: false,
             mobileMenuOpen: false,
+            // Officer lead-detail drill-down
+            showOfficerDetail: false,
+            officerDetailLoading: false,
+            officerDetailEmployeeId: null,
+            officerDetailMode: "called",   // called | assigned
+            officerDetail: null,           // { employee_name, mode, total, admitted, rows }
         });
 
         this.qualityOptions = QUALITY_OPTIONS;
@@ -288,6 +294,48 @@ class CallCampaignDashboard extends Component {
             views: [[false, "form"]],
             target: "main",
         });
+    }
+
+    // ── Officer lead-detail drill-down ────────────────────────────────────
+    async openOfficerDetail(employeeId) {
+        this.state.showOfficerDetail = true;
+        this.state.officerDetailEmployeeId = employeeId;
+        this.state.officerDetailMode = "called";
+        await this.loadOfficerDetail();
+    }
+
+    closeOfficerDetail() {
+        this.state.showOfficerDetail = false;
+        this.state.officerDetail = null;
+        this.state.officerDetailEmployeeId = null;
+    }
+
+    async setOfficerDetailMode(mode) {
+        if (this.state.officerDetailMode === mode) return;
+        this.state.officerDetailMode = mode;
+        await this.loadOfficerDetail();
+    }
+
+    async loadOfficerDetail() {
+        this.state.officerDetailLoading = true;
+        try {
+            this.state.officerDetail = await this.orm.call(
+                "lead.call.log", "get_officer_lead_detail",
+                [this.state.officerDetailEmployeeId, this.state.officerDetailMode]
+            );
+        } catch (e) {
+            this.notification.add("Failed to load lead detail: " + e.message, { type: "danger" });
+        } finally {
+            this.state.officerDetailLoading = false;
+        }
+    }
+
+    exportOfficerDetail() {
+        const url =
+            "/custom_leads/officer_lead_detail/export?employee_id=" +
+            encodeURIComponent(this.state.officerDetailEmployeeId) +
+            "&mode=" + encodeURIComponent(this.state.officerDetailMode);
+        window.open(url, "_blank");
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────

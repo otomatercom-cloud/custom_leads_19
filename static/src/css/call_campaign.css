@@ -1090,3 +1090,40 @@
 .o_cc_member_selected_count {
     margin-top: 8px; font-size: 12px; color: #64748b; font-style: italic;
 }
+
+/* ══ Officer Lead Detail Modal ═══════════════════════════════════════════ */
+.o_cc_officer_detail_modal { width: 920px; }
+.o_cc_officer_card { cursor: pointer; }
+
+.o_cc_od_tabs { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+.o_cc_od_tabs .ms-auto { margin-left: auto; }
+
+.o_cc_od_loading { text-align: center; padding: 40px 0; color: #64748b; }
+.o_cc_od_loading i { color: #7c3aed; }
+
+.o_cc_od_summary { display: flex; gap: 8px; margin-bottom: 14px; }
+.o_cc_od_badge {
+    padding: 5px 12px; border-radius: 999px; font-size: 12px; font-weight: 700;
+}
+.o_cc_od_badge_total { background: #eef2ff; color: #4f46e5; }
+.o_cc_od_badge_ok { background: #ecfdf5; color: #059669; }
+
+.o_cc_od_empty { text-align: center; padding: 40px 0; color: #94a3b8; }
+.o_cc_od_empty i { display: block; margin-bottom: 10px; }
+
+.o_cc_od_table_wrap { max-height: 55vh; overflow: auto; border: 1px solid #eef0f3; border-radius: 10px; }
+.o_cc_od_table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.o_cc_od_table th {
+    position: sticky; top: 0; background: #f8fafc; padding: 10px 12px;
+    text-align: left; font-weight: 700; color: #475569;
+    border-bottom: 2px solid #e5e7eb; white-space: nowrap;
+}
+.o_cc_od_table td { padding: 9px 12px; border-bottom: 1px solid #f3f4f6; color: #374151; white-space: nowrap; }
+.o_cc_od_table tr:hover td { background: #f9fafb; }
+.o_cc_od_th_name, .o_cc_od_td_name { min-width: 160px; white-space: normal; font-weight: 600; }
+.o_cc_od_num { text-align: center; }
+.o_cc_od_muted { color: #94a3b8; }
+
+@media (max-width: 900px) {
+    .o_cc_officer_detail_modal { width: 100%; }
+}
