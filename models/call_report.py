@@ -326,7 +326,8 @@ class LeadCallLogReport(models.Model):
     # Officer drill-down: lead-level detail (called or assigned)
     # ------------------------------------------------------------------
     @api.model
-    def get_officer_lead_detail(self, employee_id, mode='called'):
+    def get_officer_lead_detail(self, employee_id, mode='called',
+                                 date_from=None, date_to=None):
         """Lead-level detail for one officer, for the Officer Performance
         drill-down.
 
@@ -334,6 +335,17 @@ class LeadCallLogReport(models.Model):
                             by this officer (i.e. they actually called it).
         mode='assigned' -> every lead currently owned by this officer
                             (leads.logic.lead_owner), called or not.
+
+        date_from/date_to (optional, 'YYYY-MM-DD'): when given, restricts
+        which *activity* counts —
+          - mode='called': only leads this officer called within the range
+            (call_time inside the window) are included at all.
+          - mode='assigned': the assigned-lead list itself is NOT restricted
+            (ownership isn't date-bound), but the "Last Called" / "Quality
+            Set By Officer" columns only reflect activity inside the range,
+            so you can see e.g. "who did this officer touch this week out
+            of everyone they own".
+        Leave both blank for all-time.
 
         Each row reports: the lead's CURRENT quality, the quality this
         specific officer last set on it (from lead.quality.history — quality
@@ -357,28 +369,43 @@ class LeadCallLogReport(models.Model):
                         'total': 0, 'admitted': 0, 'rows': [],
                         'error': 'not_authorized'}
 
+        start_utc = end_utc = None
+        d_from_str = d_to_str = ''
+        if date_from or date_to:
+            d_from, d_to, start_utc, end_utc = self._report_utc_bounds(date_from, date_to)
+            d_from_str, d_to_str = fields.Date.to_string(d_from), fields.Date.to_string(d_to)
+
         Lead = self.env['leads.logic'].sudo()
         if mode == 'assigned':
             leads = Lead.search([('lead_owner', '=', employee.id)])
         else:
             if not user:
                 return {'employee_name': employee.name, 'mode': mode,
-                        'total': 0, 'admitted': 0, 'rows': []}
-            log_lead_ids = self.sudo().search(
-                [('user_id', '=', user.id)]).mapped('lead_id').ids
+                        'total': 0, 'admitted': 0, 'rows': [],
+                        'date_from': d_from_str, 'date_to': d_to_str}
+            call_domain = [('user_id', '=', user.id)]
+            if start_utc:
+                call_domain += [('call_time', '>=', start_utc), ('call_time', '<=', end_utc)]
+            log_lead_ids = self.sudo().search(call_domain).mapped('lead_id').ids
             leads = Lead.browse(log_lead_ids)
 
         if not leads:
             return {'employee_name': employee.name, 'mode': mode,
-                    'total': 0, 'admitted': 0, 'rows': []}
+                    'total': 0, 'admitted': 0, 'rows': [],
+                    'date_from': d_from_str, 'date_to': d_to_str}
 
         # Last call this officer made on each lead (only if they have a
         # linked user — otherwise there's nothing to match in the log).
+        # When a date range is active, only calls inside it count here too
+        # (so 'assigned' rows show blank if the officer didn't call them
+        # within the selected window, even though they're still assigned).
         last_call = {}
         if user:
+            log_domain = [('lead_id', 'in', leads.ids), ('user_id', '=', user.id)]
+            if start_utc:
+                log_domain += [('call_time', '>=', start_utc), ('call_time', '<=', end_utc)]
             logs = self.sudo().search_read(
-                [('lead_id', 'in', leads.ids), ('user_id', '=', user.id)],
-                ['lead_id', 'call_time', 'call_status'], order='call_time asc')
+                log_domain, ['lead_id', 'call_time', 'call_status'], order='call_time asc')
             for l in logs:
                 last_call[l['lead_id'][0]] = {
                     'call_time': l['call_time'],
@@ -390,9 +417,11 @@ class LeadCallLogReport(models.Model):
         # scoped to their own changes already).
         last_quality = {}
         if user:
+            hist_domain = [('lead_id', 'in', leads.ids), ('user_id', '=', user.id)]
+            if start_utc:
+                hist_domain += [('change_date', '>=', start_utc), ('change_date', '<=', end_utc)]
             hist = self.env['lead.quality.history'].sudo().search_read(
-                [('lead_id', 'in', leads.ids), ('user_id', '=', user.id)],
-                ['lead_id', 'lead_quality', 'change_date'], order='change_date asc')
+                hist_domain, ['lead_id', 'lead_quality', 'change_date'], order='change_date asc')
             for h in hist:
                 last_quality[h['lead_id'][0]] = {
                     'quality': h['lead_quality'],
@@ -436,6 +465,8 @@ class LeadCallLogReport(models.Model):
             'total': len(rows),
             'admitted': sum(1 for r in rows if r['admission_status']),
             'rows': rows,
+            'date_from': d_from_str,
+            'date_to': d_to_str,
         }
 
     # ------------------------------------------------------------------

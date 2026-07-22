@@ -474,6 +474,29 @@
                         </button>
                     </div>
 
+                    <div class="o_cc_od_datebar">
+                        <label>From</label>
+                        <input type="date" class="form-control form-control-sm"
+                               t-att-value="state.officerDetailDateFrom"
+                               t-on-change="onOfficerDetailDateFromChange"/>
+                        <label>To</label>
+                        <input type="date" class="form-control form-control-sm"
+                               t-att-value="state.officerDetailDateTo"
+                               t-on-change="onOfficerDetailDateToChange"/>
+                        <button type="button" class="btn btn-sm btn-primary"
+                                t-on-click="applyOfficerDetailDateFilter">
+                            <i class="fa fa-filter me-1"/>Apply
+                        </button>
+                        <button type="button" class="btn btn-sm btn-light"
+                                t-if="state.officerDetailDateFrom or state.officerDetailDateTo"
+                                t-on-click="clearOfficerDetailDateFilter">
+                            <i class="fa fa-times me-1"/>All Time
+                        </button>
+                        <span class="o_cc_od_date_hint" t-if="state.officerDetailMode === 'assigned'">
+                            (Assigned list is always all-time — the date only filters Last Called / Quality Set columns)
+                        </span>
+                    </div>
+
                     <t t-if="state.officerDetailLoading">
                         <div class="o_cc_od_loading">
                             <i class="fa fa-spinner fa-spin fa-2x"/>

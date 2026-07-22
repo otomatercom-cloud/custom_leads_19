@@ -65,6 +65,8 @@ class CallCampaignDashboard extends Component {
             officerDetailLoading: false,
             officerDetailEmployeeId: null,
             officerDetailMode: "called",   // called | assigned
+            officerDetailDateFrom: "",
+            officerDetailDateTo: "",
             officerDetail: null,           // { employee_name, mode, total, admitted, rows }
         });
 
@@ -301,6 +303,8 @@ class CallCampaignDashboard extends Component {
         this.state.showOfficerDetail = true;
         this.state.officerDetailEmployeeId = employeeId;
         this.state.officerDetailMode = "called";
+        this.state.officerDetailDateFrom = "";
+        this.state.officerDetailDateTo = "";
         await this.loadOfficerDetail();
     }
 
@@ -316,12 +320,35 @@ class CallCampaignDashboard extends Component {
         await this.loadOfficerDetail();
     }
 
+    onOfficerDetailDateFromChange(ev) {
+        this.state.officerDetailDateFrom = ev.target.value;
+    }
+
+    onOfficerDetailDateToChange(ev) {
+        this.state.officerDetailDateTo = ev.target.value;
+    }
+
+    async applyOfficerDetailDateFilter() {
+        await this.loadOfficerDetail();
+    }
+
+    async clearOfficerDetailDateFilter() {
+        this.state.officerDetailDateFrom = "";
+        this.state.officerDetailDateTo = "";
+        await this.loadOfficerDetail();
+    }
+
     async loadOfficerDetail() {
         this.state.officerDetailLoading = true;
         try {
             this.state.officerDetail = await this.orm.call(
                 "lead.call.log", "get_officer_lead_detail",
-                [this.state.officerDetailEmployeeId, this.state.officerDetailMode]
+                [
+                    this.state.officerDetailEmployeeId,
+                    this.state.officerDetailMode,
+                    this.state.officerDetailDateFrom || false,
+                    this.state.officerDetailDateTo || false,
+                ]
             );
         } catch (e) {
             this.notification.add("Failed to load lead detail: " + e.message, { type: "danger" });
@@ -331,10 +358,16 @@ class CallCampaignDashboard extends Component {
     }
 
     exportOfficerDetail() {
-        const url =
+        let url =
             "/custom_leads/officer_lead_detail/export?employee_id=" +
             encodeURIComponent(this.state.officerDetailEmployeeId) +
             "&mode=" + encodeURIComponent(this.state.officerDetailMode);
+        if (this.state.officerDetailDateFrom) {
+            url += "&date_from=" + encodeURIComponent(this.state.officerDetailDateFrom);
+        }
+        if (this.state.officerDetailDateTo) {
+            url += "&date_to=" + encodeURIComponent(this.state.officerDetailDateTo);
+        }
         window.open(url, "_blank");
     }
 

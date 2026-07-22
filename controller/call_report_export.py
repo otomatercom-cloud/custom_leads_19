@@ -130,7 +130,8 @@ class CallReportExportController(http.Controller):
 
     @http.route('/custom_leads/officer_lead_detail/export', type='http',
                 auth='user', methods=['GET'])
-    def export_officer_lead_detail(self, employee_id=None, mode='called', **kwargs):
+    def export_officer_lead_detail(self, employee_id=None, mode='called',
+                                    date_from=None, date_to=None, **kwargs):
         try:
             import xlsxwriter
         except ImportError:
@@ -144,7 +145,8 @@ class CallReportExportController(http.Controller):
             return request.make_response(
                 "Invalid employee_id", headers=[('Content-Type', 'text/plain')])
 
-        data = request.env['lead.call.log'].get_officer_lead_detail(employee_id, mode)
+        data = request.env['lead.call.log'].get_officer_lead_detail(
+            employee_id, mode, date_from, date_to)
         if data.get('error') == 'not_authorized':
             return request.make_response(
                 "Not authorized", headers=[('Content-Type', 'text/plain')],
@@ -170,8 +172,10 @@ class CallReportExportController(http.Controller):
 
         sheet.write(0, 0, 'Officer Lead Detail — %s' % data['employee_name'],
                     fmt_title)
-        sheet.write(1, 0, 'Basis: %s' % (
-            'Leads Called' if mode == 'called' else 'Leads Assigned'), fmt_sub)
+        basis_line = 'Basis: %s' % ('Leads Called' if mode == 'called' else 'Leads Assigned')
+        if data.get('date_from'):
+            basis_line += '   |   Period: %s to %s' % (data['date_from'], data['date_to'])
+        sheet.write(1, 0, basis_line, fmt_sub)
         sheet.write(2, 0, 'Total Leads: %s   |   Admissions: %s' % (
             data['total'], data['admitted']), fmt_sub)
 

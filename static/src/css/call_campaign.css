@@ -1098,6 +1098,15 @@
 .o_cc_od_tabs { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
 .o_cc_od_tabs .ms-auto { margin-left: auto; }
 
+.o_cc_od_datebar {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    margin-bottom: 16px; padding: 10px 12px; background: #f8fafc;
+    border-radius: 10px; border: 1px solid #eef0f3;
+}
+.o_cc_od_datebar label { font-size: 12px; font-weight: 700; color: #64748b; margin: 0; }
+.o_cc_od_datebar input[type="date"] { width: auto; }
+.o_cc_od_date_hint { font-size: 11px; color: #94a3b8; font-style: italic; }
+
 .o_cc_od_loading { text-align: center; padding: 40px 0; color: #64748b; }
 .o_cc_od_loading i { color: #7c3aed; }
 
