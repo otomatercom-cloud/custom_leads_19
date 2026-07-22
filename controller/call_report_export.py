@@ -53,22 +53,25 @@ class CallReportExportController(http.Controller):
         sheet.write(1, 0, 'Period: %s  to  %s' % (
             data['date_from'], data['date_to']), fmt_sub)
         s = data['summary']
-        sheet.write(2, 0, 'Total Calls: %s   |   Connected: %s   |   '
-                          'Outgoing: %s   |   Incoming: %s   |   '
-                          'Unique Leads: %s   |   Talk Time: %s' % (
-                              s['total_calls'], s['connected'],
-                              s['outgoing'], s['incoming'],
-                              s['unique_leads'], s['total_duration']),
+        sheet.write(2, 0, 'Assigned: %s   |   Total Calls: %s   |   '
+                          'Connected: %s   |   Outgoing: %s   |   '
+                          'Incoming: %s   |   Called Leads: %s   |   '
+                          'Pending: %s   |   Talk Time: %s' % (
+                              s['total_assigned'], s['total_calls'],
+                              s['connected'], s['outgoing'], s['incoming'],
+                              s['unique_leads'], s['total_pending'],
+                              s['total_duration']),
                     fmt_sub)
 
-        headers = ['Team', 'Name', 'Role', 'Reporting TL', 'Total Calls',
-                   'Outgoing', 'Incoming', 'Connected', 'Not Connected',
-                   'Unique Leads', 'Talk Time', 'Avg Duration']
+        headers = ['Team', 'Name', 'Role', 'Reporting TL', 'Assigned',
+                   'Total Calls', 'Outgoing', 'Incoming', 'Connected',
+                   'Not Connected', 'Called Leads', 'Pending', 'Talk Time',
+                   'Avg Duration']
         header_row = 4
         for col, title in enumerate(headers):
             sheet.write(header_row, col, title, fmt_head)
 
-        widths = [22, 26, 18, 22, 11, 10, 10, 11, 13, 12, 12, 12]
+        widths = [22, 26, 18, 22, 10, 11, 10, 10, 11, 13, 12, 10, 12, 12]
         for col, w in enumerate(widths):
             sheet.set_column(col, col, w)
 
@@ -81,14 +84,16 @@ class CallReportExportController(http.Controller):
             sheet.write(r, 1, row['name'], f_txt)
             sheet.write(r, 2, row['role'], f_txt)
             sheet.write(r, 3, row['tl_name'], f_txt)
-            sheet.write(r, 4, row['calls'], f_num)
-            sheet.write(r, 5, row['outgoing'], f_num)
-            sheet.write(r, 6, row['incoming'], f_num)
-            sheet.write(r, 7, row['connected'], f_num)
-            sheet.write(r, 8, row['not_connected'], f_num)
-            sheet.write(r, 9, row['unique_leads'], f_num)
-            sheet.write(r, 10, row['duration'], f_num)
-            sheet.write(r, 11, row['avg_duration'], f_num)
+            sheet.write(r, 4, row['assigned'], f_num)
+            sheet.write(r, 5, row['calls'], f_num)
+            sheet.write(r, 6, row['outgoing'], f_num)
+            sheet.write(r, 7, row['incoming'], f_num)
+            sheet.write(r, 8, row['connected'], f_num)
+            sheet.write(r, 9, row['not_connected'], f_num)
+            sheet.write(r, 10, row['unique_leads'], f_num)
+            sheet.write(r, 11, row['pending'], f_num)
+            sheet.write(r, 12, row['duration'], f_num)
+            sheet.write(r, 13, row['avg_duration'], f_num)
             r += 1
 
         # Totals row
@@ -96,14 +101,16 @@ class CallReportExportController(http.Controller):
         sheet.write(r, 1, '', fmt_total)
         sheet.write(r, 2, '', fmt_total)
         sheet.write(r, 3, '', fmt_total)
-        sheet.write(r, 4, sum(x['calls'] for x in rows), fmt_total_num)
-        sheet.write(r, 5, sum(x['outgoing'] for x in rows), fmt_total_num)
-        sheet.write(r, 6, sum(x['incoming'] for x in rows), fmt_total_num)
-        sheet.write(r, 7, sum(x['connected'] for x in rows), fmt_total_num)
-        sheet.write(r, 8, sum(x['not_connected'] for x in rows), fmt_total_num)
-        sheet.write(r, 9, '', fmt_total)
-        sheet.write(r, 10, s['total_duration'], fmt_total_num)
-        sheet.write(r, 11, '', fmt_total)
+        sheet.write(r, 4, sum(x['assigned'] for x in rows), fmt_total_num)
+        sheet.write(r, 5, sum(x['calls'] for x in rows), fmt_total_num)
+        sheet.write(r, 6, sum(x['outgoing'] for x in rows), fmt_total_num)
+        sheet.write(r, 7, sum(x['incoming'] for x in rows), fmt_total_num)
+        sheet.write(r, 8, sum(x['connected'] for x in rows), fmt_total_num)
+        sheet.write(r, 9, sum(x['not_connected'] for x in rows), fmt_total_num)
+        sheet.write(r, 10, '', fmt_total)
+        sheet.write(r, 11, sum(x['pending'] for x in rows), fmt_total_num)
+        sheet.write(r, 12, s['total_duration'], fmt_total_num)
+        sheet.write(r, 13, '', fmt_total)
 
         sheet.freeze_panes(header_row + 1, 0)
         workbook.close()

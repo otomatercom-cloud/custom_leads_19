@@ -105,6 +105,8 @@
 .o_crd_card_in .o_crd_card_icon { background: #3b82f6; }
 .o_crd_card_leads .o_crd_card_icon { background: #8b5cf6; }
 .o_crd_card_time .o_crd_card_icon { background: #64748b; }
+.o_crd_card_assigned .o_crd_card_icon { background: #0ea5e9; }
+.o_crd_card_pending .o_crd_card_icon { background: #f97316; }
 .o_crd_card_value {
     font-size: 24px;
     font-weight: 800;
@@ -153,6 +155,8 @@
 }
 .o_crd_badge_total { background: #eef2ff; color: #4f46e5; }
 .o_crd_badge_ok { background: #ecfdf5; color: #059669; }
+.o_crd_badge_assigned { background: #e0f2fe; color: #0369a1; }
+.o_crd_badge_pending { background: #fff7ed; color: #c2410c; }
 
 /* ── Table ──────────────────────────────────────────────────────── */
 .o_crd_table_wrap { overflow-x: auto; }
@@ -190,6 +194,7 @@
 .o_crd_bold { font-weight: 700; }
 .o_crd_green { color: #059669; font-weight: 600; }
 .o_crd_red { color: #dc2626; }
+.o_crd_amber { color: #c2410c; font-weight: 600; }
 
 .o_crd_role {
     font-size: 11px;

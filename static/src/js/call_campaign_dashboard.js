@@ -34,7 +34,7 @@ class CallCampaignDashboard extends Component {
             officerBreakdown: [],
             stats: { total: 0, running: 0, draft: 0, done: 0,
                      total_leads: 0, total_called: 0, total_pending: 0 },
-            filter: "all",
+            filter: "running",
             search: "",
             role: "officer",
             // Generate modal
@@ -84,6 +84,11 @@ class CallCampaignDashboard extends Component {
     }
 
     // ── Filters ───────────────────────────────────────────────────────────
+    _stateRank(c) {
+        // running first, then draft, then done/cancelled
+        return { running: 0, draft: 1, done: 2 }[c.state] ?? 3;
+    }
+
     get filteredCampaigns() {
         let list = this.state.campaigns;
         if (this.state.filter === "running") list = list.filter(c => c.state === "running");
@@ -97,7 +102,10 @@ class CallCampaignDashboard extends Component {
                 (c.created_by || "").toLowerCase().includes(q)
             );
         }
-        return list;
+        // Running campaigns always on top (matters for the "All" and
+        // "Mine" filters), newest first within each state group.
+        return [...list].sort((a, b) =>
+            this._stateRank(a) - this._stateRank(b) || (b.id - a.id));
     }
 
     get isAdminRole() {

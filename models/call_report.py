@@ -53,14 +53,21 @@ def _fmt_duration(seconds):
 
 
 _CONNECTED_KEYWORDS = ('answer', 'connect', 'success', 'complete', 'received')
+_NOT_CONNECTED_KEYWORDS = ('noanswer', 'no answer', 'no_answer', 'busy',
+                           'cancel', 'congestion', 'chanunavail', 'fail',
+                           'not attended', 'not_attended')
 
 
 def _is_connected(status, duration_seconds):
-    """Heuristic: a call is 'connected' if status says so, or it has duration."""
+    """Heuristic: a call is 'connected' if it has talk time, or the status
+    is positive. Negative statuses are checked FIRST because Voxbay's
+    'NOANSWER' would otherwise match the 'answer' keyword."""
     if duration_seconds > 0:
         return True
     if status:
         s = str(status).lower()
+        if any(k in s for k in _NOT_CONNECTED_KEYWORDS):
+            return False
         return any(k in s for k in _CONNECTED_KEYWORDS)
     return False
 
@@ -131,12 +138,39 @@ class LeadCallLogReport(models.Model):
         return 'own', self.env['lead.team'].sudo().browse(), {user.id}
 
     # ------------------------------------------------------------------
+    # Assigned leads (current ownership, any date, any state)
+    # ------------------------------------------------------------------
+    @api.model
+    def _assigned_counts(self, allowed_user_ids=None):
+        """res.users id -> count of leads.logic currently owned (lead_owner)
+        by that user's linked hr.employee. Snapshot of *current* assignment
+        — not scoped to the report's date range, since ownership can predate
+        it. Restricted to allowed_user_ids when a scope is given (TL/officer
+        visibility), so a TL never sees another team's assigned totals."""
+        Lead = self.env['leads.logic'].sudo()
+        grouped = Lead.read_group(
+            [('lead_owner', '!=', False)], ['lead_owner'], ['lead_owner'])
+        emp_counts = {g['lead_owner'][0]: g['lead_owner_count'] for g in grouped}
+        if not emp_counts:
+            return {}
+        employees = self.env['hr.employee'].sudo().browse(list(emp_counts.keys()))
+        result = {}
+        for emp in employees:
+            if not emp.user_id:
+                continue
+            if allowed_user_ids is not None and emp.user_id.id not in allowed_user_ids:
+                continue
+            result[emp.user_id.id] = result.get(emp.user_id.id, 0) + emp_counts.get(emp.id, 0)
+        return result
+
+    # ------------------------------------------------------------------
     # Main dashboard RPC
     # ------------------------------------------------------------------
     @api.model
     def get_call_report(self, date_from=None, date_to=None):
         d_from, d_to, start_utc, end_utc = self._report_utc_bounds(date_from, date_to)
         scope, teams, allowed_user_ids = self._report_scope()
+        assigned_map = self._assigned_counts(allowed_user_ids)
 
         domain = [('call_time', '>=', start_utc), ('call_time', '<=', end_utc)]
         if allowed_user_ids is not None:
@@ -184,6 +218,13 @@ class LeadCallLogReport(models.Model):
             }
             calls = base['calls']
             secs = base['duration_seconds']
+            called_leads = len(base['lead_ids'])
+            assigned = assigned_map.get(uid, 0)
+            # Pending = currently-assigned leads this officer hasn't called
+            # in the selected period. Clamped at 0: a lead can show up as
+            # "called" here (call log) while no longer being "assigned"
+            # (reassigned/lost since), which would otherwise go negative.
+            pending = max(0, assigned - called_leads)
             return {
                 'user_id': uid,
                 'name': name,
@@ -194,7 +235,9 @@ class LeadCallLogReport(models.Model):
                 'incoming': base['incoming'],
                 'connected': base['connected'],
                 'not_connected': base['not_connected'],
-                'unique_leads': len(base['lead_ids']),
+                'unique_leads': called_leads,
+                'assigned': assigned,
+                'pending': pending,
                 'duration': _fmt_duration(secs),
                 'avg_duration': _fmt_duration(secs / calls) if calls else '00:00:00',
             }
@@ -202,6 +245,7 @@ class LeadCallLogReport(models.Model):
         # ---- build team blocks --------------------------------------
         team_blocks = []
         seen_user_ids = set()
+        all_rows = []  # every row actually shown, for assigned/pending totals
         for team in teams:
             rows = []
             for tl_emp in team.team_lead_ids:
@@ -210,7 +254,9 @@ class LeadCallLogReport(models.Model):
                     continue
                 if allowed_user_ids is not None and tl_user.id not in allowed_user_ids:
                     continue
-                rows.append(make_row(tl_user.id, tl_emp.name, 'tl'))
+                row = make_row(tl_user.id, tl_emp.name, 'tl')
+                rows.append(row)
+                all_rows.append(row)
                 seen_user_ids.add(tl_user.id)
             for member in team.member_ids:
                 m_user = member.user_id
@@ -218,9 +264,11 @@ class LeadCallLogReport(models.Model):
                     continue
                 if allowed_user_ids is not None and m_user.id not in allowed_user_ids:
                     continue
-                rows.append(make_row(
+                row = make_row(
                     m_user.id, member.employee_id.name, 'officer',
-                    member.team_lead_id.name or ''))
+                    member.team_lead_id.name or '')
+                rows.append(row)
+                all_rows.append(row)
                 seen_user_ids.add(m_user.id)
             if not rows:
                 continue
@@ -229,6 +277,8 @@ class LeadCallLogReport(models.Model):
                 'name': team.name,
                 'total_calls': sum(r['calls'] for r in rows),
                 'total_connected': sum(r['connected'] for r in rows),
+                'total_assigned': sum(r['assigned'] for r in rows),
+                'total_pending': sum(r['pending'] for r in rows),
                 'rows': rows,
             })
 
@@ -239,7 +289,9 @@ class LeadCallLogReport(models.Model):
                 continue
             if allowed_user_ids is not None and uid not in allowed_user_ids:
                 continue
-            others.append(make_row(uid, rec['name'], 'officer'))
+            row = make_row(uid, rec['name'], 'officer')
+            others.append(row)
+            all_rows.append(row)
         others.sort(key=lambda r: -r['calls'])
 
         # ---- summary (distinct users, so TL in 2 teams not doubled) --
@@ -254,6 +306,11 @@ class LeadCallLogReport(models.Model):
             'active_callers': len(per_user),
             'total_duration': _fmt_duration(
                 sum(r['duration_seconds'] for r in per_user.values())),
+            # Assigned/pending come from all_rows (every officer/TL shown,
+            # not just ones with call activity) so an officer sitting on
+            # assigned leads with zero calls still counts toward pending.
+            'total_assigned': sum(r['assigned'] for r in all_rows),
+            'total_pending': sum(r['pending'] for r in all_rows),
         }
 
         return {
@@ -279,12 +336,14 @@ class LeadCallLogReport(models.Model):
                     'name': r['name'],
                     'role': 'Team Lead' if r['role'] == 'tl' else 'Admission Officer',
                     'tl_name': r['tl_name'],
+                    'assigned': r['assigned'],
                     'calls': r['calls'],
                     'outgoing': r['outgoing'],
                     'incoming': r['incoming'],
                     'connected': r['connected'],
                     'not_connected': r['not_connected'],
                     'unique_leads': r['unique_leads'],
+                    'pending': r['pending'],
                     'duration': r['duration'],
                     'avg_duration': r['avg_duration'],
                 })
@@ -294,12 +353,14 @@ class LeadCallLogReport(models.Model):
                 'name': r['name'],
                 'role': 'Other',
                 'tl_name': '',
+                'assigned': r['assigned'],
                 'calls': r['calls'],
                 'outgoing': r['outgoing'],
                 'incoming': r['incoming'],
                 'connected': r['connected'],
                 'not_connected': r['not_connected'],
                 'unique_leads': r['unique_leads'],
+                'pending': r['pending'],
                 'duration': r['duration'],
                 'avg_duration': r['avg_duration'],
             })

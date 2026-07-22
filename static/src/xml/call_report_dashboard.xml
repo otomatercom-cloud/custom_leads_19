@@ -74,6 +74,11 @@
     <t t-else="">
         <!-- ── Summary cards ──────────────────────────────────────── -->
         <div class="o_crd_cards">
+            <div class="o_crd_card o_crd_card_assigned">
+                <div class="o_crd_card_icon"><i class="fa fa-address-book"/></div>
+                <div class="o_crd_card_value" t-esc="summary.total_assigned"/>
+                <div class="o_crd_card_label">Assigned</div>
+            </div>
             <div class="o_crd_card o_crd_card_total">
                 <div class="o_crd_card_icon"><i class="fa fa-phone"/></div>
                 <div class="o_crd_card_value" t-esc="summary.total_calls"/>
@@ -97,7 +102,12 @@
             <div class="o_crd_card o_crd_card_leads">
                 <div class="o_crd_card_icon"><i class="fa fa-users"/></div>
                 <div class="o_crd_card_value" t-esc="summary.unique_leads"/>
-                <div class="o_crd_card_label">Unique Leads</div>
+                <div class="o_crd_card_label">Called Leads</div>
+            </div>
+            <div class="o_crd_card o_crd_card_pending">
+                <div class="o_crd_card_icon"><i class="fa fa-hourglass-half"/></div>
+                <div class="o_crd_card_value" t-esc="summary.total_pending"/>
+                <div class="o_crd_card_label">Pending</div>
             </div>
             <div class="o_crd_card o_crd_card_time">
                 <div class="o_crd_card_icon"><i class="fa fa-clock-o"/></div>
@@ -120,11 +130,17 @@
                         <i class="fa fa-users me-2"/><t t-esc="team.name"/>
                     </div>
                     <div class="o_crd_team_stats">
+                        <span class="o_crd_badge o_crd_badge_assigned">
+                            <t t-esc="team.total_assigned"/> assigned
+                        </span>
                         <span class="o_crd_badge o_crd_badge_total">
                             <t t-esc="team.total_calls"/> calls
                         </span>
                         <span class="o_crd_badge o_crd_badge_ok">
                             <t t-esc="team.total_connected"/> connected
+                        </span>
+                        <span class="o_crd_badge o_crd_badge_pending">
+                            <t t-esc="team.total_pending"/> pending
                         </span>
                     </div>
                 </div>
@@ -135,12 +151,14 @@
                                 <th class="o_crd_th_name">Name</th>
                                 <th>Role</th>
                                 <th>Reporting TL</th>
+                                <th class="o_crd_num">Assigned</th>
                                 <th class="o_crd_num">Calls</th>
                                 <th class="o_crd_num">Out</th>
                                 <th class="o_crd_num">In</th>
                                 <th class="o_crd_num">Connected</th>
                                 <th class="o_crd_num">Not Conn.</th>
-                                <th class="o_crd_num">Leads</th>
+                                <th class="o_crd_num">Called Leads</th>
+                                <th class="o_crd_num">Pending</th>
                                 <th class="o_crd_num">Talk Time</th>
                                 <th class="o_crd_num">Avg</th>
                                 <th class="o_crd_num">Connect %</th>
@@ -160,12 +178,14 @@
                                         </span>
                                     </td>
                                     <td class="o_crd_muted" t-esc="row.tl_name"/>
+                                    <td class="o_crd_num" t-esc="row.assigned"/>
                                     <td class="o_crd_num o_crd_bold" t-esc="row.calls"/>
                                     <td class="o_crd_num" t-esc="row.outgoing"/>
                                     <td class="o_crd_num" t-esc="row.incoming"/>
                                     <td class="o_crd_num o_crd_green" t-esc="row.connected"/>
                                     <td class="o_crd_num o_crd_red" t-esc="row.not_connected"/>
                                     <td class="o_crd_num" t-esc="row.unique_leads"/>
+                                    <td class="o_crd_num o_crd_amber" t-esc="row.pending"/>
                                     <td class="o_crd_num" t-esc="row.duration"/>
                                     <td class="o_crd_num" t-esc="row.avg_duration"/>
                                     <td class="o_crd_num">
@@ -198,12 +218,14 @@
                         <thead>
                             <tr>
                                 <th class="o_crd_th_name">Name</th>
+                                <th class="o_crd_num">Assigned</th>
                                 <th class="o_crd_num">Calls</th>
                                 <th class="o_crd_num">Out</th>
                                 <th class="o_crd_num">In</th>
                                 <th class="o_crd_num">Connected</th>
                                 <th class="o_crd_num">Not Conn.</th>
-                                <th class="o_crd_num">Leads</th>
+                                <th class="o_crd_num">Called Leads</th>
+                                <th class="o_crd_num">Pending</th>
                                 <th class="o_crd_num">Talk Time</th>
                                 <th class="o_crd_num">Avg</th>
                             </tr>
@@ -212,12 +234,14 @@
                             <t t-foreach="others" t-as="row" t-key="row.user_id">
                                 <tr class="o_crd_row" t-on-click="() => this.openUserCalls(row)">
                                     <td class="o_crd_td_name" t-esc="row.name"/>
+                                    <td class="o_crd_num" t-esc="row.assigned"/>
                                     <td class="o_crd_num o_crd_bold" t-esc="row.calls"/>
                                     <td class="o_crd_num" t-esc="row.outgoing"/>
                                     <td class="o_crd_num" t-esc="row.incoming"/>
                                     <td class="o_crd_num o_crd_green" t-esc="row.connected"/>
                                     <td class="o_crd_num o_crd_red" t-esc="row.not_connected"/>
                                     <td class="o_crd_num" t-esc="row.unique_leads"/>
+                                    <td class="o_crd_num o_crd_amber" t-esc="row.pending"/>
                                     <td class="o_crd_num" t-esc="row.duration"/>
                                     <td class="o_crd_num" t-esc="row.avg_duration"/>
                                 </tr>

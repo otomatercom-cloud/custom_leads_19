@@ -24,8 +24,9 @@
                 <field name="caller_number" optional="show"/>
                 <field name="call_type" optional="show"/>
                 <field name="call_status" optional="show"/>
-                <field name="duration" optional="show"/>
+                <field name="duration" optional="show" string="Duration (sec)"/>
                 <field name="remarks" optional="hide"/>
+                <field name="recording_url" optional="show" widget="url" string="Recording"/>
                 <field name="has_recording" optional="hide"/>
             </list>
         </field>
