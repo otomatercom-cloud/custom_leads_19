@@ -7,7 +7,7 @@ class KanbanResponseWizard(models.TransientModel):
     _name = 'kanban.response.wizard'
     _description = 'Quick Response Wizard'
 
-    lead_id         = fields.Many2one('leads.logic', required=True, readonly=True)
+    lead_id         = fields.Many2one('leads.logic', index=True, required=True, readonly=True)
     lead_name       = fields.Char(related='lead_id.name', readonly=True)
     phone_number    = fields.Char(related='lead_id.phone_number', readonly=True)
     current_quality = fields.Selection(related='lead_id.lead_quality',
@@ -94,7 +94,7 @@ class KanbanQualityWizard(models.TransientModel):
     _name = 'kanban.quality.wizard'
     _description = 'Quick Lead Quality Wizard'
 
-    lead_id = fields.Many2one('leads.logic', required=True, readonly=True)
+    lead_id = fields.Many2one('leads.logic', index=True, required=True, readonly=True)
     lead_name = fields.Char(related='lead_id.name', readonly=True)
     phone_number = fields.Char(related='lead_id.phone_number', readonly=True)
     current_quality = fields.Selection(related='lead_id.lead_quality',

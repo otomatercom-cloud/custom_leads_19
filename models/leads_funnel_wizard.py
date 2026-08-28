@@ -5,7 +5,7 @@ class LeadsFunnelWizard(models.TransientModel):
     _name = 'leads.funnel.wizard'
     _description = 'Lead Funnel Wizard'
 
-    lead_id = fields.Many2one('leads.logic', string='Lead', required=True)
+    lead_id = fields.Many2one('leads.logic', index=True, string='Lead', required=True)
     first_call = fields.Boolean(related='lead_id.first_call', string="First Call Done")
     whatsapp_intro = fields.Boolean(related='lead_id.whatsapp_intro', string="WhatsApp Sent")
     second_followup = fields.Boolean(related='lead_id.second_followup', string="Second Follow Up Done")

@@ -15,7 +15,7 @@ class ConnectionForm(models.TransientModel):
         string='Lead Quality'
     )
     expected_joining_date = fields.Date(string="Expected Joining Date")
-    lead_id = fields.Many2one('leads.logic', string="Lead")
+    lead_id = fields.Many2one('leads.logic', index=True, string="Lead")
     subject = fields.Many2one('mail.activity.type', string="Subject")
     task_owner_id = fields.Many2one('res.users', string="Task Owner")
     due_date = fields.Date(string="Due Date")
@@ -64,7 +64,7 @@ class NotConnectionForm(models.TransientModel):
     _name = 'not.connect.form'
 
     notes = fields.Text(string="Notes")
-    lead_id = fields.Many2one('leads.logic', string="Lead")
+    lead_id = fields.Many2one('leads.logic', index=True, string="Lead")
 
     def act_done(self):
         self.lead_id.write({
@@ -78,7 +78,7 @@ class ConvertLead(models.TransientModel):
     _name = 'convert.lead'
 
     amount = fields.Float(string="Booking Amount")
-    lead_id = fields.Many2one('leads.logic', string="Deal Name")
+    lead_id = fields.Many2one('leads.logic', index=True, string="Deal Name")
     closing_date = fields.Date(string="Closing Date")
     lead_owner_id = fields.Many2one('res.users', string="Lead Owner")
 
@@ -95,7 +95,7 @@ class ConvertLead(models.TransientModel):
 class LostLead(models.TransientModel):
     _name = 'lost.lead.form'
 
-    lead_id = fields.Many2one('leads.logic', string="Lead")
+    lead_id = fields.Many2one('leads.logic', index=True, string="Lead")
     reason = fields.Text(string="Lost Reason")
 
     @api.constrains('reason')

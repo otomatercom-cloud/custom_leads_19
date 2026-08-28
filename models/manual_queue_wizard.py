@@ -30,7 +30,7 @@ class ManualQueueLine(models.TransientModel):
     _order = 'queue_priority asc, id asc'
 
     wizard_id = fields.Many2one('manual.queue.assign.wizard', ondelete='cascade')
-    lead_id = fields.Many2one('leads.logic', string='Lead', required=True, readonly=True)
+    lead_id = fields.Many2one('leads.logic', index=True, string='Lead', required=True, readonly=True)
     lead_name = fields.Char(related='lead_id.name', readonly=True)
     phone_number = fields.Char(related='lead_id.phone_number', readonly=True)
     lead_quality = fields.Selection(related='lead_id.lead_quality', readonly=True)

@@ -6,7 +6,7 @@ class StudentDetailsInherit(models.Model):
     _inherit = 'student.details'
     _description = 'Student Details (Lead Extension)'
 
-    lead_id = fields.Many2one('leads.logic', string='Source Lead', readonly=True, copy=False)
+    lead_id = fields.Many2one('leads.logic', index=True, string='Source Lead', readonly=True, copy=False)
     lead_ids = fields.One2many('leads.logic', 'student_id', string='Connected Leads', readonly=True)
     lead_count = fields.Integer(string='Leads', compute='_compute_lead_count')
 

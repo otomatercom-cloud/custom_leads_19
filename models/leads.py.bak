@@ -19,7 +19,7 @@ class LeadAssignmentHistory(models.Model):
     _description = 'Lead Assignment History'
     _order = 'create_date desc'
 
-    lead_id = fields.Many2one('leads.logic', index=True, string='Lead', ondelete='cascade')
+    lead_id = fields.Many2one('leads.logic', string='Lead', ondelete='cascade')
     owner_id = fields.Many2one('hr.employee', string='Assigned Officer')
     assigned_date = fields.Datetime(string='Assigned Date', default=fields.Datetime.now)
     assigned_by = fields.Many2one('res.users', string='Assigned By', default=lambda self: self.env.user)
@@ -33,7 +33,7 @@ class LeadQualityHistory(models.Model):
     _description = 'Lead Quality History'
     _order = 'create_date desc'
 
-    lead_id = fields.Many2one('leads.logic', index=True, string='Lead', ondelete='cascade')
+    lead_id = fields.Many2one('leads.logic', string='Lead', ondelete='cascade')
     lead_quality = fields.Selection(
         [
             ('new', '🆕  New'),
@@ -1551,8 +1551,8 @@ class LeadsForm(models.Model):
             'exported_fields': ", ".join(fields_to_export),
             'ip_address': ip_addr,
         })
-        #for record in self:
-        #    record.message_post(body=f"⚠️ This lead was exported by {self.env.user.name} on {fields.Datetime.now()}")
+        for record in self:
+            record.message_post(body=f"⚠️ This lead was exported by {self.env.user.name} on {fields.Datetime.now()}")
         return super(LeadsForm, self).export_data(fields_to_export)
 
 
@@ -1575,7 +1575,7 @@ class LeadResponse(models.Model):
     _rec_name = 'comment'
     _order = 'response_time desc'
 
-    lead_id = fields.Many2one('leads.logic', index=True, string="Lead", ondelete='cascade')
+    lead_id = fields.Many2one('leads.logic', string="Lead", ondelete='cascade')
     user_id = fields.Many2one('res.users', string="Responded By", default=lambda self: self.env.user)
     comment = fields.Text(string="Response / Comment", required=True)
     response_time = fields.Datetime(string="Response Time", default=fields.Datetime.now)
@@ -1626,7 +1626,7 @@ class LeadCallLog(models.Model):
     _description = "Lead Call Log"
     _order = "call_time desc"
 
-    lead_id = fields.Many2one("leads.logic", index=True, string="Lead", ondelete="cascade")
+    lead_id = fields.Many2one("leads.logic", string="Lead", ondelete="cascade")
     user_id = fields.Many2one("res.users", string="Agent", default=lambda self: self.env.user)
     call_time = fields.Datetime(string="Call Time", default=lambda self: fields.Datetime.now())
     remarks = fields.Text(string="Remarks")
@@ -1681,7 +1681,7 @@ class LeadFollowUp(models.Model):
     _order = 'status desc, next_followup_date asc'
 
     display_name = fields.Char(compute='_compute_display_name', store=True)
-    lead_id = fields.Many2one('leads.logic', index=True, string="Lead", ondelete="cascade", required=True)
+    lead_id = fields.Many2one('leads.logic', string="Lead", ondelete="cascade", required=True)
     lead_reference = fields.Char(related='lead_id.reference_no', string='Lead Reference', readonly=True)
     lead_owner_id = fields.Many2one(related='lead_id.lead_owner', string='Lead Owner', readonly=True)
     user_id = fields.Many2one('res.users', string="Follow-Up By", default=lambda self: self.env.user)
@@ -1851,7 +1851,7 @@ class LeadUnlockWizard(models.TransientModel):
     _name = "lead.unlock.wizard"
     _description = "Unlock Lead Editing Wizard"
 
-    lead_id = fields.Many2one("leads.logic", index=True, required=True)
+    lead_id = fields.Many2one("leads.logic", required=True)
 
     def action_unlock(self):
         self.lead_id.is_editable = True
@@ -1865,7 +1865,7 @@ class WebinarInviteWizard(models.TransientModel):
     _name = 'webinar.invite.wizard'
     _description = 'Webinar Invite Wizard'
 
-    lead_id = fields.Many2one('leads.logic', index=True, required=True)
+    lead_id = fields.Many2one('leads.logic', required=True)
     zoom_link = fields.Char(string='Zoom Link', required=True)
     webinar_date = fields.Char(string='Webinar Date / Time')
 
@@ -1897,7 +1897,7 @@ class LeadOpenHistory(models.Model):
     _description = 'Lead Open History'
     _order = 'opened_on desc'
 
-    lead_id = fields.Many2one('leads.logic', index=True, string='Lead', required=True, ondelete='cascade')
+    lead_id = fields.Many2one('leads.logic', string='Lead', required=True, ondelete='cascade')
     user_id = fields.Many2one('res.users', string='Opened By', required=True)
     opened_on = fields.Datetime(string='Opened On', default=fields.Datetime.now)
     ip_address = fields.Char(string='IP Address')

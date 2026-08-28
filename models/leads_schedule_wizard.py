@@ -5,7 +5,7 @@ class LeadsScheduleWizard(models.TransientModel):
     _name = "leads.schedule.wizard"
     _description = "Schedule Zoom/Walk-in Wizard"
 
-    lead_id = fields.Many2one('leads.logic', string="Lead", required=True)
+    lead_id = fields.Many2one('leads.logic', index=True, string="Lead", required=True)
     schedule_type = fields.Selection([
         ('zoom', 'Zoom Schedule'),
         ('walkin', 'Walk-in Schedule'),

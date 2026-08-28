@@ -5,7 +5,7 @@ class LeadsConfirmWizard(models.TransientModel):
     _name = "leads.confirm.wizard"
     _description = "Lead Confirm Wizard"
 
-    lead_id = fields.Many2one("leads.logic", string="Lead", required=True)
+    lead_id = fields.Many2one("leads.logic", index=True, string="Lead", required=True)
     name = fields.Char(string="Lead Name", readonly=True)
     phone_number = fields.Char(string="Mobile Number", readonly=True)
     lead_quality = fields.Char(string="Lead Quality", readonly=True)

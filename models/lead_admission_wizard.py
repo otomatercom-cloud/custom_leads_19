@@ -36,7 +36,7 @@ class LeadAdmissionWizard(models.TransientModel):
     _name = 'lead.admission.wizard'
     _description = 'Lead Admission Wizard'
 
-    lead_id = fields.Many2one('leads.logic', required=True, readonly=True)
+    lead_id = fields.Many2one('leads.logic', index=True, required=True, readonly=True)
     lead_name = fields.Char(related='lead_id.name', readonly=True)
     lead_phone = fields.Char(related='lead_id.phone_number', readonly=True)
     lead_email = fields.Char(related='lead_id.email_address', readonly=True)
