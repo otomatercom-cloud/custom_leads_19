@@ -1,5 +1,6 @@
 from . import source
 from . import leads
+from . import log_cleanup_cron
 from . import allocation
 from . import connection
 from . import lead_admission_wizard

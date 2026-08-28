@@ -65,6 +65,7 @@
         'data/actions.xml',
         'data/followup_cron.xml',
         'data/daily_queue_cron.xml',
+        'data/log_cleanup_cron.xml',
     ],
     'assets': {
         'web.assets_backend': [
