@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="action_lead_export_by_source_server" model="ir.actions.server">
+        <field name="name">Export Selected (Named by Source)</field>
+        <field name="model_id" ref="custom_leads_19.model_leads_logic"/>
+        <field name="binding_model_id" ref="custom_leads_19.model_leads_logic"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">
+action = records.action_export_by_source()
+        </field>
+    </record>
+</odoo>

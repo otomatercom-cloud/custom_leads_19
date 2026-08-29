@@ -38,6 +38,7 @@
         'views/source.xml',
         'views/course_inter.xml',
         'views/leads.xml',
+        'views/lead_export_by_source_action.xml',
         'views/lead_reattempt_views.xml',
         'views/leads_reattempt_inherit.xml',
         'views/reattempt_dashboard.xml',

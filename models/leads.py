@@ -1555,6 +1555,24 @@ class LeadsForm(models.Model):
         #    record.message_post(body=f"⚠️ This lead was exported by {self.env.user.name} on {fields.Datetime.now()}")
         return super(LeadsForm, self).export_data(fields_to_export)
 
+    # ── Export by Source (list-view Actions menu) ────────────────────────────
+    def action_export_by_source(self):
+        """Downloads the selected leads as a CSV named after their Source
+        (falls back to a dated generic name if multiple sources are
+        selected together). See controller/lead_source_export.py."""
+        self.env['lead.export.history'].sudo().create({
+            'user_id': self.env.user.id,
+            'export_date': fields.Datetime.now(),
+            'record_count': len(self),
+            'exported_fields': 'CSV export by source',
+        })
+        return {
+            'type': 'ir.actions.act_url',
+            'url': '/custom_leads/export_by_source?ids=%s' % (
+                ','.join(str(i) for i in self.ids)),
+            'target': 'new',
+        }
+
 
 # --------------------------------------------------------------------------
 # Model: call.responses
