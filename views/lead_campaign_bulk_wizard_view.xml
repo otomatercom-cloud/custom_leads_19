@@ -30,10 +30,15 @@
                     </group>
                 </sheet>
                 <footer>
+                    <button name="action_add_and_start"
+                            type="object"
+                            string="Add &amp; Start Campaign"
+                            class="btn-primary"
+                            icon="fa-play"/>
                     <button name="action_add"
                             type="object"
                             string="Add to Campaign"
-                            class="btn-primary"
+                            class="btn-secondary"
                             icon="fa-phone"/>
                     <button string="Cancel" class="btn-secondary" special="cancel"/>
                 </footer>

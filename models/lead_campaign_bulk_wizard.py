@@ -50,7 +50,10 @@ class LeadCampaignBulkWizard(models.TransientModel):
         else:
             self.campaign_id = False
 
-    def action_add(self):
+    def _process_leads(self):
+        """Resolve/create the target campaign and add the selected leads to
+        it. Shared by both the "just add" and "add & start" buttons.
+        Returns (campaign, added_count, skipped_count)."""
         self.ensure_one()
 
         leads = self.lead_ids or self.env['leads.logic'].browse(
@@ -90,6 +93,10 @@ class LeadCampaignBulkWizard(models.TransientModel):
 
         added = len(new_leads)
         skipped = len(leads) - added
+        return campaign, added, skipped
+
+    def action_add(self):
+        campaign, added, skipped = self._process_leads()
 
         if added:
             message = _(
@@ -112,6 +119,56 @@ class LeadCampaignBulkWizard(models.TransientModel):
                 'title': _('Added to Call Campaign'),
                 'message': message,
                 'type': msg_type,
+                'sticky': True,
+            },
+        }
+
+    def action_add_and_start(self):
+        """Add the leads and flip the campaign to Running — skips the
+        extra manual "open campaign → Start Calling" step. Does NOT
+        open the calling runner: this is meant for a team lead/manager
+        setting up and starting campaigns for other agents to pick up,
+        not for the person clicking the button to start calling
+        themselves."""
+        campaign, added, skipped = self._process_leads()
+
+        # campaign came back bound to a sudo() env from _process_leads
+        # (new-campaign create / lead write); drop back to the real user
+        # so the state change runs under normal ACLs, same as if the
+        # user clicked "Start" from the campaign form.
+        campaign = campaign.sudo(False)
+
+        if campaign.state == 'draft':
+            if not campaign.lead_ids:
+                raise UserError(_('Add leads to the campaign before starting.'))
+            campaign.state = 'running'
+            started = True
+        else:
+            started = False  # already running (or was before this call)
+
+        if added:
+            message = _(
+                '%(count)s lead(s) added to campaign "%(name)s".',
+                count=added, name=campaign.name,
+            )
+            if skipped:
+                message += ' ' + _(
+                    '%(skipped)s lead(s) were already in the campaign.', skipped=skipped,
+                )
+        else:
+            message = _('All selected leads were already in campaign "%(name)s".', name=campaign.name)
+
+        message += ' ' + (
+            _('Campaign is now Running.') if started else _('Campaign is already Running.')
+        )
+
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Call Campaign Started'),
+                'message': message,
+                'type': 'success',
                 'sticky': True,
             },
         }
