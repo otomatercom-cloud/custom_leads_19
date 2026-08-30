@@ -78,6 +78,42 @@ class VoxbayWebhookController(http.Controller):
         return env['leads.logic'].sudo().search(
             [('phone_number', 'like', '%' + last10)], limit=1)
 
+    @classmethod
+    def _find_or_create_lead(cls, env, number, call_type):
+        """Look up a lead by number; if none matches, auto-create one —
+        gated by Settings > Leads > Voxbay Click-to-Call so a flood of
+        wrong-number/spam calls doesn't silently spawn junk leads unless
+        the company has opted in for that call direction."""
+        lead = cls._find_lead(env, number)
+        if lead:
+            return lead
+
+        number = (number or '').replace(' ', '').replace('+', '')
+        if not number:
+            return env['leads.logic'].sudo().browse()
+
+        company = env.company.sudo()
+        allowed = (company.auto_create_lead_outgoing if call_type == 'outgoing'
+                   else company.auto_create_lead_incoming)
+        if not allowed:
+            _logger.info(
+                "Voxbay webhook: %s call to/from %s matched no existing lead and "
+                "auto-create is disabled for %s calls — logging without a lead.",
+                call_type, number, call_type)
+            return env['leads.logic'].sudo().browse()
+
+        source_name = 'Incoming Call Leads' if call_type == 'incoming' else 'Outgoing Call Leads'
+        Source = env['leads.sources'].sudo()
+        source = Source.search([('name', '=', source_name)], limit=1)
+        if not source:
+            source = Source.create({'name': source_name})
+
+        return env['leads.logic'].sudo().create({
+            'name': f'Auto-Created [{number}]',
+            'phone_number': number,
+            'leads_source': source.id,
+        })
+
     @staticmethod
     def _find_user_by_extension(env, agent):
         agent = (agent or '').strip()
@@ -122,7 +158,7 @@ class VoxbayWebhookController(http.Controller):
                                 env, extension.rsplit(sep, 1)[-1])
                             if user:
                                 break
-                lead = self._find_lead(env, destination)
+                lead = self._find_or_create_lead(env, destination, 'outgoing')
 
                 log = self._log_by_uuid(env, call_uuid)
                 if not log and user:
@@ -179,7 +215,7 @@ class VoxbayWebhookController(http.Controller):
                                 'recordingURL')
 
             log = self._log_by_uuid(env, call_uuid)
-            lead = self._find_lead(env, caller)
+            lead = self._find_or_create_lead(env, caller, 'incoming')
             user = self._find_user_by_extension(env, agent)
 
             is_cdr = bool(total_dur or conv_dur or status or rec_url)

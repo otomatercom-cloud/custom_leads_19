@@ -22,6 +22,13 @@ class ResConfigSettings(models.TransientModel):
     meta_verify_token = fields.Char(related='company_id.meta_verify_token', string='Meta Verify Token', readonly=False)
     meta_page_access_token = fields.Char(related='company_id.meta_page_access_token', string='Meta Page Access Token', readonly=False)
 
+    auto_create_lead_incoming = fields.Boolean(
+        related='company_id.auto_create_lead_incoming',
+        string='Auto-Create Lead on Unknown Incoming Call', readonly=False)
+    auto_create_lead_outgoing = fields.Boolean(
+        related='company_id.auto_create_lead_outgoing',
+        string='Auto-Create Lead on Unknown Outgoing Call', readonly=False)
+
     # ── Toggles: compute/inverse pattern — works in Odoo 19 ──────────────────
 
     enable_followup_popup = fields.Boolean(

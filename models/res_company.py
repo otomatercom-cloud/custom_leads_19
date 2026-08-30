@@ -19,3 +19,14 @@ class ResCompany(models.Model):
 
     meta_verify_token = fields.Char(string='Meta Verify Token')
     meta_page_access_token = fields.Char(string='Meta Page Access Token')
+
+    auto_create_lead_incoming = fields.Boolean(
+        string='Auto-Create Lead on Unknown Incoming Call', default=True,
+        help="When an incoming Voxbay call comes from a number that matches no existing "
+             "lead, automatically create one under source 'Incoming Call Leads'. "
+             "When off, the call is still logged, just without a lead attached.")
+    auto_create_lead_outgoing = fields.Boolean(
+        string='Auto-Create Lead on Unknown Outgoing Call', default=False,
+        help="When an outgoing Voxbay call is dialed to a number that matches no existing "
+             "lead, automatically create one under source 'Outgoing Call Leads'. "
+             "When off, the call is still logged, just without a lead attached.")

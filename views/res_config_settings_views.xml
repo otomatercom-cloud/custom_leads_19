@@ -17,6 +17,14 @@
                         <setting string="Caller ID (DID)">
                             <field name="voxbay_callerid"/>
                         </setting>
+                        <setting string="Auto-Create Lead (Incoming)"
+                                 help="Create a new lead when an incoming call comes from an unknown number.">
+                            <field name="auto_create_lead_incoming"/>
+                        </setting>
+                        <setting string="Auto-Create Lead (Outgoing)"
+                                 help="Create a new lead when an outgoing call is dialed to an unknown number.">
+                            <field name="auto_create_lead_outgoing"/>
+                        </setting>
                     </block>
                     <block title="Bonvoice Click-to-Call">
                         <setting string="Username">

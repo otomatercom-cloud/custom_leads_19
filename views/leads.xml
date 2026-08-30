@@ -281,8 +281,10 @@
                                     <field name="call_time"/>
                                     <field name="user_id"/>
                                     <field name="call_type"/>
+                                    <field name="caller_number"/>
                                     <field name="call_status"/>
                                     <field name="duration"/>
+                                    <field name="recording_url" widget="url"/>
                                     <field name="remarks"/>
                                     <field name="has_recording" column_invisible="1"/>
                                     <button name="action_upload_recording" type="object" string="&#128206; Upload Recording" class="btn-sm btn-secondary" invisible="has_recording"/>
