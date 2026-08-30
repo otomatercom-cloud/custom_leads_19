@@ -61,6 +61,7 @@
         'views/lead_user_permission_views.xml',
         'views/lead_assignment_views.xml',
         'views/bulk_assign_team_wizard_view.xml',
+        'views/lead_campaign_bulk_wizard_view.xml',
         'views/call_campaign_views.xml',
         'views/call_report_views.xml',
         'data/actions.xml',

@@ -16,6 +16,7 @@
                 <field name="leads_source" optional="show"/>
                 <field name="lead_quality"/>
                 <field name="call_response" string="Last Response" optional="show"/>
+                <field name="call_count" string="Calls" optional="show"/>
                 <field name="attendance_percentage" string="Attend %" optional="show"/>
                 <field name="lead_stage_category" optional="show"/>
                 <field name="lead_owner"/>

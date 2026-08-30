@@ -23,6 +23,7 @@ from . import lead_user_permission
 from . import lead_assignment_engine
 from . import lead_assignment_integration
 from . import bulk_assign_team_wizard
+from . import lead_campaign_bulk_wizard
 from . import call_campaign
 from . import call_report
 from . import campaign_generate_wizard

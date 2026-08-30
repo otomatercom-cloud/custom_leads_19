@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <!-- ─── Add to Call Campaign Wizard – Form ───────────────────────────── -->
+    <record id="view_lead_campaign_bulk_wizard_form" model="ir.ui.view">
+        <field name="name">lead.campaign.bulk.wizard.form</field>
+        <field name="model">lead.campaign.bulk.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Add to Call Campaign">
+                <sheet>
+                    <div class="alert alert-info mb-3" role="alert">
+                        <field name="lead_count" nolabel="1" readonly="1" class="fw-bold"/>
+                        lead(s) selected for calling.
+                    </div>
+
+                    <group>
+                        <field name="mode" widget="radio"/>
+                        <field name="campaign_id"
+                               options="{'no_create': True}"
+                               invisible="mode != 'existing'"
+                               required="mode == 'existing'"/>
+                        <field name="new_campaign_name"
+                               invisible="mode != 'new'"
+                               required="mode == 'new'"
+                               placeholder="e.g. Follow-up Drive – August"/>
+                    </group>
+
+                    <group string="Leads to be Added">
+                        <field name="lead_ids" nolabel="1" readonly="1" widget="many2many_tags"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_add"
+                            type="object"
+                            string="Add to Campaign"
+                            class="btn-primary"
+                            icon="fa-phone"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- ─── Button on leads list view toolbar (Action menu) ──────────────── -->
+    <record id="action_server_lead_campaign_bulk_add" model="ir.actions.server">
+        <field name="name">📞 Add to Call Campaign</field>
+        <field name="model_id" ref="custom_leads_19.model_leads_logic"/>
+        <field name="binding_model_id" ref="custom_leads_19.model_leads_logic"/>
+        <field name="binding_view_types">list,kanban</field>
+        <field name="state">code</field>
+        <field name="code">
+action = {
+    'type': 'ir.actions.act_window',
+    'name': 'Add to Call Campaign',
+    'res_model': 'lead.campaign.bulk.wizard',
+    'view_mode': 'form',
+    'target': 'new',
+    'context': {'active_ids': records.ids, 'active_model': 'leads.logic'},
+}
+        </field>
+    </record>
+
+</odoo>

@@ -485,7 +485,18 @@ class LeadsForm(models.Model):
     response_ids = fields.One2many('lead.response', 'lead_id', string="Responses")
     course_inter = fields.Many2many('course.interested', string="Course Interested In")
     call_log_ids = fields.One2many("lead.call.log", "lead_id", string="Call History")
+    call_count = fields.Integer(
+        string="Calls Made",
+        compute='_compute_call_count',
+        store=True,
+        help="Total number of times this lead has been called (count of Call History entries).",
+    )
     followup_ids = fields.One2many('lead.followup', 'lead_id', string="Follow Ups")
+
+    @api.depends('call_log_ids')
+    def _compute_call_count(self):
+        for rec in self:
+            rec.call_count = len(rec.call_log_ids)
 
     # ── Admission fields (standalone, no openeducat) ───────────────────────
     admission_batch = fields.Char(string="Batch")
