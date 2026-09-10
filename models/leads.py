@@ -492,6 +492,7 @@ class LeadsForm(models.Model):
         help="Total number of times this lead has been called (count of Call History entries).",
     )
     followup_ids = fields.One2many('lead.followup', 'lead_id', string="Follow Ups")
+    counselling_ids = fields.One2many('lead.counselling', 'lead_id', string="Counselling Sessions")
 
     @api.depends('call_log_ids')
     def _compute_call_count(self):

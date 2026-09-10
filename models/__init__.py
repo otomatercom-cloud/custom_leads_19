@@ -27,6 +27,7 @@ from . import lead_campaign_bulk_wizard
 from . import call_campaign
 from . import call_report
 from . import campaign_generate_wizard
+from . import lead_counselling
 
 try:
     from . import student_inherit

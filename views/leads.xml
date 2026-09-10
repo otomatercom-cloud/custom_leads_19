@@ -335,6 +335,29 @@
                             </field>
                         </page>
 
+                        <page string="Counselling">
+                            <field name="counselling_ids">
+                                <list editable="bottom" default_order="appointment_date desc">
+                                    <field name="appointment_date"/>
+                                    <field name="counsellor_id" widget="many2one_avatar_user"/>
+                                    <field name="mode"/>
+                                    <field name="student_requirement"/>
+                                    <field name="recommended_course_ids" widget="many2many_tags"/>
+                                    <field name="outcome"/>
+                                    <field name="next_followup_date"/>
+                                    <field name="parent_present"/>
+                                    <field name="parent_name" invisible="not parent_present"/>
+                                    <field name="parent_phone" invisible="not parent_present"/>
+                                    <field name="remarks"/>
+                                    <field name="state" widget="badge"
+                                           decoration-info="state == 'scheduled'"
+                                           decoration-success="state == 'done'"
+                                           decoration-muted="state in ('cancelled', 'no_show')"/>
+                                    <button name="action_mark_done" string="Done" type="object" invisible="state != 'scheduled'" class="btn-sm btn-success"/>
+                                </list>
+                            </field>
+                        </page>
+
 
 
                         <page string="History">

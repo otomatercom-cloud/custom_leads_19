@@ -26,6 +26,8 @@ access_course_interested,access_course_interested,model_course_interested,,1,1,1
 access_lead_response,access_lead_response,model_lead_response,,1,1,1,0
 access_lead_call_log,access_lead_call_log,model_lead_call_log,,1,1,1,0
 access_lead_followup,access_lead_followup,model_lead_followup,,1,1,1,0
+access_lead_counselling,access_lead_counselling,model_lead_counselling,,1,1,1,0
+access_lead_counselling_unlink,access_lead_counselling_unlink,model_lead_counselling,custom_leads_19.group_super_admin,1,1,1,1
 access_lead_followup_wizard,access_lead_followup_wizard,model_lead_followup_wizard,,1,1,1,0
 access_course_fee_structure_mgr,access_course_fee_structure_mgr,model_course_fee_structure,custom_leads_19.group_lead_manager,1,1,1,1
 access_course_fee_structure_user,access_course_fee_structure_user,model_course_fee_structure,custom_leads_19.group_lead_users,1,0,0,0

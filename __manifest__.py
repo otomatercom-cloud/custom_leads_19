@@ -50,6 +50,7 @@
         'views/leads_schedule_wizard_view.xml',
         'views/lead_followup_wizard_view.xml',
         'views/lead_followup_views.xml',
+        'views/lead_counselling_views.xml',
         'views/kanban_quick_wizard_views.xml',
         'views/lead_admission_wizard_view.xml',
         'views/voxbay_call_wizard_views.xml',

@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <!-- ─── List View ─────────────────────────────────────────────────── -->
+    <record id="view_lead_counselling_list" model="ir.ui.view">
+        <field name="name">lead.counselling.list</field>
+        <field name="model">lead.counselling</field>
+        <field name="arch" type="xml">
+            <list string="Counselling Sessions" default_order="appointment_date desc"
+                  decoration-muted="state in ('cancelled', 'no_show')"
+                  decoration-success="state == 'done'"
+                  decoration-info="state == 'scheduled'">
+                <field name="appointment_date"/>
+                <field name="lead_id"/>
+                <field name="lead_reference" optional="show"/>
+                <field name="phone_number" optional="show"/>
+                <field name="counsellor_id"/>
+                <field name="mode" widget="badge"/>
+                <field name="parent_present" optional="show" widget="boolean_toggle"/>
+                <field name="outcome" optional="show"/>
+                <field name="next_followup_date" optional="show"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'scheduled'"
+                       decoration-success="state == 'done'"
+                       decoration-muted="state in ('cancelled', 'no_show')"/>
+                <button name="action_mark_done" string="Done" type="object"
+                        icon="fa-check" invisible="state != 'scheduled'"/>
+                <button name="action_open_lead" string="Open Lead" type="object"
+                        icon="fa-external-link"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ─── Form View ─────────────────────────────────────────────────── -->
+    <record id="view_lead_counselling_form" model="ir.ui.view">
+        <field name="name">lead.counselling.form</field>
+        <field name="model">lead.counselling</field>
+        <field name="arch" type="xml">
+            <form string="Counselling Session">
+                <header>
+                    <button name="action_mark_done" string="Mark Done" type="object"
+                            class="btn-primary" invisible="state != 'scheduled'"/>
+                    <button name="action_mark_no_show" string="No Show" type="object"
+                            invisible="state != 'scheduled'"/>
+                    <button name="action_cancel" string="Cancel" type="object"
+                            invisible="state != 'scheduled'"/>
+                    <button name="action_open_lead" string="Open Lead" type="object"/>
+                    <field name="state" widget="statusbar" statusbar_visible="scheduled,done"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="lead_id"/>
+                            <field name="counsellor_id" widget="many2one_avatar_user"/>
+                            <field name="mode"/>
+                            <field name="appointment_date"/>
+                        </group>
+                        <group>
+                            <field name="outcome"/>
+                            <field name="next_followup_date"/>
+                            <field name="parent_present"/>
+                            <field name="parent_name" invisible="not parent_present"/>
+                            <field name="parent_phone" invisible="not parent_present"/>
+                        </group>
+                    </group>
+                    <group string="Student Requirement / Interest">
+                        <field name="student_requirement" nolabel="1"/>
+                    </group>
+                    <group string="Course Recommendation">
+                        <field name="recommended_course_ids" nolabel="1" widget="many2many_tags"/>
+                    </group>
+                    <group string="Counselling Remarks">
+                        <field name="remarks" nolabel="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ─── Pivot / Graph (Counsellor Performance) ───────────────────────── -->
+    <record id="view_lead_counselling_pivot" model="ir.ui.view">
+        <field name="name">lead.counselling.pivot</field>
+        <field name="model">lead.counselling</field>
+        <field name="arch" type="xml">
+            <pivot string="Counsellor Performance">
+                <field name="counsellor_id" type="row"/>
+                <field name="state" type="col"/>
+                <field name="outcome" type="col"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_lead_counselling_graph" model="ir.ui.view">
+        <field name="name">lead.counselling.graph</field>
+        <field name="model">lead.counselling</field>
+        <field name="arch" type="xml">
+            <graph string="Counsellor Performance" type="bar">
+                <field name="counsellor_id" type="row"/>
+                <field name="outcome" type="row"/>
+            </graph>
+        </field>
+    </record>
+
+    <!-- ─── Actions ────────────────────────────────────────────────────── -->
+    <record id="action_lead_counselling" model="ir.actions.act_window">
+        <field name="name">Counselling Sessions</field>
+        <field name="res_model">lead.counselling</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="action_lead_counselling_performance" model="ir.actions.act_window">
+        <field name="name">Counsellor Performance</field>
+        <field name="res_model">lead.counselling</field>
+        <field name="view_mode">pivot,graph,list</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'pivot', 'view_id': ref('view_lead_counselling_pivot')}),
+            (0, 0, {'view_mode': 'graph', 'view_id': ref('view_lead_counselling_graph')}),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('view_lead_counselling_list')})]"/>
+    </record>
+
+    <!-- ─── Menus ──────────────────────────────────────────────────────── -->
+    <menuitem id="menu_lead_counselling"
+              name="Counselling"
+              parent="menu_leads_root"
+              action="action_lead_counselling"
+              sequence="6"/>
+
+    <menuitem id="menu_lead_counselling_performance"
+              name="Counsellor Performance"
+              parent="menu_leads_root"
+              action="action_lead_counselling_performance"
+              sequence="7"
+              groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager,custom_leads_19.group_lead_team_lead,custom_leads_19.group_lead_branch_head"/>
+
+</odoo>
