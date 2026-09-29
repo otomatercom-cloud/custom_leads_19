@@ -75,7 +75,8 @@ class OtmLeadsOdoo17ImportWizard(models.TransientModel):
         string='Import Chatter Messages', default=False,
         help='Copies comments/notes from the Odoo 17 chatter. Slower.')
     campaign_option_ids = fields.Many2many(
-        'otm.leads.odoo17.campaign.option', string='Source Campaigns',
+        'otm.leads.odoo17.campaign.option', 'otm_l17_wiz_camp_opt_rel', 'wizard_id', 'option_id',
+        string='Source Campaigns',
         help='Only import leads of these Odoo 17 Source Campaigns. Leave empty for all.')
     campaigns_loaded = fields.Boolean()
     preview_count = fields.Integer(string='Leads Found in Odoo 17', readonly=True)
