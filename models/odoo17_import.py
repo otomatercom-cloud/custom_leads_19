@@ -269,7 +269,16 @@ class OtmLeadsOdoo17ImportWizard(models.TransientModel):
             mail_notrigger=True, mail_activity_quick_update=True)
         domain = self._remote_domain()
         remote_ids = call('leads.logic', 'search', domain, order='id asc')
-        rfields = call('leads.logic', 'fields_get', attributes=['type', 'relation'])
+        rfields = call('leads.logic', 'fields_get', attributes=['type', 'relation', 'store'])
+        # Read only STORED fields that also exist locally (computed, non-stored
+        # Odoo 17 fields can raise errors on the 17 side and are useless here)
+        local_fields = self.env['leads.logic']._fields
+        read_fields = sorted(
+            f for f, d in rfields.items()
+            if d.get('store') and (f in local_fields or f in (
+                'lead_owner', 'tele_caller_id', 'lead_creator_id', 'reference_no',
+                'create_date', 'write_date', 'name'))
+            and d.get('type') not in ('one2many', 'binary', 'html'))
         ctx = {'cache': {}, 'sources_created': 0, 'campaigns_created': 0, 'warnings': []}
 
         log = self.env['otm.leads.odoo17.import.log'].create({
@@ -287,7 +296,7 @@ class OtmLeadsOdoo17ImportWizard(models.TransientModel):
 
         for start in range(0, len(todo), BATCH):
             chunk = todo[start:start + BATCH]
-            rows = call('leads.logic', 'read', chunk)
+            rows = call('leads.logic', 'read', chunk, fields=read_fields)
             for row in rows:
                 rid = row['id']
                 try:
