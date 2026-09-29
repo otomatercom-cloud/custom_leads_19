@@ -106,6 +106,15 @@
                         <field name="preview_count"/>
                     </group>
                 </group>
+                <group string="Source Campaign (optional)">
+                    <field name="campaigns_loaded" invisible="1"/>
+                    <div colspan="2" class="text-muted" invisible="campaigns_loaded">
+                        Click "Load Campaigns" to fetch the Odoo 17 Source Campaigns, then pick one or more.
+                        Leave empty to import all campaigns.
+                    </div>
+                    <field name="campaign_option_ids" widget="many2many_tags" colspan="2"
+                           options="{'no_create': True}" invisible="not campaigns_loaded"/>
+                </group>
                 <div class="text-muted">
                     Leads are matched by the last 10 digits of the phone number; existing leads and leads
                     already imported are skipped. Missing Lead Sources and Source Campaigns are created
@@ -114,6 +123,7 @@
                 <footer>
                     <button name="action_import" type="object" string="Import" class="btn-primary"
                             confirm="Import the leads in this date range from Odoo 17?"/>
+                    <button name="action_load_campaigns" type="object" string="Load Campaigns" class="btn-secondary"/>
                     <button name="action_test_connection" type="object" string="Test &amp; Count" class="btn-secondary"/>
                     <button string="Cancel" special="cancel" class="btn-secondary"/>
                 </footer>

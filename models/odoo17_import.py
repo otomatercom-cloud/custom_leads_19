@@ -43,6 +43,21 @@ class OtmLeadsOdoo17ImportLog(models.Model):
     lead_ids = fields.One2many('leads.logic', 'odoo17_import_log_id', string='Imported Leads')
 
 
+class OtmLeadsOdoo17CampaignOption(models.TransientModel):
+    """Odoo 17 Source Campaign shown in the import wizard's multi-select."""
+    _name = 'otm.leads.odoo17.campaign.option'
+    _description = 'Odoo 17 Source Campaign (import option)'
+
+    remote_id = fields.Integer(index=True)
+    name = fields.Char(required=True)
+    source_name = fields.Char()
+
+    @api.depends('name', 'source_name')
+    def _compute_display_name(self):
+        for rec in self:
+            rec.display_name = '%s / %s' % (rec.source_name, rec.name) if rec.source_name else rec.name
+
+
 class OtmLeadsOdoo17ImportWizard(models.TransientModel):
     _name = 'otm.leads.odoo17.import.wizard'
     _description = 'Import Leads from Odoo 17'
@@ -59,6 +74,10 @@ class OtmLeadsOdoo17ImportWizard(models.TransientModel):
     import_chatter = fields.Boolean(
         string='Import Chatter Messages', default=False,
         help='Copies comments/notes from the Odoo 17 chatter. Slower.')
+    campaign_option_ids = fields.Many2many(
+        'otm.leads.odoo17.campaign.option', string='Source Campaigns',
+        help='Only import leads of these Odoo 17 Source Campaigns. Leave empty for all.')
+    campaigns_loaded = fields.Boolean()
     preview_count = fields.Integer(string='Leads Found in Odoo 17', readonly=True)
     connection_info = fields.Char(string='Connection', readonly=True)
 
@@ -138,14 +157,31 @@ class OtmLeadsOdoo17ImportWizard(models.TransientModel):
             raise UserError(_("From Date must be before To Date."))
         if self.date_field == 'date_of_adding':
             return [('date_of_adding', '>=', str(self.date_from)),
-                    ('date_of_adding', '<=', str(self.date_to))]
+                    ('date_of_adding', '<=', str(self.date_to))] + campaign_dom
         tz = pytz.timezone(self.env.user.tz or 'Asia/Kolkata')
+        campaign_dom = []
+        if self.campaign_option_ids:
+            campaign_dom = [('source_campaign_id', 'in', self.campaign_option_ids.mapped('remote_id'))]
 
         def to_utc(d, t):
             return tz.localize(datetime.combine(d, t)).astimezone(pytz.utc).strftime('%Y-%m-%d %H:%M:%S')
 
         return [('create_date', '>=', to_utc(self.date_from, time.min)),
-                ('create_date', '<=', to_utc(self.date_to, time.max.replace(microsecond=0)))]
+                ('create_date', '<=', to_utc(self.date_to, time.max.replace(microsecond=0)))] + campaign_dom
+
+    def action_load_campaigns(self):
+        """Fetch the Odoo 17 Source Campaigns so they can be picked (multi-select)."""
+        self.ensure_one()
+        call, info = self._connect()
+        rows = call('lead.source.campaign', 'search_read', [], fields=['name', 'lead_source_id'],
+                    order='name asc', context={'active_test': False})
+        Opt = self.env['otm.leads.odoo17.campaign.option']
+        self.campaign_option_ids = [(5, 0, 0)]
+        Opt.search([]).unlink()          # transient: only this user's old lists
+        Opt.create([{'remote_id': r['id'], 'name': r['name'],
+                     'source_name': (r['lead_source_id'] or [0, ''])[1] or False} for r in rows])
+        self.write({'campaigns_loaded': True, 'connection_info': info})
+        return self._reopen()
 
     def action_test_connection(self):
         self.ensure_one()
