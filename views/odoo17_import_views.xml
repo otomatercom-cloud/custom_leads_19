@@ -116,7 +116,7 @@
                     <field name="campaign_option_ids" widget="many2many_tags" colspan="2"
                            options="{'no_create': True}" invisible="not campaigns_loaded"/>
                 </group>
-                <group string="Count (click Test &amp; Count)" invisible="not preview_details">
+                <group string="Selected for import" invisible="not preview_details">
                     <field name="preview_details" nolabel="1" colspan="2"/>
                 </group>
                 <div class="text-muted">
@@ -154,8 +154,10 @@
                 <field name="user_id"/>
                 <field name="fetched_count"/>
                 <field name="created_count"/>
+                <field name="already_count"/>
                 <field name="duplicate_count"/>
                 <field name="failed_count"/>
+                <field name="remaining_count"/>
             </list>
         </field>
     </record>
@@ -177,8 +179,10 @@
                         <group>
                             <field name="fetched_count"/>
                             <field name="created_count"/>
+                            <field name="already_count"/>
                             <field name="duplicate_count"/>
                             <field name="failed_count"/>
+                            <field name="remaining_count"/>
                             <field name="sources_created"/>
                             <field name="campaigns_created"/>
                         </group>

@@ -1,4 +1,5 @@
 import logging
+import time as _time
 import xmlrpc.client
 from datetime import datetime, time
 
@@ -35,7 +36,9 @@ class OtmLeadsOdoo17ImportLog(models.Model):
     user_id = fields.Many2one('res.users', string='Run By', default=lambda s: s.env.user, readonly=True)
     fetched_count = fields.Integer(string='Fetched', readonly=True)
     created_count = fields.Integer(string='Created', readonly=True)
-    duplicate_count = fields.Integer(string='Skipped (Duplicate)', readonly=True)
+    duplicate_count = fields.Integer(string='Skipped (Phone Duplicate)', readonly=True)
+    already_count = fields.Integer(string='Already Imported Earlier', readonly=True)
+    remaining_count = fields.Integer(string='Remaining (click Import again)', readonly=True)
     failed_count = fields.Integer(string='Failed', readonly=True)
     campaigns_created = fields.Integer(string='Campaigns Created', readonly=True)
     sources_created = fields.Integer(string='Sources Created', readonly=True)
@@ -197,31 +200,95 @@ class OtmLeadsOdoo17ImportWizard(models.TransientModel):
             dom.append(('lead_id.source_campaign_id', 'in', self.campaign_option_ids.mapped('remote_id')))
         return dom
 
-    def action_test_connection(self):
+    def _analyse(self, call):
+        """Work out, without importing anything, what an import would do.
+
+        Returns dict: all_ids, re_rows, already_ids, dup_ids, new_ids, campaign_counts, extra_re
+        Only ids + phone numbers are read from Odoo 17, so this is fast.
+        """
+        self.ensure_one()
+        domain = self._remote_domain()
+        main_ids = call('leads.logic', 'search', domain, order='id asc')
+        groups = call('leads.logic', 'read_group', domain, ['source_campaign_id'],
+                      ['source_campaign_id'], lazy=False)
+        campaign_counts = sorted(
+            [((g['source_campaign_id'] or [0, '(no campaign)'])[1], g['__count']) for g in groups],
+            key=lambda x: -x[1])
+        re_rows, extra_re = [], 0
+        all_ids = list(main_ids)
+        if self.import_reenquiries:
+            re_rows = call('lead.re.enquiry', 'search_read', self._reenquiry_domain(),
+                           fields=['lead_id'], order='id asc')
+            extra = sorted({r['lead_id'][0] for r in re_rows if r['lead_id']} - set(main_ids))
+            extra_re = len(extra)
+            all_ids += extra
+        # phones
+        phones = {}
+        for i in range(0, len(all_ids), 500):
+            for r in call('leads.logic', 'read', all_ids[i:i + 500], fields=['phone_number']):
+                phones[r['id']] = ''.join((r.get('phone_number') or '').split())[-10:]
+        Lead = self.env['leads.logic'].sudo()
+        already = set(Lead.search([('odoo17_lead_id', 'in', all_ids)]).mapped('odoo17_lead_id')) if all_ids else set()
+        self.env.cr.execute(
+            "SELECT DISTINCT RIGHT(REPLACE(phone_number, ' ', ''), 10) FROM leads_logic "
+            "WHERE phone_number IS NOT NULL")
+        local_phones = {r[0] for r in self.env.cr.fetchall()}
+        seen, dup_ids, new_ids = set(), [], []
+        for i in all_ids:
+            if i in already:
+                continue
+            ph = phones.get(i)
+            if ph and (ph in local_phones or ph in seen):
+                dup_ids.append(i)
+            else:
+                new_ids.append(i)
+                if ph:
+                    seen.add(ph)
+        return {'all_ids': all_ids, 'main_count': len(main_ids), 're_rows': re_rows, 'extra_re': extra_re,
+                'already_ids': sorted(already), 'dup_ids': dup_ids, 'new_ids': new_ids,
+                'campaign_counts': campaign_counts}
+
+    def _preview_text(self, an):
+        lines = ['Leads in date range%s: %d' % (
+            ' (selected campaigns)' if self.campaign_option_ids else '', an['main_count'])]
+        for name, cnt in an['campaign_counts']:
+            lines.append('   - %s: %d' % (name, cnt))
+        if self.import_reenquiries:
+            lines.append('Re-Attempts (Re-Enquiries) in date range: %d  (+%d extra older leads)' % (
+                len(an['re_rows']), an['extra_re']))
+        lines += [
+            '',
+            'SELECTED FOR IMPORT (total leads fetched): %d' % len(an['all_ids']),
+            '   - already imported earlier: %d' % len(an['already_ids']),
+            '   - skipped, phone number already exists in Odoo 19 (or repeated in this list): %d' % len(an['dup_ids']),
+            '   - NEW leads that will be imported: %d' % len(an['new_ids']),
+        ]
+        return '\n'.join(lines)
+
+    def _refresh_preview(self):
+        """Fill preview fields (used by the button and by onchange)."""
         self.ensure_one()
         call, info = self._connect()
-        domain = self._remote_domain()
-        count = call('leads.logic', 'search_count', domain)
-        lines = ['Leads in date range: %d' % count]
-        groups = call('leads.logic', 'read_group', domain, ['source_campaign_id'], ['source_campaign_id'],
-                      lazy=False)
-        for g in sorted(groups, key=lambda g: -g['__count']):
-            name = g['source_campaign_id'][1] if g['source_campaign_id'] else '(no campaign)'
-            lines.append('   - %s: %d' % (name, g['__count']))
-        if self.import_reenquiries:
-            try:
-                rows = call('lead.re.enquiry', 'search_read', self._reenquiry_domain(), fields=['lead_id'])
-                lead_ids = list({r['lead_id'][0] for r in rows if r['lead_id']})
-                in_range = call('leads.logic', 'search_count', domain + [('id', 'in', lead_ids)]) if lead_ids else 0
-                extra = len(lead_ids) - in_range
-                lines.append('Re-Attempts (Re-Enquiries) in date range: %d (on %d leads)' % (len(rows), len(lead_ids)))
-                lines.append('   - extra leads pulled only because of a re-attempt: %d' % extra)
-                lines.append('TOTAL leads that will be fetched: %d' % (count + extra))
-            except Exception as e:
-                lines.append('Re-Attempts could not be counted: %s' % str(e)[:150])
-        self.write({'preview_count': count, 'connection_info': info,
-                    'preview_details': '\n'.join(lines)})
+        an = self._analyse(call)
+        self.preview_count = an['main_count']
+        self.connection_info = info
+        self.preview_details = self._preview_text(an)
+        return an
+
+    def action_test_connection(self):
+        self.ensure_one()
+        self._refresh_preview()
         return self._reopen()
+
+    @api.onchange('campaign_option_ids', 'date_from', 'date_to', 'date_field', 'import_reenquiries')
+    def _onchange_refresh_preview(self):
+        for rec in self:
+            if not (rec.date_from and rec.date_to):
+                continue
+            try:
+                rec._refresh_preview()
+            except Exception as e:  # never block the form because the count failed
+                rec.preview_details = _('Count not available: %s') % str(e)[:200]
 
     def _reopen(self):
         return {'type': 'ir.actions.act_window', 'res_model': self._name, 'res_id': self.id,
@@ -336,14 +403,10 @@ class OtmLeadsOdoo17ImportWizard(models.TransientModel):
         Lead = self.env['leads.logic'].with_context(
             otm_odoo17_import=True, tracking_disable=True, mail_create_nolog=True,
             mail_notrigger=True, mail_activity_quick_update=True)
-        domain = self._remote_domain()
-        remote_ids = call('leads.logic', 'search', domain, order='id asc')
-        re_rows = []
-        if self.import_reenquiries:
-            re_rows = call('lead.re.enquiry', 'search_read', self._reenquiry_domain(),
-                           order='id asc')
-            extra_ids = {r['lead_id'][0] for r in re_rows if r['lead_id']} - set(remote_ids)
-            remote_ids = list(remote_ids) + sorted(extra_ids)
+        an = self._analyse(call)
+        remote_ids = an['all_ids']
+        re_rows = call('lead.re.enquiry', 'search_read', self._reenquiry_domain(), order='id asc') \
+            if self.import_reenquiries else []
         rfields = call('leads.logic', 'fields_get', attributes=['type', 'relation', 'store'])
         # Read only STORED fields that also exist locally (computed, non-stored
         # Odoo 17 fields can raise errors on the 17 side and are useless here)
@@ -360,16 +423,22 @@ class OtmLeadsOdoo17ImportWizard(models.TransientModel):
             'name': self.env['ir.sequence'].next_by_code('otm.leads.odoo17.import.log') or _('Import'),
             'date_from': self.date_from, 'date_to': self.date_to, 'date_field': self.date_field,
             'fetched_count': len(remote_ids)})
-        created = dup = failed = 0
+        created = failed = 0
+        dup = len(an['dup_ids'])
+        already_n = len(an['already_ids'])
         lines = []
-
-        already = set(Lead.search([('odoo17_lead_id', 'in', remote_ids)]).mapped('odoo17_lead_id'))
-        todo = [i for i in remote_ids if i not in already]
-        dup += len(already)
-        if already:
-            lines.append('%d lead(s) already imported earlier - skipped.' % len(already))
+        todo = an['new_ids']
+        budget = float(self.env['ir.config_parameter'].sudo().get_param('otm_odoo17.import_time_budget', 40))
+        t0 = _time.time()
+        truncated = False
+        if dup:
+            lines.append('%d lead(s) skipped - phone number already exists in Odoo 19 (ids: %s%s)' % (
+                dup, ', '.join(str(i) for i in an['dup_ids'][:50]), ' ...' if dup > 50 else ''))
 
         for start in range(0, len(todo), BATCH):
+            if _time.time() - t0 > budget:
+                truncated = True
+                break
             chunk = todo[start:start + BATCH]
             rows = call('leads.logic', 'read', chunk, fields=read_fields)
             for row in rows:
@@ -418,9 +487,12 @@ class OtmLeadsOdoo17ImportWizard(models.TransientModel):
                     failed += 1
                     lines.append('#%s %s: FAILED - %s' % (rid, row.get('name'), str(e).strip()[:300]))
                     _logger.warning('Odoo17 import failed for lead %s: %s', rid, e)
+            log.write({'created_count': created, 'failed_count': failed})
             self.env.cr.commit()  # keep progress on long runs
 
-        if re_rows:
+        remaining = len(todo) - created - failed if truncated else 0
+        # (leads that failed are not retried automatically; see details)
+        if re_rows and not truncated:
             r_ok, r_skip, r_fail = self._import_reenquiries(call, re_rows, ctx, lines)
             lines.append('Re-Attempts: %d created, %d skipped, %d failed.' % (r_ok, r_skip, r_fail))
             failed += r_fail
@@ -428,10 +500,17 @@ class OtmLeadsOdoo17ImportWizard(models.TransientModel):
         if ctx['warnings']:
             lines.append('--- Warnings (first 50) ---')
             lines.extend(sorted(set(ctx['warnings']))[:50])
+        summary = ['SELECTED %d  =  IMPORTED %d  +  ALREADY IMPORTED %d  +  PHONE DUPLICATE %d  +  FAILED %d%s' % (
+            len(remote_ids), created, already_n, dup, failed,
+            ('  +  REMAINING %d' % remaining) if truncated else '')]
+        if truncated:
+            summary.append('Stopped after %ds to avoid a server timeout. Click Import again with the same '
+                           'filters to continue - already imported leads are skipped.' % budget)
         log.write({
-            'created_count': created, 'duplicate_count': dup, 'failed_count': failed,
+            'fetched_count': len(remote_ids), 'created_count': created, 'duplicate_count': dup,
+            'already_count': already_n, 'remaining_count': remaining, 'failed_count': failed,
             'campaigns_created': ctx['campaigns_created'], 'sources_created': ctx['sources_created'],
-            'details': '\n'.join(lines),
+            'details': '\n'.join(summary + [''] + lines),
         })
         return {'type': 'ir.actions.act_window', 'res_model': log._name, 'res_id': log.id,
                 'view_mode': 'form', 'target': 'current', 'name': _('Import Result')}
