@@ -22,6 +22,7 @@ from . import lead_reattempt_bulk
 from . import leads_reattempt_extend
 from . import lead_team
 from . import lead_user_permission
+from . import lead_user_permission_bulk
 from . import lead_assignment_engine
 from . import lead_assignment_integration
 from . import bulk_assign_team_wizard

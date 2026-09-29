@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_lead_user_permission_bulk_form" model="ir.ui.view">
+        <field name="name">lead.user.permission.bulk.wizard.form</field>
+        <field name="model">lead.user.permission.bulk.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Bulk User Permissions">
+                <group>
+                    <field name="user_ids" widget="many2many_tags" options="{'no_create': True}"
+                           placeholder="Select one or more users..."/>
+                    <field name="mode" widget="radio"/>
+                </group>
+                <group>
+                    <group string="Administration">
+                        <field name="perm_super_admin"/>
+                        <field name="perm_manager"/>
+                    </group>
+                    <group string="Team">
+                        <field name="perm_team_lead"/>
+                        <field name="perm_branch_head"/>
+                    </group>
+                </group>
+                <group>
+                    <group string="Operations">
+                        <field name="perm_officer"/>
+                        <field name="perm_tele_caller"/>
+                    </group>
+                    <group string="Digital">
+                        <field name="perm_digital_team"/>
+                        <field name="perm_digital_head"/>
+                    </group>
+                </group>
+                <group>
+                    <group string="Crash Management">
+                        <field name="perm_crash_head"/>
+                        <field name="perm_crash_user"/>
+                    </group>
+                    <group string="Re-Attempt">
+                        <field name="perm_reattempt_user"/>
+                        <field name="perm_reattempt_tl"/>
+                        <field name="perm_reattempt_manager"/>
+                    </group>
+                </group>
+                <footer>
+                    <button name="action_apply" type="object" string="Apply to All Selected Users"
+                            class="btn-primary"/>
+                    <button string="Cancel" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_lead_user_permission_bulk" model="ir.actions.act_window">
+        <field name="name">Bulk User Permissions</field>
+        <field name="res_model">lead.user.permission.bulk.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_lead_user_permissions_bulk" name="Bulk User Permissions"
+              parent="menu_leads_config" action="action_lead_user_permission_bulk"
+              sequence="2" groups="custom_leads_19.group_super_admin"/>
+</odoo>
