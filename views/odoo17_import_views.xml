@@ -196,6 +196,42 @@
         <field name="view_mode">list,form</field>
     </record>
 
+    <record id="view_otm_leads_odoo17_sync_queue_list" model="ir.ui.view">
+        <field name="name">otm.leads.odoo17.sync.queue.list</field>
+        <field name="model">otm.leads.odoo17.sync.queue</field>
+        <field name="arch" type="xml">
+            <list create="0" decoration-danger="state == 'failed'" decoration-success="state == 'done'">
+                <header>
+                    <button name="action_retry" type="object" string="Retry"/>
+                </header>
+                <field name="create_date"/>
+                <field name="lead_id"/>
+                <field name="odoo17_lead_id"/>
+                <field name="state"/>
+                <field name="attempts"/>
+                <field name="error"/>
+                <field name="payload" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_otm_leads_odoo17_sync_queue" model="ir.actions.act_window">
+        <field name="name">Odoo 17 Sync Queue</field>
+        <field name="res_model">otm.leads.odoo17.sync.queue</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <record id="action_otm_leads_odoo17_sync_now" model="ir.actions.server">
+        <field name="name">Process Sync Queue Now</field>
+        <field name="model_id" ref="model_otm_leads_odoo17_sync_queue"/>
+        <field name="binding_model_id" ref="model_otm_leads_odoo17_sync_queue"/>
+        <field name="state">code</field>
+        <field name="code">model.action_process_now()</field>
+    </record>
+
+    <menuitem id="menu_leads_odoo17_sync_queue" name="Sync Queue" parent="menu_leads_odoo17_import"
+              action="action_otm_leads_odoo17_sync_queue" sequence="3"
+              groups="custom_leads_19.group_super_admin"/>
     <menuitem id="menu_lead_source_campaign" name="Source Campaigns" parent="custom_leads_19.menu_leads_config"
               action="action_lead_source_campaign" sequence="3"
               groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager"/>

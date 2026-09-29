@@ -56,6 +56,8 @@ class CallCampaignDashboard extends Component {
             membersLoading: false,
             // Source selection
             availableSources: [],
+            availableCampaigns: [],
+            genCampaignIds: [],          // selected source campaign ids (empty = all)
             sourcesLoading: false,
             // Other
             startingAll: false,
@@ -130,6 +132,7 @@ class CallCampaignDashboard extends Component {
         this.state.genType           = "combined";
         this.state.genQualities      = [...ALL_QUALITY_VALUES];
         this.state.genSourceIds      = [];
+        this.state.genCampaignIds    = [];
         this.state.genMaxLeads       = 50;
         this.state.genIncludeTL      = true;
         this.state.genClearExisting  = true;
@@ -160,8 +163,12 @@ class CallCampaignDashboard extends Component {
                 "call.campaign", "get_selectable_sources", [], {}
             );
             this.state.availableSources = sources;
+            this.state.availableCampaigns = await this.orm.call(
+                "call.campaign", "get_selectable_campaigns", [], {}
+            );
         } catch(e) {
             this.state.availableSources = [];
+            this.state.availableCampaigns = [];
         } finally {
             this.state.sourcesLoading = false;
         }
@@ -202,10 +209,28 @@ class CallCampaignDashboard extends Component {
         const idx = this.state.genSourceIds.indexOf(id);
         if (idx >= 0) this.state.genSourceIds.splice(idx, 1);
         else this.state.genSourceIds.push(id);
+        this._pruneCampaigns();
     }
+    // Source Campaigns: empty array means "no filter"; list narrows to selected sources
+    get visibleCampaigns() {
+        const src = this.state.genSourceIds;
+        return this.state.availableCampaigns.filter(c => !src.length || src.includes(c.source_id));
+    }
+    _pruneCampaigns() {
+        const ids = this.visibleCampaigns.map(c => c.id);
+        this.state.genCampaignIds = this.state.genCampaignIds.filter(i => ids.includes(i));
+    }
+    toggleCampaign(id) {
+        const idx = this.state.genCampaignIds.indexOf(id);
+        if (idx >= 0) this.state.genCampaignIds.splice(idx, 1);
+        else this.state.genCampaignIds.push(id);
+    }
+    isCampaignSelected(id) { return this.state.genCampaignIds.includes(id); }
+    selectAllCampaigns()   { this.state.genCampaignIds = this.visibleCampaigns.map(c => c.id); }
+    clearAllCampaigns()    { this.state.genCampaignIds = []; }
     isSourceSelected(id)  { return this.state.genSourceIds.includes(id); }
-    selectAllSources()    { this.state.genSourceIds = this.state.availableSources.map(s => s.id); }
-    clearAllSources()     { this.state.genSourceIds = []; }
+    selectAllSources()    { this.state.genSourceIds = this.state.availableSources.map(s => s.id); this._pruneCampaigns(); }
+    clearAllSources()     { this.state.genSourceIds = []; this._pruneCampaigns(); }
 
     async confirmGenerate() {
         if (this.state.genType === "quality" && !this.state.genQualities.length) {
@@ -221,6 +246,7 @@ class CallCampaignDashboard extends Component {
                         campaign_type:        this.state.genType,
                         quality_filter:       this.state.genQualities,
                         source_ids:           this.state.genSourceIds,
+                        campaign_ids:         this.state.genCampaignIds,
                         date_from:            this.state.genDateFrom,
                         date_to:              this.state.genDateTo,
                         max_leads:            this.state.genMaxLeads,

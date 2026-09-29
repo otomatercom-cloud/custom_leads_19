@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo noupdate="1">
+    <record id="cron_otm_leads_odoo17_sync" model="ir.cron">
+        <field name="name">Leads: Push changes to Odoo 17</field>
+        <field name="model_id" ref="model_otm_leads_odoo17_sync_queue"/>
+        <field name="state">code</field>
+        <field name="code">model.cron_process_queue()</field>
+        <field name="interval_number">2</field>
+        <field name="interval_type">minutes</field>
+        <field name="active" eval="True"/>
+    </record>
+</odoo>

@@ -9,6 +9,9 @@ PARAM_BATCH_REQUIRED = 'custom_leads_19.admission_batch_required'
 class ResConfigSettings(models.TransientModel):
     _inherit = 'res.config.settings'
 
+    otm_odoo17_sync_enabled = fields.Boolean(
+        string='Sync Lead Changes to Odoo 17', config_parameter='otm_odoo17.sync_enabled')
+
     voxbay_uid = fields.Char(related='company_id.voxbay_uid', string='Voxbay UID', readonly=False)
     voxbay_upin = fields.Char(related='company_id.voxbay_upin', string='Voxbay UPIN', readonly=False)
     voxbay_callerid = fields.Char(related='company_id.voxbay_callerid', string='Voxbay Caller ID (DID)', readonly=False)

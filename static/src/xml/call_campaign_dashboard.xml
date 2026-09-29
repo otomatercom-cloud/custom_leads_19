@@ -368,6 +368,32 @@
                             </t>
                         </div>
 
+                        <!-- Step: Source Campaign chips (narrowed by selected sources; empty = all) -->
+                        <div class="o_cc_gen_step" t-if="visibleCampaigns.length">
+                            <div class="o_cc_gen_step_title">
+                                2 · Source Campaign
+                                <span class="o_cc_gen_step_actions">
+                                    <a t-on-click="selectAllCampaigns">All</a> ·
+                                    <a t-on-click="clearAllCampaigns">Clear</a>
+                                </span>
+                            </div>
+                            <div class="o_cc_quality_chips">
+                                <t t-foreach="visibleCampaigns" t-as="camp" t-key="camp.id">
+                                    <button class="o_cc_quality_chip"
+                                            t-att-class="{'o_cc_chip_active': isCampaignSelected(camp.id)}"
+                                            t-on-click="() => this.toggleCampaign(camp.id)"
+                                            t-esc="camp.name"/>
+                                </t>
+                            </div>
+                            <div class="o_cc_member_selected_count" t-if="!state.genCampaignIds.length">
+                                No campaign selected — every campaign will be included
+                            </div>
+                            <div class="o_cc_member_selected_count" t-else="">
+                                <t t-esc="state.genCampaignIds.length"/> of
+                                <t t-esc="visibleCampaigns.length"/> selected
+                            </div>
+                        </div>
+
                         <!-- Step 2 (date): Date range -->
                         <div class="o_cc_gen_step" t-if="state.genType === 'date'">
                             <div class="o_cc_gen_step_title">3 · Date Range (Lead Created)</div>

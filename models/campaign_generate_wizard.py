@@ -105,6 +105,14 @@ class CallCampaignAutoGenerate(models.Model):
         sources = self.env['leads.sources'].search([], order='name asc')
         return [{'id': s.id, 'name': s.name} for s in sources]
 
+    @api.model
+    def get_selectable_campaigns(self):
+        """Returns Source Campaigns (with parent source id) for the modal chips.
+        Empty selection in the modal means 'no campaign filter'."""
+        camps = self.env['lead.source.campaign'].search([], order='name asc')
+        return [{'id': c.id, 'name': c.name, 'source_id': c.lead_source_id.id or False}
+                for c in camps]
+
     # ── Core generate method ─────────────────────────────────────────────
     @api.model
     def generate_smart_campaigns(self, options=None):
@@ -132,6 +140,7 @@ class CallCampaignAutoGenerate(models.Model):
         camp_type     = options.get('campaign_type', 'combined')
         quality_filter = options.get('quality_filter') or QUALITY_PRIORITY
         source_ids     = options.get('source_ids') or []   # empty = all sources
+        campaign_ids   = options.get('campaign_ids') or []  # empty = all source campaigns
         max_leads      = int(options.get('max_leads', 50))
         include_tl     = options.get('include_tl', True)
         clear_existing = options.get('clear_existing', True)
@@ -195,7 +204,7 @@ class CallCampaignAutoGenerate(models.Model):
             # Get leads grouped by quality
             quality_groups = self._get_leads_grouped_by_quality(
                 emp, camp_type, quality_filter, source_ids,
-                today_start, date_from, date_to
+                today_start, date_from, date_to, campaign_ids=campaign_ids
             )
 
             emp_created = 0
@@ -245,7 +254,7 @@ class CallCampaignAutoGenerate(models.Model):
         }
 
     def _get_leads_grouped_by_quality(self, emp, camp_type, quality_filter, source_ids,
-                                       today_start, date_from, date_to):
+                                       today_start, date_from, date_to, campaign_ids=None):
         """
         Return list of (quality_value, quality_label, [leads]) tuples.
 
@@ -268,6 +277,8 @@ class CallCampaignAutoGenerate(models.Model):
         ]
         if source_ids:
             base.append(('leads_source', 'in', source_ids))
+        if campaign_ids:
+            base.append(('source_campaign_id', 'in', campaign_ids))
 
         if camp_type == 'combined':
             # Today's new leads (any quality)

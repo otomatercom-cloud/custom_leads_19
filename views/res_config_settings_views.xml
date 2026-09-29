@@ -51,6 +51,12 @@
                             <field name="meta_page_access_token"/>
                         </setting>
                     </block>
+                    <block title="Odoo 17 Sync">
+                        <setting string="Sync Lead Changes to Odoo 17"
+                                 help="One-way: changes to imported leads are pushed to the old Odoo 17 lead every few minutes.">
+                            <field name="otm_odoo17_sync_enabled"/>
+                        </setting>
+                    </block>
                     <block title="Follow-Up Popup">
                         <setting string="Enable Follow-Up Popup"
                                  help="Show a popup with today's follow-ups when opening the Leads view.">

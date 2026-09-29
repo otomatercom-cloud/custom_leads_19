@@ -1,6 +1,7 @@
 from . import source
 from . import leads
 from . import odoo17_import
+from . import odoo17_sync
 from . import log_cleanup_cron
 from . import allocation
 from . import connection
