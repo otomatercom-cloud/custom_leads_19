@@ -43,7 +43,37 @@ class OtmLeadsOdoo17ImportLog(models.Model):
     campaigns_created = fields.Integer(string='Campaigns Created', readonly=True)
     sources_created = fields.Integer(string='Sources Created', readonly=True)
     details = fields.Text(string='Details', readonly=True)
+    state = fields.Selection([('done', 'Done'), ('running', 'Continuing in background')],
+                             default='done', readonly=True)
+    params = fields.Text(readonly=True)
     lead_ids = fields.One2many('leads.logic', 'odoo17_import_log_id', string='Imported Leads')
+
+    @api.model
+    def cron_continue_imports(self):
+        """Continue interrupted imports in the background (no HTTP timeout here)."""
+        import json
+        for log in self.search([('state', '=', 'running')]):
+            try:
+                p = json.loads(log.params or '{}')
+                wiz = self.env['otm.leads.odoo17.import.wizard'].with_user(log.user_id or self.env.user).create({
+                    'date_from': p['date_from'], 'date_to': p['date_to'], 'date_field': p['date_field'],
+                    'import_children': p['import_children'], 'import_chatter': p['import_chatter'],
+                    'import_reenquiries': p['import_reenquiries'],
+                })
+                ids = p.get('campaign_remote_ids') or []
+                if ids:
+                    opts = self.env['otm.leads.odoo17.campaign.option'].create(
+                        [{'remote_id': i, 'name': str(i)} for i in ids])
+                    wiz.campaign_option_ids = [(6, 0, opts.ids)]
+                budget = float(self.env['ir.config_parameter'].sudo().get_param(
+                    'otm_odoo17.bg_time_budget', 240))
+                wiz._run_import(log=log, budget=budget)
+                self.env.cr.commit()
+            except Exception as e:
+                self.env.cr.rollback()
+                _logger.exception('Odoo17 background import failed')
+                log.write({'state': 'done', 'details': (log.details or '') + '\nBackground import stopped: %s' % e})
+                self.env.cr.commit()
 
 
 class OtmLeadsOdoo17CampaignOption(models.TransientModel):
@@ -399,6 +429,15 @@ class OtmLeadsOdoo17ImportWizard(models.TransientModel):
     # ------------------------------------------------------------------ #
     def action_import(self):
         self.ensure_one()
+        log = self._run_import()
+        return {'type': 'ir.actions.act_window', 'res_model': log._name, 'res_id': log.id,
+                'view_mode': 'form', 'target': 'current', 'name': _('Import Result')}
+
+    def _run_import(self, log=None, budget=None):
+        """Import new leads. First click: ~40s in the foreground, then the rest
+        continues automatically in the background (cron) until nothing remains."""
+        self.ensure_one()
+        resume = bool(log)
         call, info = self._connect()
         Lead = self.env['leads.logic'].with_context(
             otm_odoo17_import=True, tracking_disable=True, mail_create_nolog=True,
@@ -419,19 +458,28 @@ class OtmLeadsOdoo17ImportWizard(models.TransientModel):
             and d.get('type') not in ('one2many', 'binary', 'html'))
         ctx = {'cache': {}, 'sources_created': 0, 'campaigns_created': 0, 'warnings': []}
 
-        log = self.env['otm.leads.odoo17.import.log'].create({
-            'name': self.env['ir.sequence'].next_by_code('otm.leads.odoo17.import.log') or _('Import'),
-            'date_from': self.date_from, 'date_to': self.date_to, 'date_field': self.date_field,
-            'fetched_count': len(remote_ids)})
+        if not resume:
+            log = self.env['otm.leads.odoo17.import.log'].create({
+                'name': self.env['ir.sequence'].next_by_code('otm.leads.odoo17.import.log') or _('Import'),
+                'date_from': self.date_from, 'date_to': self.date_to, 'date_field': self.date_field,
+                'fetched_count': len(remote_ids)})
+            base_created = base_failed = 0
+            dup = len(an['dup_ids'])
+            already_n = len(an['already_ids'])
+            lines = []
+            total_selected = len(remote_ids)
+        else:  # continuing an earlier run: keep its totals
+            base_created, base_failed = log.created_count, log.failed_count
+            dup, already_n = log.duplicate_count, log.already_count
+            lines = (log.details or '').splitlines() + ['--- continued in background ---']
+            total_selected = log.fetched_count
         created = failed = 0
-        dup = len(an['dup_ids'])
-        already_n = len(an['already_ids'])
-        lines = []
         todo = an['new_ids']
-        budget = float(self.env['ir.config_parameter'].sudo().get_param('otm_odoo17.import_time_budget', 40))
+        if budget is None:
+            budget = float(self.env['ir.config_parameter'].sudo().get_param('otm_odoo17.import_time_budget', 40))
         t0 = _time.time()
         truncated = False
-        if dup:
+        if dup and not resume:
             lines.append('%d lead(s) skipped - phone number already exists in Odoo 19 (ids: %s%s)' % (
                 dup, ', '.join(str(i) for i in an['dup_ids'][:50]), ' ...' if dup > 50 else ''))
 
@@ -487,33 +535,51 @@ class OtmLeadsOdoo17ImportWizard(models.TransientModel):
                     failed += 1
                     lines.append('#%s %s: FAILED - %s' % (rid, row.get('name'), str(e).strip()[:300]))
                     _logger.warning('Odoo17 import failed for lead %s: %s', rid, e)
-            log.write({'created_count': created, 'failed_count': failed})
+            log.write({'created_count': base_created + created, 'failed_count': base_failed + failed})
             self.env.cr.commit()  # keep progress on long runs
 
         remaining = len(todo) - created - failed if truncated else 0
-        # (leads that failed are not retried automatically; see details)
+        created_t, failed_t = base_created + created, base_failed + failed
         if re_rows and not truncated:
             r_ok, r_skip, r_fail = self._import_reenquiries(call, re_rows, ctx, lines)
             lines.append('Re-Attempts: %d created, %d skipped, %d failed.' % (r_ok, r_skip, r_fail))
-            failed += r_fail
+            failed_t += r_fail
 
         if ctx['warnings']:
             lines.append('--- Warnings (first 50) ---')
             lines.extend(sorted(set(ctx['warnings']))[:50])
         summary = ['SELECTED %d  =  IMPORTED %d  +  ALREADY IMPORTED %d  +  PHONE DUPLICATE %d  +  FAILED %d%s' % (
-            len(remote_ids), created, already_n, dup, failed,
+            total_selected, created_t, already_n, dup, failed_t,
             ('  +  REMAINING %d' % remaining) if truncated else '')]
         if truncated:
-            summary.append('Stopped after %ds to avoid a server timeout. Click Import again with the same '
-                           'filters to continue - already imported leads are skipped.' % budget)
+            summary.append('The rest is importing automatically in the background - refresh this page '
+                           'in a minute to see the numbers grow. Nothing else to click.')
+        # strip an older summary line when we rewrite it
+        body = [l for l in lines if l and not l.startswith('SELECTED ')]
         log.write({
-            'fetched_count': len(remote_ids), 'created_count': created, 'duplicate_count': dup,
-            'already_count': already_n, 'remaining_count': remaining, 'failed_count': failed,
-            'campaigns_created': ctx['campaigns_created'], 'sources_created': ctx['sources_created'],
-            'details': '\n'.join(summary + [''] + lines),
+            'fetched_count': total_selected, 'created_count': created_t, 'duplicate_count': dup,
+            'already_count': already_n, 'remaining_count': remaining, 'failed_count': failed_t,
+            'campaigns_created': (log.campaigns_created or 0) + ctx['campaigns_created'],
+            'sources_created': (log.sources_created or 0) + ctx['sources_created'],
+            'details': '\n'.join(summary + [''] + body),
+            'state': 'running' if truncated else 'done',
+            'params': self._bg_params() if truncated else False,
         })
-        return {'type': 'ir.actions.act_window', 'res_model': log._name, 'res_id': log.id,
-                'view_mode': 'form', 'target': 'current', 'name': _('Import Result')}
+        if truncated:
+            self.env.cr.commit()
+            cron = self.env.ref('custom_leads_19.cron_otm_leads_odoo17_import', raise_if_not_found=False)
+            if cron:
+                cron.sudo()._trigger()
+        return log
+
+    def _bg_params(self):
+        import json
+        return json.dumps({
+            'date_from': str(self.date_from), 'date_to': str(self.date_to), 'date_field': self.date_field,
+            'import_children': self.import_children, 'import_chatter': self.import_chatter,
+            'import_reenquiries': self.import_reenquiries,
+            'campaign_remote_ids': self.campaign_option_ids.mapped('remote_id'),
+        })
 
     # ------------------------------------------------------------------ #
     def _import_reenquiries(self, call, rows, ctx, lines):

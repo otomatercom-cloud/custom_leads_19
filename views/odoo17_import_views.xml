@@ -179,6 +179,7 @@
                         <group>
                             <field name="fetched_count"/>
                             <field name="created_count"/>
+                            <field name="state"/>
                             <field name="already_count"/>
                             <field name="duplicate_count"/>
                             <field name="failed_count"/>
