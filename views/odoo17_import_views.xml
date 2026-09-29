@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- Source Campaign -->
+    <record id="view_lead_source_campaign_list" model="ir.ui.view">
+        <field name="name">lead.source.campaign.list</field>
+        <field name="model">lead.source.campaign</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="lead_source_id"/>
+                <field name="active" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_lead_source_campaign_search" model="ir.ui.view">
+        <field name="name">lead.source.campaign.search</field>
+        <field name="model">lead.source.campaign</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="lead_source_id"/>
+                <filter string="Archived" name="inactive" domain="[('active', '=', False)]"/>
+                <group>
+                    <filter string="Lead Source" name="group_source" context="{'group_by': 'lead_source_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_lead_source_campaign" model="ir.actions.act_window">
+        <field name="name">Source Campaigns</field>
+        <field name="res_model">lead.source.campaign</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <!-- Lead Source form: show campaigns -->
+    <record id="view_leads_source_form_campaigns" model="ir.ui.view">
+        <field name="name">leads.sources.form.campaigns</field>
+        <field name="model">leads.sources</field>
+        <field name="inherit_id" ref="custom_leads_19.view_leads_source_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <separator string="Source Campaigns"/>
+                <field name="campaign_ids">
+                    <list editable="bottom">
+                        <field name="sequence" widget="handle"/>
+                        <field name="name"/>
+                    </list>
+                </field>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Leads: campaign field on form / list / search -->
+    <record id="view_leads_logic_form_campaign" model="ir.ui.view">
+        <field name="name">leads.logic.form.campaign</field>
+        <field name="model">leads.logic</field>
+        <field name="inherit_id" ref="custom_leads_19.view_leads_logic_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='leads_source']" position="after">
+                <field name="source_campaign_id" options="{'no_create': True}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_leads_logic_list_campaign" model="ir.ui.view">
+        <field name="name">leads.logic.list.campaign</field>
+        <field name="model">leads.logic</field>
+        <field name="inherit_id" ref="custom_leads_19.view_leads_logic_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='leads_source']" position="after">
+                <field name="source_campaign_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_leads_logic_search_campaign" model="ir.ui.view">
+        <field name="name">leads.logic.search.campaign</field>
+        <field name="model">leads.logic</field>
+        <field name="inherit_id" ref="custom_leads_19.view_leads_logic_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='leads_source']" position="after">
+                <field name="source_campaign_id"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Import wizard -->
+    <record id="view_otm_leads_odoo17_import_wizard_form" model="ir.ui.view">
+        <field name="name">otm.leads.odoo17.import.wizard.form</field>
+        <field name="model">otm.leads.odoo17.import.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Import Leads from Odoo 17">
+                <group>
+                    <group>
+                        <field name="date_from"/>
+                        <field name="date_to"/>
+                        <field name="date_field"/>
+                    </group>
+                    <group>
+                        <field name="import_children"/>
+                        <field name="import_chatter"/>
+                        <field name="connection_info"/>
+                        <field name="preview_count"/>
+                    </group>
+                </group>
+                <div class="text-muted">
+                    Leads are matched by the last 10 digits of the phone number; existing leads and leads
+                    already imported are skipped. Missing Lead Sources and Source Campaigns are created
+                    automatically. Users and employees are matched by login / name.
+                </div>
+                <footer>
+                    <button name="action_import" type="object" string="Import" class="btn-primary"
+                            confirm="Import the leads in this date range from Odoo 17?"/>
+                    <button name="action_test_connection" type="object" string="Test &amp; Count" class="btn-secondary"/>
+                    <button string="Cancel" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_otm_leads_odoo17_import_wizard" model="ir.actions.act_window">
+        <field name="name">Import Leads from Odoo 17</field>
+        <field name="res_model">otm.leads.odoo17.import.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <!-- Import log -->
+    <record id="view_otm_leads_odoo17_import_log_list" model="ir.ui.view">
+        <field name="name">otm.leads.odoo17.import.log.list</field>
+        <field name="model">otm.leads.odoo17.import.log</field>
+        <field name="arch" type="xml">
+            <list create="0">
+                <field name="name"/>
+                <field name="date_from"/>
+                <field name="date_to"/>
+                <field name="user_id"/>
+                <field name="fetched_count"/>
+                <field name="created_count"/>
+                <field name="duplicate_count"/>
+                <field name="failed_count"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_otm_leads_odoo17_import_log_form" model="ir.ui.view">
+        <field name="name">otm.leads.odoo17.import.log.form</field>
+        <field name="model">otm.leads.odoo17.import.log</field>
+        <field name="arch" type="xml">
+            <form create="0" edit="0">
+                <sheet>
+                    <h1><field name="name"/></h1>
+                    <group>
+                        <group>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                            <field name="date_field"/>
+                            <field name="user_id"/>
+                        </group>
+                        <group>
+                            <field name="fetched_count"/>
+                            <field name="created_count"/>
+                            <field name="duplicate_count"/>
+                            <field name="failed_count"/>
+                            <field name="sources_created"/>
+                            <field name="campaigns_created"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Details">
+                            <field name="details"/>
+                        </page>
+                        <page string="Imported Leads">
+                            <field name="lead_ids">
+                                <list>
+                                    <field name="reference_no"/>
+                                    <field name="name"/>
+                                    <field name="leads_source"/>
+                                    <field name="source_campaign_id"/>
+                                    <field name="odoo17_lead_id"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_otm_leads_odoo17_import_log" model="ir.actions.act_window">
+        <field name="name">Odoo 17 Import Logs</field>
+        <field name="res_model">otm.leads.odoo17.import.log</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_lead_source_campaign" name="Source Campaigns" parent="custom_leads_19.menu_leads_config"
+              action="action_lead_source_campaign" sequence="3"
+              groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager"/>
+    <menuitem id="menu_leads_odoo17_import" name="Import from Odoo 17" parent="custom_leads_19.menu_leads_config"
+              sequence="90" groups="custom_leads_19.group_super_admin"/>
+    <menuitem id="menu_leads_odoo17_import_wizard" name="Import Leads" parent="menu_leads_odoo17_import"
+              action="action_otm_leads_odoo17_import_wizard" sequence="1"
+              groups="custom_leads_19.group_super_admin"/>
+    <menuitem id="menu_leads_odoo17_import_log" name="Import Logs" parent="menu_leads_odoo17_import"
+              action="action_otm_leads_odoo17_import_log" sequence="2"
+              groups="custom_leads_19.group_super_admin"/>
+</odoo>

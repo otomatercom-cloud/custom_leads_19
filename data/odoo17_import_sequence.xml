@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo noupdate="1">
+    <record id="seq_otm_leads_odoo17_import_log" model="ir.sequence">
+        <field name="name">Odoo 17 Leads Import</field>
+        <field name="code">otm.leads.odoo17.import.log</field>
+        <field name="prefix">IMP17/</field>
+        <field name="padding">4</field>
+    </record>
+</odoo>

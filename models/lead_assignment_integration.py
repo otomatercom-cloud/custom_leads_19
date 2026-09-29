@@ -74,6 +74,8 @@ class LeadsLogicAssignment(models.Model):
     # ── create() – trigger auto-assignment after super ──────────────────────
     @api.model_create_multi
     def create(self, vals_list):
+        if self.env.context.get('otm_odoo17_import'):
+            return super().create(vals_list)
         for vals in vals_list:
             # leads.py defines lead_owner with
             #   default=lambda self: self.env.user.employee_id.id

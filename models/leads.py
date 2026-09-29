@@ -70,6 +70,15 @@ class LeadsForm(models.Model):
 
     # ── Basic Information ──────────────────────────────────────────────────
     leads_source = fields.Many2one('leads.sources', string='Leads Source', required=True)
+    source_campaign_id = fields.Many2one(
+        'lead.source.campaign', string='Source Campaign', index=True,
+        domain="[('lead_source_id', '=', leads_source)]")
+    odoo17_import_log_id = fields.Many2one(
+        'otm.leads.odoo17.import.log', string='Odoo 17 Import', index=True, copy=False,
+        readonly=True, ondelete='set null')
+    odoo17_lead_id = fields.Integer(
+        string='Odoo 17 Lead ID', index=True, copy=False, readonly=True,
+        help='ID of this lead in the Odoo 17 database (set by the Odoo 17 import).')
     source_name = fields.Char(string="Source", related="leads_source.name")
     name = fields.Char(string='Lead Name', required=True)
     email_address = fields.Char(string='Email')
@@ -1614,6 +1623,8 @@ class LeadResponse(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         records = super(LeadResponse, self).create(vals_list)
+        if self.env.context.get('otm_odoo17_import'):
+            return records
         for record in records:
             if record.lead_id and record.comment:
                 safe_comment = html_escape(record.comment)

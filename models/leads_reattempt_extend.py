@@ -70,6 +70,10 @@ class LeadsLogicReattemptExtension(models.Model):
           - Create otomater.lead.reattempt record
           - Raise warning to user
         """
+        if self.env.context.get('otm_odoo17_import'):
+            # Odoo 17 import does its own duplicate check
+            return super(LeadsLogicReattemptExtension, self).create(vals_list)
+
         processed_results = []
         reattempts_to_create = []
 
