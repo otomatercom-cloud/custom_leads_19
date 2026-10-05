@@ -248,9 +248,6 @@
         <field name="code">model.action_process_now()</field>
     </record>
 
-    <menuitem id="menu_leads_odoo17_sync_queue" name="Sync Queue" parent="menu_leads_odoo17_import"
-              action="action_otm_leads_odoo17_sync_queue" sequence="3"
-              groups="custom_leads_19.group_super_admin"/>
     <menuitem id="menu_lead_source_campaign" name="Source Campaigns" parent="custom_leads_19.menu_leads_config"
               action="action_lead_source_campaign" sequence="3"
               groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager"/>
@@ -261,5 +258,8 @@
               groups="custom_leads_19.group_super_admin"/>
     <menuitem id="menu_leads_odoo17_import_log" name="Import Logs" parent="menu_leads_odoo17_import"
               action="action_otm_leads_odoo17_import_log" sequence="2"
+              groups="custom_leads_19.group_super_admin"/>
+    <menuitem id="menu_leads_odoo17_sync_queue" name="Sync Queue" parent="menu_leads_odoo17_import"
+              action="action_otm_leads_odoo17_sync_queue" sequence="3"
               groups="custom_leads_19.group_super_admin"/>
 </odoo>
