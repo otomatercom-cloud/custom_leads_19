@@ -16,7 +16,7 @@ QUALITY_SELECTION = [
     ('wrong_number', '📵 Wrong number'),
     ('not_interested', '❌ Not Interested'),
     ('not_attended', '📵Not Attended'),
-    ('joined_other_institute', '🏫 Joined Other Institute'),
+    ('already_joined', '✅ Already Joined'),
 ]
 
 

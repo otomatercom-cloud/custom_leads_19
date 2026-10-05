@@ -80,6 +80,11 @@
                             </div>
                         </setting>
                     </block>
+                    <block title="Daily Call Goal">
+                        <setting string="Calls per officer per day" help="Shown as the progress ring on each officer's dashboard in the Next.js app.">
+                            <field name="daily_call_goal"/>
+                        </setting>
+                    </block>
                     <block title="Telegram Follow-Up Alerts">
                         <setting string="Enable Telegram alerts" help="Officers get Telegram messages for new, due-soon and overdue follow-ups plus a morning digest. Each officer's Chat ID is set on the user form (Call Settings tab).">
                             <field name="telegram_enabled"/>

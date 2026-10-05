@@ -50,7 +50,7 @@ class LeadQualityHistory(models.Model):
             ('wrong_number', '📵 Wrong number'),
             ('not_interested', '❌ Not Interested'),
             ('not_attended', '📵Not Attended'),
-            ('joined_other_institute', '🏫 Joined Other Institute'),
+            ('already_joined', '✅ Already Joined'),
         ],
         string='Lead Quality'
     )
@@ -239,7 +239,7 @@ class LeadsForm(models.Model):
             ('wrong_number', '📵 Wrong number'),
             ('not_interested', '❌ Not Interested'),
             ('not_attended', '📵Not Attended'),
-            ('joined_other_institute', '🏫 Joined Other Institute'),
+            ('already_joined', '✅ Already Joined'),
         ],
         string='Lead Quality', default='new', required=True, tracking=True
     )

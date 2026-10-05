@@ -39,3 +39,4 @@ try:
     from . import student_inherit
 except Exception:
     pass
+from . import daily_goal

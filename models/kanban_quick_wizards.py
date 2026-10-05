@@ -29,7 +29,7 @@ class KanbanResponseWizard(models.TransientModel):
         ('wrong_number',         '📵 Wrong number'),
         ('not_interested',       '❌ Not Interested'),
         ('not_attended',         '📵Not Attended'),
-        ('joined_other_institute', '🏫 Joined Other Institute'),
+        ('already_joined',       '✅ Already Joined'),
     ], string='Lead Quality', required=True)
 
     # ── Response ──────────────────────────────────────────────────────────────
@@ -114,7 +114,7 @@ class KanbanQualityWizard(models.TransientModel):
         ('wrong_number',         '📵 Wrong number'),
         ('not_interested',       '❌ Not Interested'),
         ('not_attended',         '📵Not Attended'),
-        ('joined_other_institute', '🏫 Joined Other Institute'),
+        ('already_joined',       '✅ Already Joined'),
     ], string='Change To', required=True)
     reason = fields.Char(string='Reason (optional)')
 
