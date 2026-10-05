@@ -11,11 +11,17 @@ How a call is matched
 * Otherwise the call is matched by the Bonvoice call id, then by the customer
   number (lead phone) and the agent number (user.bonvoice_agent_number).
 
-Bonvoice's payload field names are not documented publicly, so every lookup
-is case-insensitive over several likely spellings, form or JSON bodies are
-accepted, and the RAW payload is always written to the Odoo log
-("Bonvoice webhook payload: ...") so field names can be tuned after the
-first real call.  Answers are always HTTP 200 'success' so Bonvoice never
+Field names are taken from the Odoo 17 production handler (known to work):
+callID / call_id, SourceNumber, DestinationNumber, Direction ('Outbound' /
+'Inbound'), CallDuration (seconds), Status, ResourceURL (recording link),
+DataSource = 'Bonvoice'.  Lookups are case-insensitive, form or JSON bodies
+are accepted, and the RAW payload is always written to the Odoo log
+("Bonvoice webhook payload: ...").
+
+The same handler also answers the legacy Odoo 17 paths
+(/callcenterbridging and /api/voxbay/callcenterbridging) so a Bonvoice panel
+already configured with those paths only needs its domain changed; Voxbay
+events arriving on those paths are passed to the Voxbay handler.  Answers are always HTTP 200 'success' so Bonvoice never
 retries in a loop.
 """
 import hmac
@@ -80,14 +86,32 @@ class BonvoiceWebhookController(http.Controller):
     @http.route('/bonvoice/webhook', type='http', auth='public', methods=['POST', 'GET'], csrf=False)
     def bonvoice_webhook(self, **kwargs):
         env = request.env
-        ok = request.make_response('success', headers=[('Content-Type', 'text/plain')])
         expected = env['ir.config_parameter'].sudo().get_param(PARAM_TOKEN)
         given = request.params.get('token', '')
         if not expected or not hmac.compare_digest(str(given), str(expected)):
             _logger.warning('Bonvoice webhook: bad or missing token from %s', request.httprequest.remote_addr)
             return request.make_response('forbidden', status=403)
+        return self._handle(env)
 
+    @http.route(['/callcenterbridging', '/api/voxbay/callcenterbridging'], type='http',
+                auth='public', methods=['POST', 'GET'], csrf=False)
+    def legacy_callcenterbridging(self, **kwargs):
+        """Legacy Odoo 17 URL (no token, same as before)."""
+        env = request.env
         data = self._payload()
+        if self._is_bonvoice(data):
+            return self._handle(env, data)
+        from .voxbay_webhook import VoxbayWebhookController
+        return VoxbayWebhookController().voxbay_webhook()
+
+    @staticmethod
+    def _is_bonvoice(data):
+        return (str(data.get('datasource', '')).lower() == 'bonvoice' or 'resourceurl' in data
+                or 'sourcenumber' in data or 'destinationnumber' in data)
+
+    def _handle(self, env, data=None):
+        ok = request.make_response('success', headers=[('Content-Type', 'text/plain')])
+        data = data if data is not None else self._payload()
         _logger.info('Bonvoice webhook payload: %s', data)
         if not data:
             return ok
@@ -97,66 +121,78 @@ class BonvoiceWebhookController(http.Controller):
             _logger.exception('Bonvoice webhook processing failed')
         return ok
 
+    @staticmethod
+    def _hms(raw):
+        try:
+            total = int(float(raw))
+            h, rem = divmod(total, 3600)
+            m, sec = divmod(rem, 60)
+            return '{:02}:{:02}:{:02}'.format(h, m, sec)
+        except (TypeError, ValueError):
+            return str(raw or '00:00:00')
+
     def _process(self, env, data):
         g = self._g
         CallLog = env['lead.call.log'].sudo()
         Users = env['res.users'].sudo()
 
-        call_id = g(data, 'call_uuid', 'calluuid', 'callid', 'call_id', 'uniqueid', 'unique_id',
-                    'uuid', 'cdr_id', 'eventid', 'event_id')
+        call_id = g(data, 'callid', 'call_id', 'call_uuid', 'calluuid', 'uniqueid', 'uuid')
+        src = g(data, 'sourcenumber', 'source_number', 'callernumber', 'caller')
+        dst = g(data, 'destinationnumber', 'destination_number', 'destination', 'callee')
+        direction = g(data, 'direction', 'calltype', 'call_type').lower()
+        outgoing = direction.startswith('out') or (dst and not src)
+        customer = dst if outgoing else src
+        agent_ext = (src if outgoing else dst) or g(data, 'agentnumber', 'agent_number', 'extension')
+        status = g(data, 'status', 'callstatus', 'call_status', 'disposition').upper() or 'ANSWERED'
+        duration = self._hms(g(data, 'callduration', 'call_duration', 'duration', 'totalcallduration'))
+        rec = g(data, 'resourceurl', 'recording_url', 'recordingurl', 'recording')
         lead_param = g(data, 'lead_id')
         agent_param = g(data, 'agent_id')
-        agent_no = g(data, 'agent_number', 'agentnumber', 'agent', 'agent_extension', 'extension',
-                     'answered_by', 'destination')
-        customer = g(data, 'legbdestination', 'customer_number', 'customernumber', 'callee',
-                     'called_number', 'callednumber', 'dialed_number', 'to', 'caller_number',
-                     'callernumber', 'caller', 'from', 'source')
-        status = g(data, 'call_status', 'callstatus', 'status', 'disposition', 'dialstatus').upper()
-        duration = g(data, 'conversation_duration', 'conversationduration', 'talk_time', 'talktime',
-                     'billsec', 'duration', 'call_duration', 'callduration', 'total_duration')
-        rec = g(data, 'recording_url', 'recordingurl', 'recording', 'record_url', 'recordingfile',
-                'recording_file', 'recordurl', 'call_recording')
-        direction = g(data, 'call_type', 'calltype', 'direction', 'calldirection', 'type').lower()
 
+        if not customer and not lead_param:
+            return
         lead = env['leads.logic'].sudo().browse()
         if lead_param.isdigit():
             lead = lead.browse(int(lead_param)).exists()
+        if not lead and customer:
+            lead = _V._find_or_create_lead(env, customer, 'outgoing' if outgoing else 'incoming')
+
         user = Users.browse()
         if agent_param.isdigit():
             user = Users.browse(int(agent_param)).exists()
-        if not user and agent_no:
-            user = Users.search([('bonvoice_agent_number', '=', agent_no.replace('+', ''))], limit=1)
-        incoming = 'in' in direction and 'out' not in direction
-        if not lead and customer:
-            lead = _V._find_or_create_lead(env, customer, 'incoming' if incoming else 'outgoing')
+        if not user and agent_ext:
+            import re
+            clean = re.sub(r'\D', '', agent_ext) or agent_ext.strip()
+            cands = {c for c in (clean, clean.lstrip('0')) if c}
+            user = Users.search([('bonvoice_agent_number', 'in', list(cands))], limit=1)
 
         log = CallLog.browse()
         if call_id:
             log = CallLog.search([('call_uuid', '=', call_id)], limit=1)
-        if not log and lead and user:
+        if not log and lead:
             log = CallLog.search([
-                ('lead_id', '=', lead.id), ('user_id', '=', user.id), ('call_uuid', '=', False),
-                ('call_time', '>=', fields.Datetime.subtract(fields.Datetime.now(), hours=2)),
-                ('remarks', 'like', 'Bourn Voice')], order='call_time desc', limit=1)
+                ('lead_id', '=', lead.id), ('call_uuid', '=', False),
+                ('call_time', '>=', fields.Datetime.subtract(fields.Datetime.now(), minutes=20))],
+                order='call_time desc', limit=1)
 
-        vals = {'call_type': 'incoming' if incoming else 'outgoing'}
-        if call_id:
-            vals['call_uuid'] = call_id
+        vals = {
+            'call_type': 'outgoing' if outgoing else 'incoming',
+            'caller_number': customer, 'call_status': 'NO ANSWER' if status in _FAILED else status,
+            'duration': duration,
+            'remarks': 'Bonvoice %s call. Status: %s. Duration: %s.' % (
+                'outgoing' if outgoing else 'incoming', status, duration),
+        }
         if lead:
             vals['lead_id'] = lead.id
-        if user:
-            vals['user_id'] = user.id
-        if customer:
-            vals['caller_number'] = customer
-        if status:
-            vals['call_status'] = 'NO ANSWER' if status in _FAILED else status
-        if duration:
-            vals['duration'] = duration
+        if call_id:
+            vals['call_uuid'] = call_id
         if rec:
             vals['recording_url'] = rec
+        # never blank out an already-known agent
+        if user:
+            vals['user_id'] = user.id
         if log:
             log.write(vals)
-        elif lead or customer:
+        else:
             vals.setdefault('call_time', fields.Datetime.now())
-            vals.setdefault('remarks', 'Bourn Voice call (webhook)')
             CallLog.create(vals)
