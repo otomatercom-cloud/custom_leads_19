@@ -69,32 +69,32 @@ class LeadDemoData(models.AbstractModel):
 
     # ------------------------------------------------------------------ helpers
     @api.model
-    def _check_admin(self):
+    def _demo_check_admin(self):
         if not self.env.user.has_group('base.group_system'):
             raise AccessError(_('Only Settings administrators can load or remove demo data.'))
 
     @api.model
-    def _ref(self, key):
+    def _demo_ref(self, key):
         return self.env.ref('%s.demo_%s' % (MODULE, key), raise_if_not_found=False)
 
     @api.model
-    def _register(self, rec, key):
+    def _demo_reg(self, rec, key):
         self.env['ir.model.data'].sudo().create({
             'module': MODULE, 'name': 'demo_%s' % key, 'model': rec._name,
             'res_id': rec.id, 'noupdate': True})
         return rec
 
     @api.model
-    def _get_or_create(self, model, key, vals):
-        rec = self._ref(key)
+    def _demo_get(self, model, key, vals):
+        rec = self._demo_ref(key)
         if rec and rec.exists():
             return rec
-        return self._register(self.env[model].create(vals), key)
+        return self._demo_reg(self.env[model].create(vals), key)
 
     # --------------------------------------------------------------------- load
     @api.model
     def load(self):
-        self._check_admin()
+        self._demo_check_admin()
         env = self.with_context(otm_demo_load=True, otm_odoo17_import=True, tracking_disable=True,
                                 mail_create_nolog=True, mail_notrigger=True, no_reset_password=True).env
         self = self.with_env(env)
@@ -105,19 +105,19 @@ class LeadDemoData(models.AbstractModel):
         users, emps = {}, {}
         for key, name, flags in DEMO_USERS:
             login = 'demo.%s@%s' % (key, DOMAIN)
-            user = self._ref('user_' + key)
+            user = self._demo_ref('user_' + key)
             if not user or not user.exists():
                 user = Users.search([('login', '=', login)], limit=1) or Users.create({
                     'name': name, 'login': login, 'email': login, 'password': DEMO_PASSWORD,
                     'group_ids': [(6, 0, [base_user.id])]})
-                self._register(user, 'user_' + key)
+                self._demo_reg(user, 'user_' + key)
             users[key] = user
             emp = Emp.search([('user_id', '=', user.id)], limit=1)
             if not emp:
                 emp = Emp.create({'name': name, 'user_id': user.id, 'work_email': login})
-                self._register(emp, 'emp_' + key)
+                self._demo_reg(emp, 'emp_' + key)
             emps[key] = emp
-            perm = self._ref('perm_' + key)
+            perm = self._demo_ref('perm_' + key)
             if not perm or not perm.exists():
                 vals = {'user_id': user.id, 'notes': 'Demo user'}
                 vals.update({f: True for f in flags})
@@ -125,11 +125,11 @@ class LeadDemoData(models.AbstractModel):
                 if existing:
                     existing.write({f: True for f in flags})
                 else:
-                    self._register(env['lead.user.permission'].sudo().create(vals), 'perm_' + key)
+                    self._demo_reg(env['lead.user.permission'].sudo().create(vals), 'perm_' + key)
 
         teams = {}
         for key, name, tl, members in TEAMS:
-            teams[key] = self._get_or_create('lead.team', key, {
+            teams[key] = self._demo_get('lead.team', key, {
                 'name': name, 'description': 'Demo team',
                 'team_lead_ids': [(6, 0, [emps[tl].id])],
                 'member_ids': [(0, 0, {'employee_id': emps[m].id, 'team_lead_id': emps[tl].id}) for m in members],
@@ -137,15 +137,15 @@ class LeadDemoData(models.AbstractModel):
 
         sources, campaigns = {}, {}
         for key, (name, digital, camps) in SOURCES.items():
-            sources[key] = self._get_or_create('leads.sources', key, {
+            sources[key] = self._demo_get('leads.sources', key, {
                 'name': name, 'digital_lead': digital, 'source': 'inbound_source'})
             for i, cname in enumerate(camps):
-                campaigns[(key, i)] = self._get_or_create('lead.source.campaign', '%s_c%d' % (key, i), {
+                campaigns[(key, i)] = self._demo_get('lead.source.campaign', '%s_c%d' % (key, i), {
                     'name': cname, 'lead_source_id': sources[key].id})
         for i, cname in enumerate(COURSES):
-            self._get_or_create('course.interested', 'course_%d' % i, {'name': cname})
+            self._demo_get('course.interested', 'course_%d' % i, {'name': cname})
 
-        self._get_or_create('lead.assignment.rule', 'rule_rr', {
+        self._demo_get('lead.assignment.rule', 'rule_rr', {
             'name': 'Demo - Round Robin (All Teams)', 'assignment_type': 'all_teams',
             'active': False})   # inactive on purpose: enable it only during the demo
 
@@ -154,8 +154,8 @@ class LeadDemoData(models.AbstractModel):
         now = fields.Datetime.now()
         leads = []
         for n in range(1, 41):
-            if self._ref('lead_%d' % n):
-                leads.append(self._ref('lead_%d' % n))
+            if self._demo_ref('lead_%d' % n):
+                leads.append(self._demo_ref('lead_%d' % n))
                 continue
             q = rnd.choice(QUALITIES)
             owner_key = officers[(n - 1) % 6]
@@ -180,7 +180,7 @@ class LeadDemoData(models.AbstractModel):
             if q == 'admission':
                 vals['admission_date'] = created + timedelta(days=1)
             lead = env['leads.logic'].sudo().create(vals)
-            self._register(lead, 'lead_%d' % n)
+            self._demo_reg(lead, 'lead_%d' % n)
             env.cr.execute("UPDATE leads_logic SET create_date=%s, write_date=%s, date_of_adding=%s, "
                            "last_update_date=%s WHERE id=%s",
                            (created, created, created.date(), created, lead.id))
@@ -208,11 +208,11 @@ class LeadDemoData(models.AbstractModel):
                     'phone_number': lead.phone_number, 'remarks': rnd.choice(REMARKS), 'status': 'scheduled'})
 
         for i, (lead_idx, officer) in enumerate([(2, 'ao4'), (7, 'ao1'), (12, 'ao5'), (19, 'ao2')], 1):
-            if self._ref('reattempt_%d' % i):
+            if self._demo_ref('reattempt_%d' % i):
                 continue
             lead = leads[lead_idx]
             other = sources['src_google' if lead.leads_source != sources['src_google'] else 'src_meta']
-            self._register(env['otomater.lead.reattempt'].sudo().create({
+            self._demo_reg(env['otomater.lead.reattempt'].sudo().create({
                 'lead_id': lead.id, 'existing_owner_id': lead.lead_owner.id,
                 'requested_owner_id': emps[officer].id, 'source_id': other.id,
                 'duplicate_type': 'phone', 'mobile': lead.phone_number,
@@ -223,7 +223,7 @@ class LeadDemoData(models.AbstractModel):
     # ------------------------------------------------------------------- remove
     @api.model
     def remove(self):
-        self._check_admin()
+        self._demo_check_admin()
         env = self.with_context(otm_demo_load=True, tracking_disable=True).env
         IMD = env['ir.model.data'].sudo()
         rows = IMD.search([('module', '=', MODULE), ('name', '=like', 'demo\\_%')])
