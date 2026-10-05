@@ -16,7 +16,7 @@ Settings → Leads → **Demo Data** → *Load Demo Data*.  *Remove Demo Data* d
 | Crash Head / Crash User | demo.crashhead@… / demo.crashuser@… |
 
 Teams: **Demo Team - Kochi** (Anil Kumar + 3 officers), **Demo Team - Calicut** (Divya Nair + 3 officers).
-Data: 40 leads (spread over 20 days, 4 sources, campaigns, all qualities), calls, responses, follow-ups (overdue / today / tomorrow), 4 re-attempts, and an *inactive* round-robin rule.
+Data: 40 leads (4 admitted leads also get a Student Details profile, enrolment and payment when student_details_19 is installed) (spread over 20 days, 4 sources, campaigns, all qualities), calls, responses, follow-ups (overdue / today / tomorrow), 4 re-attempts, and an *inactive* round-robin rule.
 
 ## 3. Demo script (≈15 min)
 1. **Officer view** – log in as `ao1`: only own leads; open a lead, show call log, responses, change quality to Hot, schedule a follow-up.

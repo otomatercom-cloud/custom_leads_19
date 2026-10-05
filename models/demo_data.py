@@ -91,6 +91,40 @@ class LeadDemoData(models.AbstractModel):
             return rec
         return self._demo_reg(self.env[model].create(vals), key)
 
+    @api.model
+    def _demo_admission_student(self, lead, n, owner_user, owner_key):
+        """Like the Admission wizard: an admitted lead gets a Student Details profile
+        (and enrolment + payment when a batch / fee structure exists)."""
+        env = self.env
+        if 'student.details' not in env:
+            return
+        batch = env['student.batch'].sudo().search([('active', '=', True)], limit=1)
+        student = env['student.details'].sudo().create({
+            'name': lead.name, 'lead_reference_no': lead.reference_no, 'email': lead.email_address,
+            'phone': lead.phone_number, 'whatsapp_number': lead.phone_number, 'city': lead.place,
+            'branch': 'kochi' if owner_key in ('ao1', 'ao2', 'ao3') else 'calicut',
+            'admission_officer_id': owner_user.id, 'joining_status': 'new',
+            'batch_id': batch.id or False, 'lead_id': lead.id,
+        })
+        self._demo_reg(student, 'student_lead_%d' % n)
+        vals = {'student_id': student.id, 'student_profile_created': True, 'adm_id': student.id,
+                'student_name': student.name}
+        if 'student_id' in lead._fields:
+            vals['student_id'] = student.id
+        lead.sudo().write({k: v for k, v in vals.items() if k in lead._fields})
+        fee = env['fee.structure'].sudo().search([('active', '=', True), ('fee_type', '!=', 'admission')], limit=1) \
+            if 'fee.structure' in env else False
+        if batch and fee:
+            total = fee.total_fee_amount if fee.fee_type == 'installment' else fee.amount_inclusive
+            enr = env['student.enrollment'].sudo().create({
+                'student_id': student.id, 'batch_id': batch.id, 'fee_structure_id': fee.id,
+                'total_fee': total, 'fee_type': fee.fee_type, 'gst_rate': fee.gst_rate})
+            self._demo_reg(enr, 'student_enr_%d' % n)
+            pay = env['student.fee.payment'].sudo().create({
+                'enrollment_id': enr.id, 'amount': round(total * 0.3, 2), 'payment_mode': 'upi',
+                'remarks': 'Demo admission fee from lead %s' % lead.reference_no})
+            self._demo_reg(pay, 'student_pay_%d' % n)
+
     # --------------------------------------------------------------------- load
     @api.model
     def load(self):
@@ -157,7 +191,7 @@ class LeadDemoData(models.AbstractModel):
             if self._demo_ref('lead_%d' % n):
                 leads.append(self._demo_ref('lead_%d' % n))
                 continue
-            q = rnd.choice(QUALITIES)
+            q = 'admission' if n in (5, 15, 25, 35) else rnd.choice(QUALITIES)
             owner_key = officers[(n - 1) % 6]
             sk = src_keys[n % len(src_keys)]
             camp_ids = [c for (k, i), c in campaigns.items() if k == sk]
@@ -186,6 +220,8 @@ class LeadDemoData(models.AbstractModel):
                            (created, created, created.date(), created, lead.id))
             leads.append(lead)
             owner_user = users[owner_key]
+            if q == 'admission':
+                self._demo_admission_student(lead, n, owner_user, owner_key)
 
             for _i in range(rnd.randint(0, 3)):      # call logs
                 answered = rnd.random() > 0.35
@@ -230,11 +266,13 @@ class LeadDemoData(models.AbstractModel):
         by_model = {}
         for r in rows:
             by_model.setdefault(r.model, []).append(r.res_id)
-        order = ['otomater.lead.reattempt', 'leads.logic', 'lead.assignment.rule', 'lead.team',
+        order = ['otomater.lead.reattempt', 'student.fee.payment', 'student.enrollment', 'student.details', 'leads.logic', 'lead.assignment.rule', 'lead.team',
                  'lead.user.permission', 'hr.employee', 'res.users', 'lead.source.campaign',
                  'leads.sources', 'course.interested']
         archived = []
         for model in order:
+            if model not in env:
+                continue
             recs = env[model].sudo().with_context(active_test=False).browse(by_model.get(model, [])).exists()
             if model == 'leads.logic':
                 recs.with_context(otm_demo_load=True).unlink()
