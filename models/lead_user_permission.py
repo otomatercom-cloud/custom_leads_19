@@ -87,6 +87,8 @@ class LeadUserPermission(models.Model):
 
     # ── Security ──────────────────────────────────────────────────────
     def _check_super_admin(self):
+        if self.env.context.get('otm_demo_load'):
+            return          # demo loader runs as a Settings admin
         if not self.env.user.has_group('custom_leads_19.group_super_admin'):
             raise AccessError(
                 'Only Super Admin can manage Lead user permissions.'

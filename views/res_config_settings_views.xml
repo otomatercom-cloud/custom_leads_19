@@ -77,6 +77,19 @@
                             </div>
                         </setting>
                     </block>
+                    <block title="Demo Data (for demonstrations / training only)">
+                        <setting string="Demo users, teams &amp; leads"
+                                 help="Creates demo users for every role (password Demo@1234), 2 teams, sources, ~40 leads with calls, follow-ups and re-attempts. Never load on a live database - remove it afterwards.">
+                            <div class="mt-2">
+                                <button name="action_load_demo_data" type="object" class="btn btn-primary"
+                                        string="Load Demo Data"
+                                        confirm="Create demo users, teams and leads? Use only on a demo/training database."/>
+                                <button name="action_remove_demo_data" type="object" class="btn btn-secondary ms-2"
+                                        string="Remove Demo Data"
+                                        confirm="Delete all demo users, teams and leads created by Load Demo Data?"/>
+                            </div>
+                        </setting>
+                    </block>
                 </app>
             </xpath>
         </field>

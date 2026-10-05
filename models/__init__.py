@@ -32,6 +32,7 @@ from . import lead_counselling
 # must load AFTER lead_reattempt / leads (they extend models defined there)
 from . import odoo17_import
 from . import odoo17_sync
+from . import demo_data
 
 try:
     from . import student_inherit

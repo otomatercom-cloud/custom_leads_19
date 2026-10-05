@@ -56,6 +56,21 @@ class ResConfigSettings(models.TransientModel):
         inverse='_inverse_enable_call_timer',
     )
 
+    def action_load_demo_data(self):
+        self.env['lead.demo.data'].load()
+        return {'type': 'ir.actions.client', 'tag': 'display_notification', 'params': {
+            'title': 'Demo data loaded', 'type': 'success', 'sticky': True,
+            'message': 'Demo users, teams, leads, calls and follow-ups created. '
+                       'Login: demo.<role>@demo.otomater.com / Demo@1234 (see the demo guide).'}}
+
+    def action_remove_demo_data(self):
+        archived = self.env['lead.demo.data'].remove()
+        msg = 'All demo records removed.'
+        if archived:
+            msg += ' Archived (have history): ' + ', '.join(archived[:6])
+        return {'type': 'ir.actions.client', 'tag': 'display_notification',
+                'params': {'title': 'Demo data removed', 'message': msg, 'type': 'warning', 'sticky': True}}
+
     @api.depends_context('company')
     def _compute_enable_followup_popup(self):
         val = self.env['ir.config_parameter'].sudo().get_param(PARAM_FOLLOWUP)
