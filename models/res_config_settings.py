@@ -56,6 +56,20 @@ class ResConfigSettings(models.TransientModel):
         inverse='_inverse_enable_call_timer',
     )
 
+    bonvoice_webhook_url = fields.Char(string='Bonvoice Webhook URL', compute='_compute_bonvoice_webhook_url')
+
+    @api.depends_context('company')
+    def _compute_bonvoice_webhook_url(self):
+        icp = self.env['ir.config_parameter'].sudo()
+        token = icp.get_param('custom_leads_19.bonvoice_webhook_token')
+        if not token:
+            import secrets
+            token = secrets.token_urlsafe(24)
+            icp.set_param('custom_leads_19.bonvoice_webhook_token', token)
+        base = icp.get_param('web.base.url', '')
+        for rec in self:
+            rec.bonvoice_webhook_url = '%s/bonvoice/webhook?token=%s' % (base, token)
+
     def action_load_demo_data(self):
         self.env['lead.demo.data'].load()
         return {'type': 'ir.actions.client', 'tag': 'display_notification', 'params': {

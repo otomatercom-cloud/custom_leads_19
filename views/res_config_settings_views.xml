@@ -42,6 +42,9 @@
                         <setting string="Leg B Caller ID">
                             <field name="bonvoice_leg_b_caller_id"/>
                         </setting>
+                        <setting string="Webhook URL (call tracking)" help="Paste this URL in the Bonvoice panel as the CDR / call-event callback URL. It contains a secret token - do not share it publicly.">
+                            <field name="bonvoice_webhook_url" readonly="1"/>
+                        </setting>
                     </block>
                     <block title="Meta WhatsApp">
                         <setting string="Meta Verify Token">
