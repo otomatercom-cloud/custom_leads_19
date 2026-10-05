@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo noupdate="1">
+    <record id="cron_telegram_followups" model="ir.cron">
+        <field name="name">Leads: Telegram follow-up reminders</field>
+        <field name="model_id" ref="model_lead_followup"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_telegram_followups()</field>
+        <field name="interval_number">5</field>
+        <field name="interval_type">minutes</field>
+        <field name="active" eval="True"/>
+    </record>
+    <record id="cron_telegram_digest" model="ir.cron">
+        <field name="name">Leads: Telegram morning digest (9:00 IST)</field>
+        <field name="model_id" ref="model_lead_followup"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_telegram_digest()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="nextcall" eval="(DateTime.now() + timedelta(days=1)).strftime('%Y-%m-%d 03:30:00')"/>
+        <field name="active" eval="True"/>
+    </record>
+</odoo>

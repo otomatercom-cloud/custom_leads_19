@@ -77,6 +77,24 @@
                             </div>
                         </setting>
                     </block>
+                    <block title="Telegram Follow-Up Alerts">
+                        <setting string="Enable Telegram alerts" help="Officers get Telegram messages for new, due-soon and overdue follow-ups plus a morning digest. Each officer's Chat ID is set on the user form (Call Settings tab).">
+                            <field name="telegram_enabled"/>
+                        </setting>
+                        <setting string="Bot Token" help="Create a bot with @BotFather in Telegram and paste the token here.">
+                            <field name="telegram_bot_token" password="True"/>
+                        </setting>
+                        <setting string="Reminder before due time (minutes)">
+                            <field name="telegram_reminder_minutes"/>
+                        </setting>
+                        <setting string="Morning digest (9:00 AM)" help="One message per officer listing today's follow-ups.">
+                            <field name="telegram_digest"/>
+                            <div class="mt-2">
+                                <button name="action_telegram_test_me" type="object" class="btn btn-secondary"
+                                        string="Save &amp; send test to me"/>
+                            </div>
+                        </setting>
+                    </block>
                     <block title="Demo Data (for demonstrations / training only)">
                         <setting string="Demo users, teams &amp; leads"
                                  help="Creates demo users for every role (password Demo@1234), 2 teams, sources, ~40 leads with calls, follow-ups and re-attempts. Never load on a live database - remove it afterwards.">

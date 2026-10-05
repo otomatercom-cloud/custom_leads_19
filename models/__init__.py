@@ -33,6 +33,7 @@ from . import lead_counselling
 from . import odoo17_import
 from . import odoo17_sync
 from . import demo_data
+from . import telegram_notify
 
 try:
     from . import student_inherit
