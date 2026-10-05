@@ -47,7 +47,7 @@ class CallCampaignAutoGenerate(models.Model):
         is_manager = user.has_group('custom_leads_19.group_lead_manager')
         is_super   = user.has_group('custom_leads_19.group_super_admin')
         is_tl      = user.has_group('custom_leads_19.group_lead_team_lead')
-        current_emp = self.env['hr.employee'].search([('user_id', '=', user.id)], limit=1)
+        current_emp = self.env['hr.employee'].sudo().search([('user_id', '=', user.id)], limit=1)
 
         employees = self.env['hr.employee']
 
@@ -66,7 +66,7 @@ class CallCampaignAutoGenerate(models.Model):
                 owner_ids = self.env['leads.logic'].search(
                     [('lead_owner', '!=', False)]
                 ).mapped('lead_owner').ids
-                employees = self.env['hr.employee'].browse(owner_ids)
+                employees = self.env['hr.employee'].sudo().browse(owner_ids)
         elif is_tl and current_emp:
             my_teams = self.env['lead.team'].search([('team_lead_ids', 'in', current_emp.id)])
             tl_emps = my_teams.mapped('team_lead_ids')
@@ -153,7 +153,7 @@ class CallCampaignAutoGenerate(models.Model):
         is_manager = user.has_group('custom_leads_19.group_lead_manager')
         is_super   = user.has_group('custom_leads_19.group_super_admin')
         is_tl      = user.has_group('custom_leads_19.group_lead_team_lead')
-        current_emp = self.env['hr.employee'].search([('user_id', '=', user.id)], limit=1)
+        current_emp = self.env['hr.employee'].sudo().search([('user_id', '=', user.id)], limit=1)
 
         # Source of truth for "who is a team lead" is lead.team.team_lead_ids
         # (see get_selectable_members for why the per-member field isn't used).
@@ -161,7 +161,7 @@ class CallCampaignAutoGenerate(models.Model):
 
         if selected_ids:
             # Use explicitly selected employees (validated by get_selectable_members scope)
-            employees = self.env['hr.employee'].browse(selected_ids)
+            employees = self.env['hr.employee'].sudo().browse(selected_ids)
         elif is_manager or is_super:
             all_teams = self.env['lead.team'].search([])
             employees = all_teams.mapped('member_ids.employee_id')
@@ -171,7 +171,7 @@ class CallCampaignAutoGenerate(models.Model):
                 owner_ids = self.env['leads.logic'].search(
                     [('lead_owner', '!=', False)]
                 ).mapped('lead_owner').ids
-                employees = self.env['hr.employee'].browse(owner_ids)
+                employees = self.env['hr.employee'].sudo().browse(owner_ids)
         elif is_tl and current_emp:
             my_teams = self.env['lead.team'].search([('team_lead_ids', 'in', current_emp.id)])
             employees = my_teams.mapped('member_ids.employee_id')

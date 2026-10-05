@@ -267,7 +267,7 @@ class CallCampaign(models.Model):
         today_str = today.strftime('%Y-%m-%d')
 
         # Try to find linked employee
-        employee = self.env['hr.employee'].search(
+        employee = self.env['hr.employee'].sudo().search(
             [('user_id', '=', user.id)], limit=1
         )
 
@@ -377,7 +377,7 @@ class CallCampaign(models.Model):
 
         if team_lead_employee_id:
             # Find officers under this TL
-            tl_employee = self.env['hr.employee'].browse(team_lead_employee_id)
+            tl_employee = self.env['hr.employee'].sudo().browse(team_lead_employee_id)
             members = self.env['lead.team.member'].search([
                 ('team_lead_id', '=', tl_employee.id),
             ])
@@ -417,7 +417,7 @@ class CallCampaign(models.Model):
         is_manager = user.has_group('custom_leads_19.group_lead_manager')
         is_super   = user.has_group('custom_leads_19.group_super_admin')
 
-        employee = self.env['hr.employee'].search([('user_id', '=', user.id)], limit=1)
+        employee = self.env['hr.employee'].sudo().search([('user_id', '=', user.id)], limit=1)
 
         result = {
             'role': 'manager' if (is_manager or is_super) else ('tl' if is_tl else 'officer'),
@@ -494,13 +494,13 @@ class CallCampaign(models.Model):
 
         # Determine which employees to generate for
         if options.get('employee_ids'):
-            employees = self.env['hr.employee'].browse(options['employee_ids'])
+            employees = self.env['hr.employee'].sudo().browse(options['employee_ids'])
         else:
             user = self.env.user
             is_manager = user.has_group('custom_leads_19.group_lead_manager')
             is_super   = user.has_group('custom_leads_19.group_super_admin')
             is_tl      = user.has_group('custom_leads_19.group_lead_team_lead')
-            current_emp = self.env['hr.employee'].search([('user_id', '=', user.id)], limit=1)
+            current_emp = self.env['hr.employee'].sudo().search([('user_id', '=', user.id)], limit=1)
 
             if is_manager or is_super:
                 members = self.env['lead.team.member'].search([])
@@ -509,7 +509,7 @@ class CallCampaign(models.Model):
                     lead_owner_ids = self.env['leads.logic'].search(
                         [('lead_owner', '!=', False)]
                     ).mapped('lead_owner').ids
-                    employees = self.env['hr.employee'].browse(lead_owner_ids)
+                    employees = self.env['hr.employee'].sudo().browse(lead_owner_ids)
             elif is_tl and current_emp:
                 members = self.env['lead.team.member'].search(
                     [('team_lead_id', '=', current_emp.id)]
@@ -586,7 +586,7 @@ class CallCampaign(models.Model):
         is_manager = user.has_group('custom_leads_19.group_lead_manager')
         is_super   = user.has_group('custom_leads_19.group_super_admin')
         is_tl      = user.has_group('custom_leads_19.group_lead_team_lead')
-        employee   = self.env['hr.employee'].search([('user_id', '=', user.id)], limit=1)
+        employee   = self.env['hr.employee'].sudo().search([('user_id', '=', user.id)], limit=1)
 
         role = 'manager' if (is_manager or is_super) else ('tl' if is_tl else 'officer')
 

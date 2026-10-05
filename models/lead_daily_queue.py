@@ -135,7 +135,7 @@ class LeadsLogicDailyQueueMixin(models.Model):
     # ── Open today's queue for the current officer in Kanban ──────────────
     def action_open_my_daily_queue(self):
         today = fields.Date.today()
-        employee = self.env['hr.employee'].search(
+        employee = self.env['hr.employee'].sudo().search(
             [('user_id', '=', self.env.uid)], limit=1
         )
         domain = [('daily_queue_date', '=', today)]
@@ -160,7 +160,7 @@ class LeadsLogicDailyQueueMixin(models.Model):
         Used by the dashboard "Today's Queue" card.
         """
         today = fields.Date.today()
-        employee = self.env['hr.employee'].search(
+        employee = self.env['hr.employee'].sudo().search(
             [('user_id', '=', self.env.uid)], limit=1
         )
         domain = [('daily_queue_date', '=', today)]
@@ -262,7 +262,7 @@ class LeadDailyQueueScheduler(models.Model):
         }
 
         # Get all active lead owners
-        officers = self.env['hr.employee'].search([
+        officers = self.env['hr.employee'].sudo().search([
             ('user_id', '!=', False),
         ])
 

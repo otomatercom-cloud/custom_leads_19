@@ -70,7 +70,7 @@ class LeadUserPermission(models.Model):
     @api.depends('user_id')
     def _compute_employee_id(self):
         for rec in self:
-            emp = self.env['hr.employee'].search(
+            emp = self.env['hr.employee'].sudo().search(
                 [('user_id', '=', rec.user_id.id)], limit=1
             )
             rec.employee_id = emp

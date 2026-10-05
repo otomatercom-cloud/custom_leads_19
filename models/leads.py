@@ -1253,7 +1253,7 @@ class LeadsForm(models.Model):
         # Resolve the current user's employee record up-front — needed both
         # to scope stage_counts below (for non-elevated roles) and for the
         # "my quality counts" section further down.
-        my_employee = self.env['hr.employee'].search(
+        my_employee = self.env['hr.employee'].sudo().search(
             [('user_id','=',user.id)], limit=1
         )
 
