@@ -69,8 +69,8 @@
                                 <field name="selected" widget="boolean_toggle"/>
                                 <field name="queue_priority" string="Priority #" readonly="1"/>
                                 <field name="lead_quality" readonly="1" widget="badge"
-                                       decoration-danger="lead_quality in ['not_responding','not_reachable','not_attended','wrong_number','not_interested']"
-                                       decoration-success="lead_quality in ['hot','warm','already_joined']"
+                                       decoration-danger="lead_quality in ['not_responding','not_reachable','wrong_number','not_interested']"
+                                       decoration-success="lead_quality in ['hot','warm']"
                                        decoration-warning="lead_quality in ['cold','call_later','follow_up']"/>
                                 <field name="lead_name" readonly="1"/>
                                 <field name="phone_number" readonly="1"/>

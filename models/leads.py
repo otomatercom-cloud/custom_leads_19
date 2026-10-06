@@ -43,14 +43,18 @@ class LeadQualityHistory(models.Model):
             ('hot', '🔥  Hot'),
             ('warm', '🌞  Warm'),
             ('cold', '❄️  Cold'),
+            ('bad_lead', '⚠️  Language Barrier'),
+            ('crash_lead', '💥  Crash Lead'),
             ('not_responding', '🔕  Ringing Not Responding'),
-            ('call_later', '📞  Call Back'),
+            ('call_later', '📞  Call Later'),
+            ('may_be_later', '🔔 May Be Later'),
             ('follow_up', '⏰  Follow Up'),
-            ('not_reachable', '⏳ Busy'),
+            ('not_reachable', '🚫  Not Reachable'),
+            ('logic_students', '🏫 Logic Students'),
+            ('joined_other_institute', '🏫 Joined Other Institute'),
             ('wrong_number', '📵 Wrong number'),
-            ('not_interested', '❌ Not Interested'),
-            ('not_attended', '📵Not Attended'),
-            ('already_joined', '✅ Already Joined'),
+            ('not_enquiry', '🛑 Not Enquiry'),
+            ('not_interested', 'Not Interested'),
         ],
         string='Lead Quality'
     )
@@ -232,14 +236,18 @@ class LeadsForm(models.Model):
             ('hot', '🔥  Hot'),
             ('warm', '🌞  Warm'),
             ('cold', '❄️  Cold'),
+            ('bad_lead', '⚠️  Language Barrier'),
+            ('crash_lead', '💥  Crash Lead'),
             ('not_responding', '🔕  Ringing Not Responding'),
-            ('call_later', '📞  Call Back'),
+            ('call_later', '📞  Call Later'),
+            ('may_be_later', '🔔 May Be Later'),
             ('follow_up', '⏰  Follow Up'),
-            ('not_reachable', '⏳ Busy'),
+            ('not_reachable', '🚫  Not Reachable'),
+            ('logic_students', '🏫 Logic Students'),
+            ('joined_other_institute', '🏫 Joined Other Institute'),
             ('wrong_number', '📵 Wrong number'),
-            ('not_interested', '❌ Not Interested'),
-            ('not_attended', '📵Not Attended'),
-            ('already_joined', '✅ Already Joined'),
+            ('not_enquiry', '🛑 Not Enquiry'),
+            ('not_interested', 'Not Interested'),
         ],
         string='Lead Quality', default='new', required=True, tracking=True
     )
@@ -258,17 +266,19 @@ class LeadsForm(models.Model):
     def _compute_lead_stage(self):
         for record in self:
             quality = record.lead_quality
-            if quality in ['hot', 'warm', 'cold', 'call_later', 'waiting_for_admission', 'already_joined']:
+            if quality in ['hot', 'warm', 'cold', 'call_later', 'may_be_later', 'waiting_for_admission']:
                 record.lead_stage_category = 'prospects'
             elif quality in ['new', 'first_attempt', 'follow_up']:
                 record.lead_stage_category = 'funnel'
-            elif quality in ['not_interested']:
+            elif quality in ['not_interested', 'bad_lead', 'crash_lead', 'joined_other_institute']:
                 record.lead_stage_category = 're_try'
-            elif quality in ['not_responding', 'not_reachable', 'not_attended']:
+            elif quality in ['not_responding', 'not_reachable']:
                 record.lead_stage_category = 'rnr_dnp'
             elif quality in ['admission', 'converted']:
                 record.lead_stage_category = 'admission_done'
-            elif quality in ['wrong_number']:
+            elif quality in ['logic_students']:
+                record.lead_stage_category = 'alumni'
+            elif quality in ['wrong_number', 'not_enquiry']:
                 record.lead_stage_category = 'junk'
             else:
                 record.lead_stage_category = False
@@ -1284,9 +1294,10 @@ class LeadsForm(models.Model):
                 'new','hot','warm','cold','first_attempt',
                 'waiting_for_admission','admission',
                 'not_responding','call_later',
-                'follow_up','not_reachable','not_attended',
-                'already_joined',
-                'wrong_number','not_interested',
+                'follow_up','not_reachable',
+                'bad_lead','crash_lead','may_be_later',
+                'logic_students','joined_other_institute',
+                'wrong_number','not_enquiry','not_interested',
             ]
             cr.execute("""
                 SELECT ll.lead_quality, COUNT(DISTINCT ll.id)

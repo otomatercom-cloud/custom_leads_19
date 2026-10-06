@@ -7,8 +7,8 @@ from odoo.exceptions import UserError
 # ---------------------------------------------------------------------------
 QUEUE_PRIORITY = [
     'hot', 'warm', 'cold', 'call_later', 'follow_up',
-    'not_responding', 'not_reachable', 'not_attended', 'first_attempt', 'new',
-    'waiting_for_admission', 'already_joined',
+    'not_responding', 'not_reachable', 'first_attempt', 'new',
+    'waiting_for_admission', 'may_be_later', 'bad_lead', 'crash_lead',
     'wrong_number', 'not_interested',
 ]
 
@@ -257,7 +257,7 @@ class LeadDailyQueueScheduler(models.Model):
         today = fields.Date.today()
 
         EXCLUDED_QUALITIES = {
-            'admission', 'already_joined',
+            'admission', 'logic_students', 'joined_other_institute', 'not_enquiry',
             'wrong_number',
         }
 

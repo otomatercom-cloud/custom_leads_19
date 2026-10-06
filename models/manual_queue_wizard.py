@@ -3,13 +3,13 @@ from odoo.exceptions import UserError
 
 QUEUE_PRIORITY = [
     'hot', 'warm', 'cold', 'call_later', 'follow_up',
-    'not_responding', 'not_reachable', 'not_attended', 'first_attempt', 'new',
-    'waiting_for_admission', 'already_joined',
+    'not_responding', 'not_reachable', 'first_attempt', 'new',
+    'waiting_for_admission', 'may_be_later', 'bad_lead', 'crash_lead',
     'wrong_number', 'not_interested',
 ]
 
 EXCLUDED_QUALITIES = {
-    'admission', 'already_joined',
+    'admission', 'logic_students', 'joined_other_institute', 'not_enquiry',
     'wrong_number',
 }
 
@@ -83,8 +83,7 @@ class ManualQueueAssignWizard(models.TransientModel):
         ('first_attempt', '🎯 First Attempt only'),
         ('call_later', '📞 Call Back only'),
         ('follow_up', '⏰ Follow Up only'),
-        ('not_reachable', '⏳ Busy only'),
-        ('not_attended', '📵 Not Attended only'),
+        ('not_reachable', '🚫 Not Reachable only'),
         ('waiting_for_admission', '⏳ Waiting for Admission only'),
     ], string='Filter by Quality', default='all')
 
@@ -150,7 +149,6 @@ class ManualQueueAssignWizard(models.TransientModel):
             'call_later': ['call_later'],
             'follow_up': ['follow_up'],
             'not_reachable': ['not_reachable'],
-            'not_attended': ['not_attended'],
             'waiting_for_admission': ['waiting_for_admission'],
         }
         if self.filter_quality and self.filter_quality != 'all':

@@ -5,18 +5,19 @@ from datetime import date, timedelta
 QUALITY_PRIORITY = [
     'hot', 'warm', 'follow_up', 'call_later',
     'first_attempt', 'new', 'not_responding', 'cold',
-    'waiting_for_admission', 'not_attended',
+    'waiting_for_admission', 'may_be_later',
 ]
 EXCLUDED_STATES = ['lost', 'qualified']
 QUALITY_LABELS = {
     'new': '🆕 New', 'first_attempt': '🎯 First Attempt',
     'hot': '🔥 Hot', 'warm': '🌞 Warm', 'cold': '❄️ Cold',
-    'follow_up': '⏰ Follow Up', 'call_later': '📞 Call Back',
+    'follow_up': '⏰ Follow Up', 'call_later': '📞 Call Later',
     'not_responding': '🔕 Ringing Not Responding',
-    'not_reachable': '⏳ Busy', 'waiting_for_admission': '⏳ Waiting for Admission',
+    'not_reachable': '🚫 Not Reachable', 'waiting_for_admission': '⏳ Waiting for Admission',
     'wrong_number': '📵 Wrong number', 'not_interested': '❌ Not Interested',
-    'not_attended': '📵Not Attended',
-    'already_joined': '✅ Already Joined',
+    'may_be_later': '🔔 May Be Later', 'bad_lead': '⚠️ Language Barrier', 'crash_lead': '💥 Crash Lead',
+    'logic_students': '🏫 Logic Students', 'joined_other_institute': '🏫 Joined Other Institute',
+    'not_enquiry': '🛑 Not Enquiry',
 }
 
 

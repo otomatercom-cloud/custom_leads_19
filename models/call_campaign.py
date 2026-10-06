@@ -2,21 +2,25 @@ from odoo import models, fields, api, _
 from odoo.exceptions import UserError
 
 QUALITY_SELECTION = [
-    ('new', '🆕 New'),
+    ('new', '🆕  New'),
     ('first_attempt', '🎯 First Attempt'),
-    ('waiting_for_admission', '⏳ Waiting for Admission'),
-    ('admission', '🎓 Admission'),
-    ('hot', '🔥 Hot'),
-    ('warm', '🌞 Warm'),
-    ('cold', '❄️ Cold'),
-    ('not_responding', '🔕 Ringing Not Responding'),
-    ('call_later', '📞 Call Back'),
-    ('follow_up', '⏰ Follow Up'),
-    ('not_reachable', '⏳ Busy'),
+    ('waiting_for_admission', '⏳  Waiting for Admission'),
+    ('admission', '🎓  Admission'),
+    ('hot', '🔥  Hot'),
+    ('warm', '🌞  Warm'),
+    ('cold', '❄️  Cold'),
+    ('bad_lead', '⚠️  Language Barrier'),
+    ('crash_lead', '💥  Crash Lead'),
+    ('not_responding', '🔕  Ringing Not Responding'),
+    ('call_later', '📞  Call Later'),
+    ('may_be_later', '🔔 May Be Later'),
+    ('follow_up', '⏰  Follow Up'),
+    ('not_reachable', '🚫  Not Reachable'),
+    ('logic_students', '🏫 Logic Students'),
+    ('joined_other_institute', '🏫 Joined Other Institute'),
     ('wrong_number', '📵 Wrong number'),
-    ('not_interested', '❌ Not Interested'),
-    ('not_attended', '📵Not Attended'),
-    ('already_joined', '✅ Already Joined'),
+    ('not_enquiry', '🛑 Not Enquiry'),
+    ('not_interested', 'Not Interested'),
 ]
 
 
@@ -199,7 +203,7 @@ class CallCampaign(models.Model):
         # Qualities that mean the phone was never answered are logged as
         # 'no_answer'; everything else counts as 'answered' (connected).
         _NOT_CONNECTED = {'not_responding', 'not_reachable', 'wrong_number',
-                          'not_attended'}
+                          'bad_lead', 'crash_lead'}
         self.env['lead.call.log'].sudo().create({
             'lead_id': lead.id,
             'user_id': self.env.uid,
@@ -275,7 +279,9 @@ class CallCampaign(models.Model):
         campaign_name = f"Daily Campaign - {user_label} - {today_str}"
 
         # Find existing today's campaign for this user
-        existing = self.search([
+        # Officers cannot create/see every campaign (ACL), so the daily
+        # campaign is looked up and created with sudo; created_by stays the user.
+        existing = self.sudo().search([
             ('name', '=', campaign_name),
             ('created_by', '=', user.id),
         ], limit=1)
@@ -286,7 +292,7 @@ class CallCampaign(models.Model):
             quality_priority = [
                 'hot', 'warm', 'follow_up', 'call_later',
                 'first_attempt', 'new', 'not_responding', 'cold',
-                'waiting_for_admission', 'not_attended',
+                'waiting_for_admission', 'may_be_later',
             ]
 
             # Build domain based on whether employee exists
@@ -314,9 +320,10 @@ class CallCampaign(models.Model):
 
             sorted_leads = sorted(all_leads, key=quality_rank)[:50]
 
-            campaign = self.create({
+            campaign = self.sudo().create({
                 'name': campaign_name,
                 'state': 'running',
+                'created_by': user.id,
                 'lead_ids': [(6, 0, [l.id for l in sorted_leads])],
             })
 
@@ -372,7 +379,7 @@ class CallCampaign(models.Model):
         quality_priority = [
             'hot', 'warm', 'follow_up', 'call_later',
             'first_attempt', 'new', 'not_responding', 'cold',
-            'waiting_for_admission', 'not_attended',
+            'waiting_for_admission', 'may_be_later',
         ]
 
         if team_lead_employee_id:
@@ -521,7 +528,7 @@ class CallCampaign(models.Model):
         quality_priority = [
             'hot', 'warm', 'follow_up', 'call_later',
             'first_attempt', 'new', 'not_responding', 'cold',
-            'waiting_for_admission', 'not_attended',
+            'waiting_for_admission', 'may_be_later',
         ]
         excluded_states = ['lost', 'qualified']
 

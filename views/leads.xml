@@ -6,8 +6,8 @@
         <field name="model">leads.logic</field>
         <field name="arch" type="xml">
             <list string="Leads" default_order="id desc"
-                  decoration-danger="lead_quality in ['not_responding','not_reachable','not_attended','wrong_number','not_interested']"
-                  decoration-success="lead_quality in ['admission','waiting_for_admission','already_joined']"
+                  decoration-danger="lead_quality in ['not_responding','not_reachable','wrong_number','not_interested']"
+                  decoration-success="lead_quality in ['admission','waiting_for_admission']"
                   decoration-warning="lead_quality in ['hot','warm']">
                 <field name="reference_no" optional="show"/>
                 <field name="name"/>

@@ -8,12 +8,12 @@ const QUALITY_OPTIONS = [
     { value: "hot",                 label: "🔥 Hot" },
     { value: "warm",                label: "🌞 Warm" },
     { value: "follow_up",           label: "⏰ Follow Up" },
-    { value: "call_later",          label: "📞 Call Back" },
+    { value: "call_later",          label: "📞 Call Later" },
     { value: "first_attempt",       label: "🎯 First Attempt" },
     { value: "new",                 label: "🆕 New" },
     { value: "not_responding",      label: "🔕 Ringing Not Responding" },
     { value: "cold",                label: "❄️ Cold" },
-    { value: "not_attended",        label: "📵Not Attended" },
+    { value: "may_be_later",        label: "🔔 May Be Later" },
     { value: "waiting_for_admission", label: "⏳ Waiting for Admission" },
 ];
 
