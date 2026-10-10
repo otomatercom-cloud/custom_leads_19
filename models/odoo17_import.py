@@ -21,8 +21,7 @@ SKIP_FIELDS = {
 }
 
 # One2many children imported in a dedicated step: (remote model, local model, link field)
-CHILD_MODELS = ('lead.response', 'lead.call.log', 'lead.followup', 'lead.quality.history',
-                'lead.assignment.history')
+CHILD_MODELS = ('lead.response', 'lead.call.log', 'lead.followup', 'lead.quality.history')
 
 
 class OtmLeadsOdoo17ImportLog(models.Model):
@@ -656,7 +655,6 @@ class OtmLeadsOdoo17ImportWizard(models.TransientModel):
                               'call_status', 'duration', 'recording_url', 'call_type'],
             'lead.followup': ['user_id', 'next_followup_date', 'remarks', 'phone_number', 'status'],
             'lead.quality.history': ['lead_quality', 'user_id', 'change_date'],
-            'lead.assignment.history': ['owner_id', 'assigned_date', 'assigned_by'],
         }
         for model, flds in specs.items():
             if model not in env:
@@ -687,19 +685,126 @@ class OtmLeadsOdoo17ImportWizard(models.TransientModel):
                 if r.get('create_date'):
                     env.cr.execute('UPDATE "%s" SET create_date=%%s WHERE id=%%s' % Local._table,
                                    (r['create_date'], rec.id))
-        # Leads that had an owner in Odoo 17 but no assignment history rows there still get one entry,
-        # so "assigned to / assigned on" is never empty after the import.
-        if 'lead.assignment.history' in env and lead.lead_owner and not lead.assignment_history_ids:
-            env['lead.assignment.history'].create({
-                'lead_id': lead.id,
-                'owner_id': lead.lead_owner.id,
-                'assigned_date': lead.reassign_date or lead.create_date or fields.Datetime.now(),
-                'assigned_by': lead.lead_creator_id.id or env.uid,
-            })
+        self._import_assignment_history(call, lead, [remote_lead_id], ctx)
         # response-time columns were computed before the original create date was restored
         lead.invalidate_recordset()
         if hasattr(lead, '_compute_response_times'):
             lead._compute_response_times()
+
+    # ------------------------------------------------------------------ #
+    #  Assignment history - copied exactly as it was in Odoo 17
+    # ------------------------------------------------------------------ #
+    _AH_ALIASES = {
+        'owner': ('owner_id', 'lead_owner', 'lead_owner_id', 'employee_id', 'officer_id'),
+        'date': ('assigned_date', 'assign_date', 'date', 'assigned_on'),
+        'by': ('assigned_by', 'assigned_by_id', 'user_id'),
+    }
+
+    def _remote_assignment_model(self, call, ctx):
+        """Find the Odoo 17 model holding the assignment history and the field names to read."""
+        if 'ah_spec' in ctx:
+            return ctx['ah_spec']
+        spec = None
+        names = ['lead.assignment.history']
+        try:
+            found = call('ir.model', 'search_read',
+                         [('model', 'ilike', 'assign'), ('model', 'ilike', 'hist')], fields=['model'])
+            names += [m['model'] for m in found if m['model'] not in names]
+        except Exception:
+            pass
+        for name in names:
+            try:
+                fg = call(name, 'fields_get', attributes=['type', 'relation', 'store'])
+            except Exception:
+                continue
+            if 'lead_id' not in fg:
+                continue
+            pick = {}
+            for key, aliases in self._AH_ALIASES.items():
+                for a in aliases:
+                    if a in fg and fg[a].get('store', True):
+                        pick[key] = a
+                        break
+            if 'owner' in pick:
+                spec = {'model': name, 'fields': pick, 'types': fg}
+                break
+        if not spec:
+            ctx['warnings'].append('No assignment history model found in Odoo 17 - history not imported.')
+        ctx['ah_spec'] = spec
+        return spec
+
+    def _import_assignment_history(self, call, lead, remote_ids, ctx, replace=False):
+        """Copy the Odoo 17 assignment history rows of `remote_ids` (remote lead ids) onto `lead`.
+        Dates, officers and 'assigned by' are kept as they were. Nothing is invented: a lead without
+        history in Odoo 17 gets none."""
+        spec = self._remote_assignment_model(call, ctx)
+        if not spec:
+            return 0
+        pick, fg = spec['fields'], spec['types']
+        read_f = list(pick.values()) + ['create_date']
+        try:
+            rows = call(spec['model'], 'search_read', [('lead_id', 'in', remote_ids)],
+                        fields=read_f, order='id asc')
+        except Exception as e:
+            ctx['warnings'].append('Assignment history could not be read: %s' % str(e)[:120])
+            return 0
+        Hist = self.env['lead.assignment.history'].sudo()
+        if replace:
+            Hist.search([('lead_id', '=', lead.id)]).unlink()
+        n = 0
+        for r in rows:
+            def m2o(key, relation_default):
+                f = pick.get(key)
+                v = r.get(f) if f else False
+                if not v:
+                    return False
+                rel = fg[f].get('relation') or relation_default
+                return self._map_many2one(call, rel, v[0] if isinstance(v, (list, tuple)) else v, ctx)
+            owner = m2o('owner', 'hr.employee')
+            if not owner:
+                continue
+            when = r.get(pick['date']) if 'date' in pick else False
+            vals = {
+                'lead_id': lead.id,
+                'owner_id': owner,
+                'assigned_date': when or r.get('create_date') or fields.Datetime.now(),
+            }
+            by = m2o('by', 'res.users')
+            if by:
+                vals['assigned_by'] = by
+            Hist.create(vals)
+            n += 1
+        return n
+
+    def action_backfill_assignment_history(self):
+        """Replace the assignment history of leads already imported from Odoo 17 with the exact
+        Odoo 17 history (use this for leads imported before assignment history was supported)."""
+        self.ensure_one()
+        call, label = self._connect()
+        ctx = {'cache': {}, 'sources_created': 0, 'campaigns_created': 0, 'warnings': []}
+        Lead = self.env['leads.logic'].sudo()
+        leads = Lead.search([('odoo17_lead_id', '>', 0)])
+        done = rows = 0
+        start = _time.time()
+        for lead in leads:
+            if _time.time() - start > 100:
+                break
+            try:
+                with self.env.cr.savepoint():
+                    rows += self._import_assignment_history(call, lead, [lead.odoo17_lead_id], ctx, replace=True)
+                    lead._compute_response_times()
+                    done += 1
+            except Exception as e:
+                ctx['warnings'].append('Lead %s: %s' % (lead.reference_no, str(e)[:100]))
+        self.env.cr.commit()
+        msg = _('%(d)s of %(t)s imported leads processed, %(r)s assignment history rows copied.') % {
+            'd': done, 't': len(leads), 'r': rows}
+        if done < len(leads):
+            msg += ' ' + _('Click again to continue (time limit reached).')
+        if ctx['warnings']:
+            msg += '\n' + '\n'.join(ctx['warnings'][:5])
+        return {'type': 'ir.actions.client', 'tag': 'display_notification',
+                'params': {'title': _('Assignment history'), 'message': msg, 'sticky': True, 'type': 'success'}}
 
     def _import_chatter(self, call, lead, remote_lead_id, ctx):
         Msg = self.env['mail.message']

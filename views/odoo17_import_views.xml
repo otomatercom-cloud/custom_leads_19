@@ -129,6 +129,8 @@
                             confirm="Import the leads in this date range from Odoo 17?"/>
                     <button name="action_load_campaigns" type="object" string="Load Campaigns" class="btn-secondary"/>
                     <button name="action_test_connection" type="object" string="Test &amp; Count" class="btn-secondary"/>
+                    <button name="action_backfill_assignment_history" type="object" string="Copy Assignment History (already imported leads)" class="btn-secondary"
+                            confirm="Replace the assignment history of every lead imported from Odoo 17 with the exact Odoo 17 history?"/>
                     <button string="Cancel" special="cancel" class="btn-secondary"/>
                 </footer>
             </form>
