@@ -321,6 +321,7 @@ class LeadsForm(models.Model):
         [
             ('2023-2024', '2023-2024'), ('2024-2025', '2024-2025'),
             ('2025-2026', '2025-2026'), ('2026-2027', '2026-2027'),
+            ('2027-2028', '2027-2028'), ('2028-2029', '2028-2029'),
         ],
         string="Academic Year of Course attended", default='2025-2026'
     )
@@ -349,7 +350,7 @@ class LeadsForm(models.Model):
     )
     incoming_source_checking = fields.Boolean(string='Incoming Source Checking')
     academic_year = fields.Selection(
-        [('2024-2025', '2024-2025'), ('2025-2026', '2025-2026'), ('2026-2027', '2026-2027'), ('nil', 'Nil')],
+        [('2024-2025', '2024-2025'), ('2025-2026', '2025-2026'), ('2026-2027', '2026-2027'), ('2027-2028', '2027-2028'), ('2028-2029', '2028-2029'), ('nil', 'Nil')],
         string="Academic Year"
     )
     college_name = fields.Char(string='College/School')
