@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Admission: leads that reached "Admission Done" + incoming / outgoing call logs.
+         Admission leads are hidden from the main Leads menu (see action_leads_logic domain). -->
+    <record id="action_leads_admission" model="ir.actions.act_window">
+        <field name="name">Admission Leads</field>
+        <field name="res_model">leads.logic</field>
+        <field name="view_mode">list,kanban,form</field>
+        <field name="domain">[('lead_stage_category', '=', 'admission_done')]</field>
+        <field name="search_view_id" ref="view_leads_logic_search"/>
+        <field name="context">{'search_default_filter_my': 0}</field>
+    </record>
+
+    <record id="action_lead_calls_incoming" model="ir.actions.act_window">
+        <field name="name">Incoming Calls</field>
+        <field name="res_model">lead.call.log</field>
+        <field name="view_mode">list,pivot,graph,form</field>
+        <field name="domain">[('call_type', '=', 'incoming')]</field>
+        <field name="search_view_id" ref="view_lead_call_log_search"/>
+        <field name="context">{'search_default_filter_today': 1}</field>
+    </record>
+
+    <record id="action_lead_calls_outgoing" model="ir.actions.act_window">
+        <field name="name">Outgoing Calls</field>
+        <field name="res_model">lead.call.log</field>
+        <field name="view_mode">list,pivot,graph,form</field>
+        <field name="domain">[('call_type', '=', 'outgoing')]</field>
+        <field name="search_view_id" ref="view_lead_call_log_search"/>
+        <field name="context">{'search_default_filter_today': 1}</field>
+    </record>
+
+    <menuitem id="menu_leads_admission" name="Admission" parent="menu_leads_root" sequence="30"/>
+    <menuitem id="menu_leads_admission_list" name="Admission Leads" parent="menu_leads_admission"
+              action="action_leads_admission" sequence="1"/>
+    <menuitem id="menu_leads_calls_incoming" name="Incoming Calls" parent="menu_leads_admission"
+              action="action_lead_calls_incoming" sequence="2"/>
+    <menuitem id="menu_leads_calls_outgoing" name="Outgoing Calls" parent="menu_leads_admission"
+              action="action_lead_calls_outgoing" sequence="3"/>
+</odoo>

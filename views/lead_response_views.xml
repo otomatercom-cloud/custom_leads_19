@@ -52,6 +52,6 @@
     </record>
 
     <menuitem id="menu_leads_response_time" name="Lead Response Time"
-              parent="menu_leads_root" action="action_leads_logic_response" sequence="40"
+              parent="menu_leads_assignment" action="action_leads_logic_response" sequence="3"
               groups="custom_leads_19.group_lead_manager,custom_leads_19.group_super_admin,custom_leads_19.group_lead_team_lead"/>
 </odoo>

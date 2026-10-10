@@ -601,6 +601,7 @@
         <field name="name">Leads</field>
         <field name="res_model">leads.logic</field>
         <field name="view_mode">list,kanban,form</field>
+        <field name="domain">[('lead_stage_category', '!=', 'admission_done')]</field>
         <field name="search_view_id" ref="view_leads_logic_search"/>
         <field name="context">{'search_default_filter_my': 0}</field>
     </record>
@@ -611,6 +612,10 @@
     <menuitem id="menu_leads_leads" name="Leads" parent="menu_leads_root" action="action_leads_logic" sequence="1" groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager,custom_leads_19.group_lead_team_lead,custom_leads_19.group_lead_users,custom_leads_19.group_lead_tele_callers,custom_leads_19.group_lead_digital_team,custom_leads_19.group_lead_digital_head,custom_leads_19.group_lead_branch_head,custom_leads_19.group_crash_head,custom_leads_19.group_crash_user"/>
 
     <menuitem id="menu_leads_config" name="Configuration" parent="menu_leads_root" sequence="50" groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager"/>
+
+    <!-- One folder for assignment tools, so the top bar stays short -->
+    <menuitem id="menu_leads_assignment" name="Assignment" parent="menu_leads_root" sequence="45"
+              groups="custom_leads_19.group_lead_manager,custom_leads_19.group_super_admin,custom_leads_19.group_lead_team_lead"/>
 
     <menuitem id="menu_leads_source" name="Lead Sources" parent="menu_leads_config" action="action_leads_source" sequence="1" groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager"/>
 

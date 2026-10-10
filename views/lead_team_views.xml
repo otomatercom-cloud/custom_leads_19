@@ -147,9 +147,9 @@ action = rule.action_pool_run_now() if rule and rule.assignment_type == 'attenda
     'params': {'title': 'Pool', 'message': 'The active assignment rule is not a Pool Round Robin rule.', 'type': 'warning'}}</field>
     </record>
 
-    <menuitem id="menu_lead_pool" name="Assignment Pool" parent="menu_leads_root" action="action_lead_pool" sequence="8"
+    <menuitem id="menu_lead_pool" name="Assignment Pool" parent="menu_leads_assignment" action="action_lead_pool" sequence="1"
               groups="custom_leads_19.group_lead_manager,custom_leads_19.group_super_admin,custom_leads_19.group_lead_team_lead"/>
-    <menuitem id="menu_lead_pool_run" name="Assign Waiting Leads Now" parent="menu_leads_root" action="action_lead_pool_run" sequence="9"
+    <menuitem id="menu_lead_pool_run" name="Assign Waiting Leads Now" parent="menu_leads_assignment" action="action_lead_pool_run" sequence="2"
               groups="custom_leads_19.group_lead_manager,custom_leads_19.group_super_admin,custom_leads_19.group_lead_team_lead"/>
 
     <!-- ─── Menu under Configuration ───────────────────────────────────── -->
