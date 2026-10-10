@@ -5,7 +5,7 @@
     <record id="action_my_daily_queue" model="ir.actions.act_window">
         <field name="name">My Queue Today</field>
         <field name="res_model">leads.logic</field>
-        <field name="view_mode">kanban,list</field>
+        <field name="view_mode">list,kanban</field>
         <field name="domain">[
             ('daily_queue_date', '=', context_today()),
             ('lead_owner.user_id', '=', uid)
@@ -28,7 +28,7 @@
     <record id="action_leads_today_queue" model="ir.actions.act_window">
         <field name="name">All Officer Queues</field>
         <field name="res_model">leads.logic</field>
-        <field name="view_mode">kanban,list</field>
+        <field name="view_mode">list,kanban</field>
         <field name="domain">[('daily_queue_date', '=', context_today())]</field>
         <field name="context">{
             'default_order': 'daily_call_done asc, daily_call_sequence asc, id asc'

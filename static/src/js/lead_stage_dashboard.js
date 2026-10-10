@@ -125,7 +125,7 @@ export class LeadStageDashboard extends Component {
         this.action.doAction({
             type:"ir.actions.act_window", name: s?s.label:"Leads",
             res_model:"leads.logic",
-            views:[[false,"kanban"],[false,"list"],[false,"form"]],
+            views:[[false,"list"],[false,"kanban"],[false,"form"]],
             domain:[["lead_stage_category","=",key]], target:"current",
         });
     }
