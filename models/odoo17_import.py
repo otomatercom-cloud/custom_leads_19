@@ -69,6 +69,11 @@ class OtmLeadsOdoo17ImportLog(models.Model):
                 hint = _('The import stopped with an error - see Details. Fix it and click Resume import.')
             rec.stop_hint = hint
 
+    def action_mark_done(self):
+        """Stop a running/failed import log (for example an old duplicate) so a new import can start."""
+        self.write({'state': 'done'})
+        return True
+
     def action_resume(self):
         """Switch the background job back on and continue this import now."""
         self.ensure_one()
@@ -88,7 +93,7 @@ class OtmLeadsOdoo17ImportLog(models.Model):
     def cron_continue_imports(self):
         """Continue interrupted imports in the background (no HTTP timeout here)."""
         import json
-        for log in self.search([('state', '=', 'running')]):
+        for log in self.search([('state', '=', 'running')], order='id', limit=1):
             try:
                 p = json.loads(log.params or '{}')
                 wiz = self.env['otm.leads.odoo17.import.wizard'].with_user(log.user_id or self.env.user).create({
@@ -465,6 +470,16 @@ class OtmLeadsOdoo17ImportWizard(models.TransientModel):
     # ------------------------------------------------------------------ #
     def action_import(self):
         self.ensure_one()
+        running = self.env['otm.leads.odoo17.import.log'].search([('state', '=', 'running')], order='id')
+        if running:
+            first = running[0]
+            raise UserError(_(
+                "Import %(name)s is still running in the background (%(done)s of %(total)s imported).\n"
+                "Starting another import now would make the server do the same work twice and can make it "
+                "freeze (offline / online).\n\n"
+                "Open Import Logs > %(name)s to follow it. If it has stopped, click Resume import there; "
+                "if it is an old duplicate, open it and mark it done, then start the new import."
+            ) % {'name': first.name, 'done': first.created_count, 'total': first.fetched_count})
         log = self._run_import()
         return {'type': 'ir.actions.act_window', 'res_model': log._name, 'res_id': log.id,
                 'view_mode': 'form', 'target': 'current', 'name': _('Import Result')}
@@ -525,6 +540,8 @@ class OtmLeadsOdoo17ImportWizard(models.TransientModel):
                 break
             chunk = todo[start:start + BATCH]
             rows = call('leads.logic', 'read', chunk, fields=read_fields)
+            if self.import_children:
+                self._prefetch_children(call, chunk, ctx)
             for row in rows:
                 rid = row['id']
                 try:
@@ -685,6 +702,47 @@ class OtmLeadsOdoo17ImportWizard(models.TransientModel):
         return ok, skip, fail
 
     # ------------------------------------------------------------------ #
+    def _prefetch_children(self, call, remote_ids, ctx):
+        """One Odoo 17 call per child model for a whole batch of leads (instead of one per lead).
+        The rows are exactly the ones the per-lead calls would have returned."""
+        env = self.env
+        specs = {
+            'lead.response': ['user_id', 'comment', 'response_time'],
+            'lead.call.log': ['user_id', 'call_time', 'remarks', 'call_uuid', 'caller_number',
+                              'call_status', 'duration', 'recording_url', 'call_type'],
+            'lead.followup': ['user_id', 'next_followup_date', 'remarks', 'phone_number', 'status'],
+            'lead.quality.history': ['lead_quality', 'user_id', 'change_date'],
+        }
+        ctx['pf'] = {}
+        ctx['pf_ah'] = None
+        for model, flds in specs.items():
+            if model not in env:
+                continue
+            avail = [f for f in flds if f in env[model]._fields]
+            try:
+                rows = call(model, 'search_read', [('lead_id', 'in', remote_ids)],
+                            fields=avail + ['create_date', 'lead_id'], order='id asc')
+            except Exception:
+                continue          # falls back to the per-lead call, which reports the warning
+            grouped = {}
+            for r in rows:
+                lid = r['lead_id'][0] if isinstance(r.get('lead_id'), (list, tuple)) else r.get('lead_id')
+                grouped.setdefault(lid, []).append(r)
+            ctx['pf'][model] = grouped
+        spec = self._remote_assignment_model(call, ctx)
+        if spec:
+            read_f = list(spec['fields'].values()) + ['create_date', 'lead_id']
+            try:
+                rows = call(spec['model'], 'search_read', [('lead_id', 'in', remote_ids)],
+                            fields=read_f, order='id asc')
+                grouped = {}
+                for r in rows:
+                    lid = r['lead_id'][0] if isinstance(r.get('lead_id'), (list, tuple)) else r.get('lead_id')
+                    grouped.setdefault(lid, []).append(r)
+                ctx['pf_ah'] = grouped
+            except Exception:
+                ctx['pf_ah'] = None
+
     def _import_children(self, call, lead, remote_lead_id, ctx):
         env = self.env
         specs = {
@@ -700,7 +758,12 @@ class OtmLeadsOdoo17ImportWizard(models.TransientModel):
             Local = env[model]
             avail = [f for f in flds if f in Local._fields]
             try:
-                rows = call(model, 'search_read', [('lead_id', '=', remote_lead_id)], fields=avail + ['create_date'])
+                pf = ctx.get('pf', {}).get(model)
+                if pf is not None:           # rows for the whole batch were fetched in one call
+                    rows = pf.get(remote_lead_id, [])
+                else:
+                    rows = call(model, 'search_read', [('lead_id', '=', remote_lead_id)],
+                                fields=avail + ['create_date'])
             except Exception as e:
                 ctx['warnings'].append('%s could not be read from Odoo 17: %s' % (model, str(e)[:120]))
                 continue
@@ -781,8 +844,12 @@ class OtmLeadsOdoo17ImportWizard(models.TransientModel):
         pick, fg = spec['fields'], spec['types']
         read_f = list(pick.values()) + ['create_date']
         try:
-            rows = call(spec['model'], 'search_read', [('lead_id', 'in', remote_ids)],
-                        fields=read_f, order='id asc')
+            pf = ctx.get('pf_ah')
+            if pf is not None and len(remote_ids) == 1 and not replace:
+                rows = pf.get(remote_ids[0], [])
+            else:
+                rows = call(spec['model'], 'search_read', [('lead_id', 'in', remote_ids)],
+                            fields=read_f, order='id asc')
         except Exception as e:
             ctx['warnings'].append('Assignment history could not be read: %s' % str(e)[:120])
             return 0

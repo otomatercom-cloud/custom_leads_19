@@ -172,6 +172,9 @@
                 <header>
                     <button name="action_resume" type="object" string="Resume import" class="btn-primary"
                             invisible="state == 'done'"/>
+                    <button name="action_mark_done" type="object" string="Stop / mark done" class="btn-secondary"
+                            invisible="state == 'done'"
+                            confirm="Stop this import? Leads already imported stay. You can start a new import afterwards."/>
                 </header>
                 <sheet>
                     <div class="alert alert-danger" role="alert" invisible="not stalled">
