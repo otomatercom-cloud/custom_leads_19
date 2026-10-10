@@ -1,7 +1,7 @@
 import logging
 import time as _time
 import xmlrpc.client
-from datetime import datetime, time
+from datetime import datetime, time, timedelta
 
 import pytz
 
@@ -43,8 +43,44 @@ class OtmLeadsOdoo17ImportLog(models.Model):
     campaigns_created = fields.Integer(string='Campaigns Created', readonly=True)
     sources_created = fields.Integer(string='Sources Created', readonly=True)
     details = fields.Text(string='Details', readonly=True)
-    state = fields.Selection([('done', 'Done'), ('running', 'Continuing in background')],
+    state = fields.Selection([('done', 'Done'), ('running', 'Continuing in background'),
+                              ('failed', 'Stopped (error)')],
                              default='done', readonly=True)
+    last_activity = fields.Datetime(string='Last Activity', readonly=True)
+    stalled = fields.Boolean(string='Stalled', compute='_compute_stalled')
+    stop_hint = fields.Char(string='Why it may have stopped', compute='_compute_stalled')
+
+    def _compute_stalled(self):
+        cron = self.env.ref('custom_leads_19.cron_otm_leads_odoo17_import', raise_if_not_found=False)
+        limit = fields.Datetime.now() - timedelta(minutes=5)
+        for rec in self:
+            idle = rec.state == 'running' and (not rec.last_activity or rec.last_activity < limit)
+            rec.stalled = idle or rec.state == 'failed'
+            hint = ''
+            if idle:
+                hint = _('No lead was imported for over 5 minutes. ')
+                if cron and not cron.sudo().active:
+                    hint += _('The background job "Continue Odoo 17 import" is switched off (Odoo switches a job off '
+                              'after repeated failures or time-outs). Click Resume import.')
+                else:
+                    hint += _('The background job was probably stopped by the server time limit or a restart. '
+                              'Click Resume import.')
+            elif rec.state == 'failed':
+                hint = _('The import stopped with an error - see Details. Fix it and click Resume import.')
+            rec.stop_hint = hint
+
+    def action_resume(self):
+        """Switch the background job back on and continue this import now."""
+        self.ensure_one()
+        cron = self.env.ref('custom_leads_19.cron_otm_leads_odoo17_import', raise_if_not_found=False)
+        if cron:
+            cron.sudo().write({'active': True})
+        self.write({'state': 'running', 'last_activity': fields.Datetime.now()})
+        if cron:
+            cron.sudo()._trigger()
+        return {'type': 'ir.actions.client', 'tag': 'display_notification',
+                'params': {'title': _('Import'), 'message': _('Import resumed in the background. Refresh in a minute.'),
+                           'type': 'success'}}
     params = fields.Text(readonly=True)
     lead_ids = fields.One2many('leads.logic', 'odoo17_import_log_id', string='Imported Leads')
 
@@ -66,13 +102,13 @@ class OtmLeadsOdoo17ImportLog(models.Model):
                         [{'remote_id': i, 'name': str(i)} for i in ids])
                     wiz.campaign_option_ids = [(6, 0, opts.ids)]
                 budget = float(self.env['ir.config_parameter'].sudo().get_param(
-                    'otm_odoo17.bg_time_budget', 240))
+                    'otm_odoo17.bg_time_budget', 60))
                 wiz._run_import(log=log, budget=budget)
                 self.env.cr.commit()
             except Exception as e:
                 self.env.cr.rollback()
                 _logger.exception('Odoo17 background import failed')
-                log.write({'state': 'done', 'details': (log.details or '') + '\nBackground import stopped: %s' % e})
+                log.write({'state': 'failed', 'details': (log.details or '') + '\nBackground import stopped: %s' % e})
                 self.env.cr.commit()
 
 
@@ -535,7 +571,8 @@ class OtmLeadsOdoo17ImportWizard(models.TransientModel):
                     failed += 1
                     lines.append('#%s %s: FAILED - %s' % (rid, row.get('name'), str(e).strip()[:300]))
                     _logger.warning('Odoo17 import failed for lead %s: %s', rid, e)
-            log.write({'created_count': base_created + created, 'failed_count': base_failed + failed})
+            log.write({'created_count': base_created + created, 'failed_count': base_failed + failed,
+                       'last_activity': fields.Datetime.now()})
             self.env.cr.commit()  # keep progress on long runs
 
         remaining = len(todo) - created - failed if truncated else 0
@@ -563,6 +600,7 @@ class OtmLeadsOdoo17ImportWizard(models.TransientModel):
             'sources_created': (log.sources_created or 0) + ctx['sources_created'],
             'details': '\n'.join(summary + [''] + body),
             'state': 'running' if truncated else 'done',
+            'last_activity': fields.Datetime.now(),
             'params': self._bg_params() if truncated else False,
         })
         if truncated:

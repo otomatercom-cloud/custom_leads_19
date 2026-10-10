@@ -169,7 +169,14 @@
         <field name="model">otm.leads.odoo17.import.log</field>
         <field name="arch" type="xml">
             <form create="0" edit="0">
+                <header>
+                    <button name="action_resume" type="object" string="Resume import" class="btn-primary"
+                            invisible="state == 'done'"/>
+                </header>
                 <sheet>
+                    <div class="alert alert-danger" role="alert" invisible="not stalled">
+                        <strong>Import is not running.</strong> <field name="stop_hint" nolabel="1"/>
+                    </div>
                     <h1><field name="name"/></h1>
                     <group>
                         <group>
@@ -182,6 +189,7 @@
                             <field name="fetched_count"/>
                             <field name="created_count"/>
                             <field name="state"/>
+                            <field name="last_activity"/>
                             <field name="already_count"/>
                             <field name="duplicate_count"/>
                             <field name="failed_count"/>
