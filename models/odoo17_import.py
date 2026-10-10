@@ -103,32 +103,52 @@ class OtmLeadsOdoo17ImportLog(models.Model):
     params = fields.Text(readonly=True)
     lead_ids = fields.One2many('leads.logic', 'odoo17_import_log_id', string='Imported Leads')
 
+    def _continue_one(self, budget):
+        """Run one time-boxed slice of this import log (used by the cron and the manual button)."""
+        import json
+        self.ensure_one()
+        log = self
+        try:
+            p = json.loads(log.params or '{}')
+            wiz = self.env['otm.leads.odoo17.import.wizard'].with_user(log.user_id or self.env.user).create({
+                'date_from': p['date_from'], 'date_to': p['date_to'], 'date_field': p['date_field'],
+                'import_children': p['import_children'], 'import_chatter': p['import_chatter'],
+                'import_reenquiries': p['import_reenquiries'],
+            })
+            ids = p.get('campaign_remote_ids') or []
+            if ids:
+                opts = self.env['otm.leads.odoo17.campaign.option'].create(
+                    [{'remote_id': i, 'name': str(i)} for i in ids])
+                wiz.campaign_option_ids = [(6, 0, opts.ids)]
+            wiz._run_import(log=log, budget=budget)
+            self.env.cr.commit()
+            return True
+        except Exception as e:
+            self.env.cr.rollback()
+            _logger.exception('Odoo17 background import failed')
+            log.write({'state': 'failed', 'details': (log.details or '') + '\nImport stopped: %s' % e})
+            self.env.cr.commit()
+            return False
+
     @api.model
     def cron_continue_imports(self):
         """Continue interrupted imports in the background (no HTTP timeout here)."""
-        import json
+        budget = float(self.env['ir.config_parameter'].sudo().get_param('otm_odoo17.bg_time_budget', 30))
         for log in self.search([('state', '=', 'running')], order='id', limit=1):
-            try:
-                p = json.loads(log.params or '{}')
-                wiz = self.env['otm.leads.odoo17.import.wizard'].with_user(log.user_id or self.env.user).create({
-                    'date_from': p['date_from'], 'date_to': p['date_to'], 'date_field': p['date_field'],
-                    'import_children': p['import_children'], 'import_chatter': p['import_chatter'],
-                    'import_reenquiries': p['import_reenquiries'],
-                })
-                ids = p.get('campaign_remote_ids') or []
-                if ids:
-                    opts = self.env['otm.leads.odoo17.campaign.option'].create(
-                        [{'remote_id': i, 'name': str(i)} for i in ids])
-                    wiz.campaign_option_ids = [(6, 0, opts.ids)]
-                budget = float(self.env['ir.config_parameter'].sudo().get_param(
-                    'otm_odoo17.bg_time_budget', 30))
-                wiz._run_import(log=log, budget=budget)
-                self.env.cr.commit()
-            except Exception as e:
-                self.env.cr.rollback()
-                _logger.exception('Odoo17 background import failed')
-                log.write({'state': 'failed', 'details': (log.details or '') + '\nBackground import stopped: %s' % e})
-                self.env.cr.commit()
+            log._continue_one(budget)
+
+    def action_run_batch(self):
+        """Manual driver: process one slice now (about 15 s) - works even if the background job is not running."""
+        self.ensure_one()
+        if self.state == 'done':
+            return True
+        if self.state == 'failed':
+            self.write({'state': 'running'})
+        if not self.params:
+            raise UserError(_("This log has no saved settings to continue from. Start a new import instead."))
+        ok = self._continue_one(15)
+        return {'type': 'ir.actions.client', 'tag': 'reload'} if ok else {
+            'type': 'ir.actions.client', 'tag': 'reload'}
 
 
 class OtmLeadsOdoo17CampaignOption(models.TransientModel):
