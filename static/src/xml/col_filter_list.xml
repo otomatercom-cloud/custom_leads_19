@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="custom_leads_19.ColFilterListRenderer" t-inherit="web.ListRenderer" t-inherit-mode="primary">
+        <xpath expr="//thead/tr" position="after">
+            <tr class="o_otm_filter_row">
+                <th t-if="hasSelectors"/>
+                <t t-foreach="state.columns" t-as="column" t-key="column.id">
+                    <th class="o_otm_filter_cell">
+                        <t t-set="kind" t-value="colFilterKind(column)"/>
+                        <input t-if="kind === 'text'" type="text" class="form-control form-control-sm"
+                               t-att-placeholder="column.label or column.string or ''"
+                               t-on-input="(ev) => this.onColFilterInput(column, 'value', ev)"/>
+                        <input t-elif="kind === 'number'" type="number" class="form-control form-control-sm"
+                               t-on-input="(ev) => this.onColFilterInput(column, 'value', ev)"/>
+                        <select t-elif="kind === 'selection'" class="form-select form-select-sm"
+                                t-on-change="(ev) => this.onColFilterInput(column, 'value', ev)">
+                            <option value="">All</option>
+                            <t t-foreach="colFilterOptions(column)" t-as="opt" t-key="opt[0]">
+                                <option t-att-value="opt[0]"><t t-esc="opt[1]"/></option>
+                            </t>
+                        </select>
+                        <div t-elif="kind === 'date'" class="d-flex gap-1">
+                            <input type="date" class="form-control form-control-sm"
+                                   t-on-change="(ev) => this.onColFilterInput(column, 'from', ev)"/>
+                            <input type="date" class="form-control form-control-sm"
+                                   t-on-change="(ev) => this.onColFilterInput(column, 'to', ev)"/>
+                        </div>
+                    </th>
+                </t>
+                <th/>
+            </tr>
+        </xpath>
+    </t>
+</templates>

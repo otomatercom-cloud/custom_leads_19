@@ -25,7 +25,6 @@
                 <field name="lead_owner"/>
                 <!-- everything below is hidden by default; switch on from the column picker -->
                 <field name="call_response" string="Last Response" optional="hide"/>
-                <field name="attendance_percentage" string="Attend %" optional="hide"/>
                 <field name="team_id" optional="hide" string="Team"/>
                 <field name="next_follow_up_date" optional="hide"/>
                 <field name="date_of_adding" optional="hide"/>
@@ -34,6 +33,20 @@
                 <field name="call_delay_hrs" widget="float_time" optional="hide"/>
                 <field name="company_id" groups="base.group_multi_company" optional="hide"/>
             </list>
+        </field>
+    </record>
+
+    <!-- Column filter row under the headers. Separate record: if it ever misbehaves,
+         deactivate this view (Settings > Technical > Views) and the plain list comes back. -->
+    <record id="view_leads_logic_tree_colfilter" model="ir.ui.view">
+        <field name="name">leads.logic.list.colfilter</field>
+        <field name="model">leads.logic</field>
+        <field name="inherit_id" ref="view_leads_logic_tree"/>
+        <field name="priority">99</field>
+        <field name="arch" type="xml">
+            <xpath expr="//list" position="attributes">
+                <attribute name="js_class">otm_col_filter_list</attribute>
+            </xpath>
         </field>
     </record>
 

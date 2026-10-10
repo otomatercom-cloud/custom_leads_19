@@ -1,0 +1,2 @@
+.o_otm_filter_row th { padding: 4px 6px; background: var(--o-view-background-color, #fff); font-weight: 400; }
+.o_otm_filter_row .form-control-sm, .o_otm_filter_row .form-select-sm { min-width: 90px; font-size: 12px; }
