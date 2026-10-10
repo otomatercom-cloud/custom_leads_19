@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_leads_logic_response_list" model="ir.ui.view">
+        <field name="name">leads.logic.response.list</field>
+        <field name="model">leads.logic</field>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <list string="Lead Response" create="0" edit="0" delete="0" default_order="create_date desc">
+                <field name="date_of_adding" string="Added Date"/>
+                <field name="create_date" string="Created Date &amp; Time"/>
+                <field name="name"/>
+                <field name="phone_number"/>
+                <field name="lead_owner"/>
+                <field name="lead_quality" optional="show"/>
+                <field name="followup_count" string="Follow-ups" sum="Total"/>
+                <field name="call_count" optional="show" sum="Total"/>
+                <field name="assigned_after"/>
+                <field name="called_after"/>
+                <field name="assign_delay_hrs" widget="float_time" optional="hide"/>
+                <field name="call_delay_hrs" widget="float_time" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_leads_logic_response_search" model="ir.ui.view">
+        <field name="name">leads.logic.response.search</field>
+        <field name="model">leads.logic</field>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="phone_number"/>
+                <field name="lead_owner"/>
+                <filter name="f_not_assigned" string="Not assigned" domain="[('first_assigned_dt','=',False)]"/>
+                <filter name="f_not_called" string="Not called yet" domain="[('first_called_dt','=',False)]"/>
+                <filter name="f_no_followup" string="No follow-up" domain="[('followup_count','=',0)]"/>
+                <separator/>
+                <filter name="f_today" string="Created today"
+                        domain="[('create_date','&gt;=',datetime.datetime.combine(context_today(), datetime.time(0, 0)))]"/>
+                <filter name="g_owner" string="Admission Officer" context="{'group_by': 'lead_owner'}"/>
+                <filter name="g_day" string="Created Date" context="{'group_by': 'create_date:day'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_leads_logic_response" model="ir.actions.act_window">
+        <field name="name">Lead Response Time</field>
+        <field name="res_model">leads.logic</field>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_leads_logic_response_list"/>
+        <field name="search_view_id" ref="view_leads_logic_response_search"/>
+    </record>
+
+    <menuitem id="menu_leads_response_time" name="Lead Response Time"
+              parent="menu_leads_root" action="action_leads_logic_response" sequence="40"
+              groups="custom_leads_19.group_lead_manager,custom_leads_19.group_super_admin,custom_leads_19.group_lead_team_lead"/>
+</odoo>

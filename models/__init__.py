@@ -41,3 +41,4 @@ except Exception:
     pass
 from . import daily_goal
 from . import urgent_lead
+from . import lead_response_time
