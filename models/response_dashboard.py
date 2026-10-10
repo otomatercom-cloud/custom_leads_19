@@ -14,8 +14,16 @@ class LeadsLogicResponseDashboard(models.Model):
     _inherit = 'leads.logic'
 
     # ── helpers ───────────────────────────────────────────────────────
+    @api.model
+    def _rd_tzname(self):
+        """Postgres on some servers does not know old aliases such as Asia/Calcutta
+        ('time zone not recognized' in date grouping) -> use the canonical name."""
+        tz = self.env.context.get('tz') or self.env.user.tz or 'Asia/Kolkata'
+        return {'Asia/Calcutta': 'Asia/Kolkata', 'Asia/Katmandu': 'Asia/Kathmandu',
+                'Asia/Rangoon': 'Asia/Yangon', 'Asia/Saigon': 'Asia/Ho_Chi_Minh'}.get(tz, tz)
+
     def _rd_tz(self):
-        return pytz.timezone(self.env.user.tz or 'Asia/Kolkata')
+        return pytz.timezone(self._rd_tzname())
 
     def _rd_utc(self, d, end=False):
         """Local date (str/date) -> naive UTC datetime at start (or end) of that day."""
@@ -46,6 +54,7 @@ class LeadsLogicResponseDashboard(models.Model):
     # ── filter lists ──────────────────────────────────────────────────
     @api.model
     def get_response_dashboard_options(self):
+        self = self.with_context(tz=self._rd_tzname())
         owners = self._read_group([('lead_owner', '!=', False)], ['lead_owner'], ['__count'])
         return {
             'sources': [{'id': s.id, 'name': s.name} for s in self.env['leads.sources'].sudo().search([])],
@@ -58,6 +67,7 @@ class LeadsLogicResponseDashboard(models.Model):
     def get_response_dashboard(self, date_from, date_to, source_id=False, team_id=False,
                                owner_id=False, group='day'):
         group = group if group in ('day', 'week', 'month', 'year') else 'day'
+        self = self.with_context(tz=self._rd_tzname())
         flt = []
         if source_id:
             flt.append(('leads_source', '=', int(source_id)))
