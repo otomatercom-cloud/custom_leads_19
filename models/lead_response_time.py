@@ -5,12 +5,15 @@ from odoo import api, fields, models
 
 
 def _fmt(hours):
-    """2.25 -> '2h 15m' ; 0 -> '0m'."""
+    """Readable duration: 25m, 3h 10m, 2d 5h (24 hours or more is shown in days)."""
     mins = int(round(max(hours, 0.0) * 60))
-    h, m = divmod(mins, 60)
-    if h and m:
-        return '%dh %dm' % (h, m)
-    return '%dh' % h if h else '%dm' % m
+    d, rest = divmod(mins, 1440)
+    h, m = divmod(rest, 60)
+    if d:
+        return '%dd %dh' % (d, h) if h else '%dd' % d
+    if h:
+        return '%dh %dm' % (h, m) if m else '%dh' % h
+    return '%dm' % m
 
 
 class LeadsLogicResponse(models.Model):
