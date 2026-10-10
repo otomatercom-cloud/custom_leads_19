@@ -1,4 +1,6 @@
+import html as _html
 import logging
+import re as _re
 import time as _time
 import xmlrpc.client
 from datetime import datetime, time, timedelta
@@ -22,6 +24,18 @@ SKIP_FIELDS = {
 
 # One2many children imported in a dedicated step: (remote model, local model, link field)
 CHILD_MODELS = ('lead.response', 'lead.call.log', 'lead.followup', 'lead.quality.history')
+
+
+_ESCAPED_TAG = _re.compile(r'&lt;/?(b|br|strong|i|em|u|p|div|span|ul|ol|li|a)\b', _re.I)
+
+
+def fix_escaped_html(body):
+    """Odoo 17 code that posted HTML as a plain string stored it escaped ('&lt;b&gt;New...'),
+    so chatter shows raw tags. Turn it back into real markup (one unescape pass only)."""
+    if body and _ESCAPED_TAG.search(body):
+        return _html.unescape(body)
+    return body
+
 
 
 class OtmLeadsOdoo17ImportLog(models.Model):
@@ -925,7 +939,7 @@ class OtmLeadsOdoo17ImportWizard(models.TransientModel):
                 name = r['author_id'][1]
                 author = self.env['res.partner'].search([('name', '=', name)], limit=1).id
             Msg.create({
-                'model': 'leads.logic', 'res_id': lead.id, 'body': r['body'],
+                'model': 'leads.logic', 'res_id': lead.id, 'body': fix_escaped_html(r['body']),
                 'date': r['date'], 'author_id': author or False,
                 'message_type': 'comment', 'subtype_id': self.env.ref('mail.mt_note').id,
                 'subject': r.get('subject') or False,
