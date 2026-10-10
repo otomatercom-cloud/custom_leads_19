@@ -18,7 +18,10 @@
                 <field name="lead_stage_category" string="Stage"/>
                 <field name="course_inter" widget="many2many_tags" string="Course Interested"/>
                 <field name="followup_count" string="Follow-ups"/>
+                <field name="followup_done_count" string="Done"/>
+                <field name="followup_due_count" string="Due"/>
                 <field name="call_count" string="Calls"/>
+                <field name="total_call_duration" string="Call Duration"/>
                 <field name="assigned_after"/>
                 <field name="called_after"/>
                 <field name="lead_creator_id" string="Lead Created By"/>

@@ -14,6 +14,7 @@
                 <field name="lead_quality" optional="show"/>
                 <field name="followup_count" string="Follow-ups" sum="Total"/>
                 <field name="call_count" optional="show" sum="Total"/>
+                <field name="total_call_duration" string="Call Duration" optional="show"/>
                 <field name="assigned_after"/>
                 <field name="called_after"/>
                 <field name="assign_delay_hrs" widget="float_time" optional="hide"/>

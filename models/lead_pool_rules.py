@@ -77,7 +77,28 @@ class LeadAssignmentRulePoolRules(models.Model):
         lead.with_context(skip_pool_rules=True).write({'auto_reassign_count': lead.auto_reassign_count + 1})
         lead.message_post(body=_("Auto-reassigned from %(old)s to %(new)s: %(why)s.") % {
             'old': old.name, 'new': lead.lead_owner.name, 'why': reason})
+        self._pool_notify(old, lead.lead_owner, lead, reason)
         return True
+
+    def _pool_notify(self, old, new, lead, reason):
+        """Popup (sticky toast) for the officer who lost the lead, and one for the officer who got it."""
+        label = '%s%s' % (lead.name or _('Lead'), (' (%s)' % lead.reference_no) if lead.reference_no else '')
+        jobs = [
+            (old, _('Lead reassigned'), 'danger', _(
+                '%(lead)s was taken from you and assigned to %(new)s: %(why)s.') % {
+                    'lead': label, 'new': new.name, 'why': reason}),
+            (new, _('New lead assigned'), 'warning', _(
+                '%(lead)s was reassigned to you from %(old)s.') % {'lead': label, 'old': old.name}),
+        ]
+        for emp, title, kind, msg in jobs:
+            partner = emp.sudo().user_id.partner_id
+            if not partner:
+                continue
+            try:
+                self.env['bus.bus'].sudo()._sendone(
+                    partner, 'simple_notification', {'title': title, 'message': msg, 'type': kind, 'sticky': True})
+            except Exception:  # noqa: BLE001 - a notification problem must never block the reassignment
+                _logger.exception('Pool reassign popup failed')
 
     @api.model
     def cron_pool_reassign_uncalled(self):
