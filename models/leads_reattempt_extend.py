@@ -146,28 +146,49 @@ class LeadsLogicReattemptExtension(models.Model):
                 'review_status': 'pending_review',
                 're_attempt_count': (existing.re_attempt_count or 0) + 1,
             }
-            # Create the re-attempt request in a separate transaction so that it is persisted
-            # even when the main transaction is rolled back due to the ValidationError.
-            with self.env.registry.cursor() as new_cr:
-                new_env = api.Environment(new_cr, self.env.uid, self.env.context)
-                new_env['otomater.lead.reattempt'].sudo().create(reattempt_vals)
+            # One open request per officer + lead: a second try with the same number does not
+            # pile up more requests, the officer is just told again who owns the lead.
+            Reattempt = self.env['otomater.lead.reattempt'].sudo()
+            already_open = Reattempt.search([
+                ('lead_id', '=', existing.id),
+                ('requested_owner_id', '=', requested_owner),
+                ('review_status', '=', 'pending_review'),
+            ], limit=1) if requested_owner else Reattempt
+            if already_open:
+                request_note = _("You already have a Re-Attempt Request pending for this lead. "
+                                 "Please wait for Team Lead approval.")
+            else:
+                # Separate transaction so the request is kept although this one is rolled back.
+                with self.env.registry.cursor() as new_cr:
+                    new_env = api.Environment(new_cr, self.env.uid, self.env.context)
+                    new_env['otomater.lead.reattempt'].sudo().create(reattempt_vals)
+                request_note = _("A Re-Attempt Request has been created and sent to the Team Lead "
+                                 "for review. Please wait for approval.")
 
-            owner_name = existing.lead_owner.name if existing.lead_owner else _('Unknown')
+            owner = existing.lead_owner
+            assigned_on = existing.assigned_date or existing.date_of_adding
+            quality = dict(existing._fields['lead_quality'].selection).get(existing.lead_quality, '') \
+                if existing.lead_quality else ''
             raise ValidationError(_(
-                "⚠️ Duplicate Lead Detected!\n\n"
-                "A lead with this %s already exists in the system.\n\n"
-                "Lead Name: %s\n"
-                "Lead Owner: %s\n"
-                "Reference: %s\n\n"
-                "A Re-Attempt Request has been automatically created and sent "
-                "to the Team Lead for review.\n\n"
-                "Please wait for Team Lead approval."
-            ) % (
-                dict(self.env['otomater.lead.reattempt']._fields['duplicate_type'].selection).get(dtype, dtype),
-                existing.name,
-                owner_name,
-                existing.reference_no or '',
-            ))
+                "Duplicate lead - not allowed.\n\n"
+                "This %(kind)s already exists in the system.\n\n"
+                "Lead: %(name)s\n"
+                "Reference: %(ref)s\n"
+                "Assigned to: %(owner)s\n"
+                "Team: %(team)s\n"
+                "Assigned / added on: %(date)s\n"
+                "Lead quality: %(quality)s\n\n"
+                "%(note)s"
+            ) % {
+                'kind': dict(self.env['otomater.lead.reattempt']._fields['duplicate_type'].selection).get(dtype, dtype),
+                'name': existing.name or '',
+                'ref': existing.reference_no or '',
+                'owner': owner.name if owner else _('Not assigned'),
+                'team': existing.team_id.name if existing.team_id else '-',
+                'date': assigned_on or '-',
+                'quality': quality or '-',
+                'note': request_note,
+            })
 
         if not processed_results:
             # All were duplicates — nothing to create

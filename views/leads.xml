@@ -24,6 +24,12 @@
                 <field name="lead_creator_id" optional="show"/>
                 <field name="next_follow_up_date" optional="show"/>
                 <field name="date_of_adding" optional="show"/>
+                <field name="create_date" string="Created Date &amp; Time" optional="show"/>
+                <field name="followup_count" string="Follow-ups" optional="show"/>
+                <field name="assigned_after" optional="show"/>
+                <field name="called_after" optional="show"/>
+                <field name="assign_delay_hrs" widget="float_time" optional="hide"/>
+                <field name="call_delay_hrs" widget="float_time" optional="hide"/>
                 <field name="last_update_date" optional="show"/>
                 <field name="company_id" groups="base.group_multi_company" optional="show"/>
             </list>

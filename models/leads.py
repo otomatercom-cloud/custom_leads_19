@@ -1170,9 +1170,14 @@ class LeadsForm(models.Model):
                     [('phone_number', 'like', '%' + last_10_digits), ('id', '!=', self._origin.id)])
                 if duplicate:
                     lead_owner_name = duplicate[0].lead_owner.name if duplicate[0].lead_owner else 'Unknown'
+                    d = duplicate[0]
                     return {'warning': {'title': _("Duplicate Phone Number"), 'message': _(
-                        "The phone number %s already exists in the system and is owned by %s.") % (
-                        record.phone_number, lead_owner_name)}}
+                        "The phone number %s already exists in the system.\n"
+                        "Lead: %s (%s)\nAssigned to: %s\nTeam: %s\n"
+                        "You cannot create this lead again - saving it sends a Re-Attempt Request "
+                        "to the Team Lead.") % (
+                        record.phone_number, d.name or '', d.reference_no or '', lead_owner_name,
+                        d.team_id.name if d.team_id else '-')}}
 
     @api.onchange('call_response')
     def _onchange_call_response(self):
