@@ -71,7 +71,7 @@
         <field name="inherit_id" ref="custom_leads_19.view_leads_logic_tree"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='leads_source']" position="after">
-                <field name="source_campaign_id" optional="show"/>
+                <field name="source_campaign_id"/>
             </xpath>
         </field>
     </record>

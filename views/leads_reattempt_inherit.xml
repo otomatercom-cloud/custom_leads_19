@@ -41,8 +41,8 @@
         <field name="inherit_id" ref="custom_leads_19.view_leads_logic_tree"/>
         <field name="arch" type="xml">
             <field name="last_update_date" position="after">
-                <field name="re_attempt_count" string="Re-Attempts" optional="show"/>
-                <field name="has_pending_reattempt" string="Pending RA" optional="show"/>
+                <field name="re_attempt_count" string="Re-Attempts" optional="hide"/>
+                <field name="has_pending_reattempt" string="Pending RA" optional="hide"/>
             </field>
         </field>
     </record>

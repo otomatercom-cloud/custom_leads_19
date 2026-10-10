@@ -9,29 +9,30 @@
                   decoration-danger="lead_quality in ['not_responding','not_reachable','wrong_number','not_interested']"
                   decoration-success="lead_quality in ['admission','waiting_for_admission']"
                   decoration-warning="lead_quality in ['hot','warm']">
-                <field name="reference_no" optional="show"/>
+                <field name="create_date" string="Created Date &amp; Time"/>
+                <field name="reference_no"/>
                 <field name="name"/>
                 <field name="masked_phone" string="Mobile"/>
-                <field name="course_inter" widget="many2many_tags" string="Course Interested" optional="show"/>
-                <field name="leads_source" optional="show"/>
+                <field name="leads_source"/>
                 <field name="lead_quality"/>
-                <field name="call_response" string="Last Response" optional="show"/>
-                <field name="call_count" string="Calls" optional="show"/>
-                <field name="attendance_percentage" string="Attend %" optional="show"/>
-                <field name="lead_stage_category" optional="show"/>
+                <field name="lead_stage_category" string="Stage"/>
+                <field name="course_inter" widget="many2many_tags" string="Course Interested"/>
+                <field name="followup_count" string="Follow-ups"/>
+                <field name="call_count" string="Calls"/>
+                <field name="assigned_after"/>
+                <field name="called_after"/>
+                <field name="lead_creator_id" string="Lead Created By"/>
                 <field name="lead_owner"/>
-                <field name="team_id" optional="show" string="Team"/>
-                <field name="lead_creator_id" optional="show"/>
-                <field name="next_follow_up_date" optional="show"/>
-                <field name="date_of_adding" optional="show"/>
-                <field name="create_date" string="Created Date &amp; Time" optional="show"/>
-                <field name="followup_count" string="Follow-ups" optional="show"/>
-                <field name="assigned_after" optional="show"/>
-                <field name="called_after" optional="show"/>
+                <!-- everything below is hidden by default; switch on from the column picker -->
+                <field name="call_response" string="Last Response" optional="hide"/>
+                <field name="attendance_percentage" string="Attend %" optional="hide"/>
+                <field name="team_id" optional="hide" string="Team"/>
+                <field name="next_follow_up_date" optional="hide"/>
+                <field name="date_of_adding" optional="hide"/>
+                <field name="last_update_date" optional="hide"/>
                 <field name="assign_delay_hrs" widget="float_time" optional="hide"/>
                 <field name="call_delay_hrs" widget="float_time" optional="hide"/>
-                <field name="last_update_date" optional="show"/>
-                <field name="company_id" groups="base.group_multi_company" optional="show"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
             </list>
         </field>
     </record>
@@ -582,16 +583,25 @@
                 <filter string="My Queue Today" name="filter_my_queue_today"
                         domain="[('daily_queue_date', '=', context_today())]"/>
                 <separator/>
-                <group>
-                    <filter string="Team" name="group_team"
-                            context="{'group_by': 'team_id'}"/>
-                    <filter string="Lead Creator" name="group_lead_creator"
-                            context="{'group_by': 'lead_creator_id'}"/>
-                    <filter string="Lead Quality" name="group_lead_quality"
-                            context="{'group_by': 'lead_quality'}"/>
-                    <filter string="Queue Status" name="group_queue_status"
-                            context="{'group_by': 'daily_call_done'}"/>
-                </group>
+                <filter string="Not assigned" name="f_not_assigned" domain="[('first_assigned_dt', '=', False)]"/>
+                <filter string="Not called yet" name="f_not_called" domain="[('first_called_dt', '=', False)]"/>
+                <filter string="No follow-up" name="f_no_followup" domain="[('followup_count', '=', 0)]"/>
+                <filter string="Has follow-ups" name="f_has_followup" domain="[('followup_count', '&gt;', 0)]"/>
+                <filter string="Created today" name="f_created_today"
+                        domain="[('create_date', '&gt;=', datetime.datetime.combine(context_today(), datetime.time(0, 0)))]"/>
+                <separator/>
+                <field name="course_inter"/>
+                <field name="lead_quality"/>
+                <field name="lead_stage_category"/>
+                <filter string="Team" name="group_team" context="{'group_by': 'team_id'}"/>
+                <filter string="Lead Owner" name="group_lead_owner" context="{'group_by': 'lead_owner'}"/>
+                <filter string="Lead Created By" name="group_lead_creator" context="{'group_by': 'lead_creator_id'}"/>
+                <filter string="Lead Source" name="group_lead_source" context="{'group_by': 'leads_source'}"/>
+                <filter string="Source Campaign" name="group_source_campaign" context="{'group_by': 'source_campaign_id'}"/>
+                <filter string="Lead Quality" name="group_lead_quality" context="{'group_by': 'lead_quality'}"/>
+                <filter string="Stage" name="group_stage" context="{'group_by': 'lead_stage_category'}"/>
+                <filter string="Created Date" name="group_created_day" context="{'group_by': 'create_date:day'}"/>
+                <filter string="Queue Status" name="group_queue_status" context="{'group_by': 'daily_call_done'}"/>
             </search>
         </field>
     </record>
