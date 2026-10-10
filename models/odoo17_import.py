@@ -12,7 +12,7 @@ from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
 
-BATCH = 100
+BATCH = 25
 
 # Never copied from Odoo 17 (handled explicitly, technical or unsafe)
 SKIP_FIELDS = {
@@ -121,7 +121,7 @@ class OtmLeadsOdoo17ImportLog(models.Model):
                         [{'remote_id': i, 'name': str(i)} for i in ids])
                     wiz.campaign_option_ids = [(6, 0, opts.ids)]
                 budget = float(self.env['ir.config_parameter'].sudo().get_param(
-                    'otm_odoo17.bg_time_budget', 60))
+                    'otm_odoo17.bg_time_budget', 30))
                 wiz._run_import(log=log, budget=budget)
                 self.env.cr.commit()
             except Exception as e:
@@ -541,7 +541,7 @@ class OtmLeadsOdoo17ImportWizard(models.TransientModel):
         created = failed = 0
         todo = an['new_ids']
         if budget is None:
-            budget = float(self.env['ir.config_parameter'].sudo().get_param('otm_odoo17.import_time_budget', 40))
+            budget = float(self.env['ir.config_parameter'].sudo().get_param('otm_odoo17.import_time_budget', 10))
         t0 = _time.time()
         truncated = False
         if dup and not resume:
@@ -605,6 +605,8 @@ class OtmLeadsOdoo17ImportWizard(models.TransientModel):
             log.write({'created_count': base_created + created, 'failed_count': base_failed + failed,
                        'last_activity': fields.Datetime.now()})
             self.env.cr.commit()  # keep progress on long runs
+            self.env.invalidate_all()  # free ORM cache so memory stays flat on big imports
+            _time.sleep(0.3)  # let the web workers breathe
 
         remaining = len(todo) - created - failed if truncated else 0
         created_t, failed_t = base_created + created, base_failed + failed
