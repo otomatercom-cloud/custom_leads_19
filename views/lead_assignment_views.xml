@@ -90,6 +90,17 @@
                                 <field name="backlog_days"/>
                             </group>
                         </group>
+                        <group string="Quality and call rules">
+                            <group>
+                                <field name="pool_rnr_min_calls"/>
+                                <field name="pool_reassign_on_quality"/>
+                            </group>
+                            <group>
+                                <field name="pool_uncalled_reassign"/>
+                                <field name="pool_min_daily_calls" invisible="not pool_uncalled_reassign"/>
+                                <field name="pool_max_reassigns"/>
+                            </group>
+                        </group>
                         <group string="Status">
                             <field name="pool_preview" nolabel="1" colspan="2" readonly="1"/>
                             <field name="pending_count"/>

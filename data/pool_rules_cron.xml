@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="cron_pool_reassign_uncalled" model="ir.cron">
+        <field name="name">Leads: Pool reassign leads not called enough</field>
+        <field name="model_id" ref="model_lead_assignment_rule"/>
+        <field name="state">code</field>
+        <field name="code">model.cron_pool_reassign_uncalled()</field>
+        <field name="interval_number">30</field>
+        <field name="interval_type">minutes</field>
+        <field name="active" eval="True"/>
+    </record>
+</odoo>

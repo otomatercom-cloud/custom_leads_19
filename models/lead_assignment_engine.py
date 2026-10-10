@@ -75,8 +75,29 @@ class LeadAssignmentRule(models.Model):
         string='Manual pool: also require sign-in today', default=True,
         help="When using the manual pool, skip officers who have not signed in today.")
     pool_require_checked_in = fields.Boolean(
-        string='Only officers currently checked in', default=False,
-        help="Ignore officers who already checked out.")
+        string='Stop pool when all officers are signed out', default=False,
+        help="Only officers who are signed in and NOT yet signed out receive leads. When every "
+             "officer has signed out nobody is eligible, so the pool stops and new leads wait "
+             "until someone signs in again.")
+    pool_rnr_min_calls = fields.Integer(
+        string='Calls needed before RNR', default=3,
+        help="A lead cannot be set to 'Ringing Not Responding' until it has at least this many calls "
+             "in its call history. 0 = no restriction.")
+    pool_reassign_on_quality = fields.Selection([
+        ('off', 'Off'),
+        ('no_call', "If an officer changes a New lead's quality without calling it"),
+        ('always', "Whenever an officer changes a New lead's quality"),
+    ], string='Reassign when quality changed', default='no_call',
+        help="When the officer who received a New lead changes its quality, the lead moves "
+             "automatically to the next officer in the pool.")
+    pool_uncalled_reassign = fields.Boolean(
+        string='Reassign leads not called enough', default=True,
+        help="A lead that got fewer than the required calls on the day it was assigned is moved to "
+             "another officer the next day.")
+    pool_min_daily_calls = fields.Integer(string='Calls required on the day', default=2)
+    pool_max_reassigns = fields.Integer(
+        string='Max automatic reassignments per lead', default=2,
+        help="Stops a lead from bouncing between officers forever.")
     use_window = fields.Boolean(string='Assign only in working hours', default=True, tracking=True)
     window_start = fields.Float(string='Pool starts', default=10.75, tracking=True,
                                 help='10.75 = 10:45')
@@ -268,6 +289,9 @@ class LeadAssignmentRule(models.Model):
 
     def _assign_pool(self, lead):
         eligible = self._pool_eligible()
+        excluded = self.env.context.get('pool_exclude_employee_ids') or []
+        if excluded:
+            eligible = eligible.filtered(lambda e: e.id not in excluded)
         if not eligible:
             _logger.info('Pool round robin: nobody eligible right now (rule %s).', self.name)
             return False, False
