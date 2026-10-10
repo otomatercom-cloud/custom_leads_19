@@ -66,6 +66,12 @@
                             <field name="enable_followup_popup"/>
                         </setting>
                     </block>
+                    <block title="Urgent New-Lead Popup">
+                        <setting string="Show urgent popup for new leads"
+                                 help="When a lead with quality New is assigned to an admission officer, a red 'Urgent - call now' card with the lead details appears on their screen (even during another call) and returns every few minutes until the lead is worked.">
+                            <field name="urgent_lead_popup"/>
+                        </setting>
+                    </block>
                     <block title="Call Timer Popup">
                         <setting string="Enable Call Timer Popup"
                                  help="When ON: clicking Call opens the timer overlay with duration tracking and recording. When OFF: clicking Call directly dials via tel: link with no overlay.">

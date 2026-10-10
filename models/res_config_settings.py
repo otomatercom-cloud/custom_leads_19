@@ -2,6 +2,7 @@ from odoo import models, fields, api
 
 PARAM_FOLLOWUP = 'custom_leads_19.enable_followup_popup'
 PARAM_CALL_TIMER = 'custom_leads_19.enable_call_timer'
+PARAM_URGENT = 'custom_leads_19.urgent_lead_popup'
 PARAM_BATCH_REQUIRED = 'custom_leads_19.admission_batch_required'
 PARAM_BATCH_REQUIRED = 'custom_leads_19.admission_batch_required'
 
@@ -39,6 +40,14 @@ class ResConfigSettings(models.TransientModel):
         help="When enabled, a popup shows today's follow-ups when opening the Leads form/list view.",
         compute='_compute_enable_followup_popup',
         inverse='_inverse_enable_followup_popup',
+    )
+
+    urgent_lead_popup = fields.Boolean(
+        string='Urgent New-Lead Popup',
+        help='Show an "URGENT - call now" popup with the lead details to the admission officer '
+             'when a new lead is assigned to them.',
+        compute='_compute_urgent_lead_popup',
+        inverse='_inverse_urgent_lead_popup',
     )
 
     admission_batch_required = fields.Boolean(
@@ -98,6 +107,16 @@ class ResConfigSettings(models.TransientModel):
             self.env['ir.config_parameter'].sudo().set_param(
                 PARAM_FOLLOWUP, '1' if rec.enable_followup_popup else '0'
             )
+
+    @api.depends_context('company')
+    def _compute_urgent_lead_popup(self):
+        enabled = self.env['ir.config_parameter'].sudo().get_param(PARAM_URGENT) != '0'
+        for rec in self:
+            rec.urgent_lead_popup = enabled
+
+    def _inverse_urgent_lead_popup(self):
+        for rec in self:
+            self.env['ir.config_parameter'].sudo().set_param(PARAM_URGENT, '1' if rec.urgent_lead_popup else '0')
 
     @api.depends_context('company')
     def _compute_enable_call_timer(self):

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="custom_leads_19.UrgentLeadPopup">
+        <div class="o_urgent_stack" t-if="state.alerts.length">
+            <div t-foreach="state.alerts" t-as="a" t-key="a.id" class="o_urgent_card" role="alertdialog">
+                <div class="o_urgent_head">
+                    <span class="o_urgent_siren">🚨</span>
+                    <span class="o_urgent_title">URGENT — new lead, call now</span>
+                    <span class="o_urgent_count" t-if="state.alerts.length > 1" t-esc="state.alerts.length + ' waiting'"/>
+                </div>
+                <div class="o_urgent_body">
+                    <div class="o_urgent_name" t-esc="a.name"/>
+                    <a class="o_urgent_phone" t-att-href="'tel:' + a.phone" t-esc="a.phone"/>
+                    <dl class="o_urgent_facts">
+                        <t t-if="a.source"><dt>Source</dt><dd t-esc="a.source + (a.campaign ? ' / ' + a.campaign : '')"/></t>
+                        <t t-if="a.course"><dt>Course</dt><dd t-esc="a.course"/></t>
+                        <t t-if="a.place"><dt>Place</dt><dd t-esc="a.place"/></t>
+                        <t t-if="a.email"><dt>Email</dt><dd t-esc="a.email"/></t>
+                        <t t-if="a.remarks"><dt>Remarks</dt><dd t-esc="a.remarks"/></t>
+                        <t t-if="a.received"><dt>Received</dt><dd t-esc="a.received"/></t>
+                    </dl>
+                </div>
+                <div class="o_urgent_actions">
+                    <button class="o_urgent_btn o_urgent_btn_call" t-on-click="() => svc.call(a)">📞 Call now</button>
+                    <button class="o_urgent_btn" t-on-click="() => svc.open(a)">Open lead</button>
+                    <button class="o_urgent_btn o_urgent_btn_ghost" t-on-click="() => svc.snooze(a, 5)">Remind in 5 min</button>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>

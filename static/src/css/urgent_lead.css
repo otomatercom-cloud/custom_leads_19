@@ -1,0 +1,34 @@
+.o_urgent_stack {
+    position: fixed; right: 16px; bottom: 16px; z-index: 2100;
+    display: flex; flex-direction: column; gap: 10px; max-width: min(380px, calc(100vw - 32px));
+    max-height: calc(100vh - 32px); overflow-y: auto;
+}
+.o_urgent_card {
+    background: #fff; color: #1f2328; border-radius: 10px; overflow: hidden;
+    border: 2px solid #c62828; box-shadow: 0 10px 34px rgba(198, 40, 40, .35);
+    animation: o_urgent_pulse 1.6s ease-in-out 3;
+}
+.o_urgent_head {
+    display: flex; align-items: center; gap: 8px; padding: 9px 12px;
+    background: #c62828; color: #fff; font-weight: 700; letter-spacing: .2px;
+}
+.o_urgent_title { flex: 1; }
+.o_urgent_count { font-size: 12px; font-weight: 600; background: rgba(255,255,255,.22); border-radius: 10px; padding: 1px 8px; }
+.o_urgent_body { padding: 12px 14px 4px; }
+.o_urgent_name { font-size: 19px; font-weight: 700; line-height: 1.2; }
+.o_urgent_phone { display: inline-block; margin-top: 2px; font-size: 20px; font-weight: 700; color: #c62828; text-decoration: none; }
+.o_urgent_facts { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; margin: 10px 0 6px; font-size: 13px; }
+.o_urgent_facts dt { color: #6a737d; font-weight: 500; }
+.o_urgent_facts dd { margin: 0; word-break: break-word; }
+.o_urgent_actions { display: flex; flex-wrap: wrap; gap: 8px; padding: 8px 14px 14px; }
+.o_urgent_btn {
+    border: 1px solid #c9ced6; background: #f4f5f7; color: #1f2328; border-radius: 6px;
+    padding: 7px 12px; font-weight: 600; cursor: pointer;
+}
+.o_urgent_btn:hover { background: #e9ebef; }
+.o_urgent_btn:focus-visible { outline: 3px solid #1565c0; outline-offset: 1px; }
+.o_urgent_btn_call { flex: 1 1 100%; background: #2e7d32; border-color: #2e7d32; color: #fff; font-size: 16px; padding: 10px 12px; }
+.o_urgent_btn_call:hover { background: #256628; }
+.o_urgent_btn_ghost { background: transparent; }
+@keyframes o_urgent_pulse { 0%, 100% { box-shadow: 0 10px 34px rgba(198,40,40,.35); } 50% { box-shadow: 0 0 0 7px rgba(198,40,40,.28), 0 10px 34px rgba(198,40,40,.5); } }
+@media (prefers-reduced-motion: reduce) { .o_urgent_card { animation: none; } }
