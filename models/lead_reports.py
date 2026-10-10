@@ -178,7 +178,7 @@ class OtmLeadReports(models.AbstractModel):
         return out
 
     @staticmethod
-    def _name(rec, blank='(none)'):
+    def _nm(rec, blank='(none)'):
         if hasattr(rec, '_name'):
             return rec.sudo().display_name if rec else blank
         return rec or blank
@@ -204,7 +204,7 @@ class OtmLeadReports(models.AbstractModel):
         rows = []
         for k, r in tot.items():
             n = r[1]
-            rows.append({'name': self._name(r[0]), 'leads': n,
+            rows.append({'name': self._nm(r[0]), 'leads': n,
                          'assigned': asg.get(k, (0, 0))[1], 'called': cal.get(k, (0, 0))[1],
                          'admissions': adm.get(k, (0, 0))[1], 'conv': self._pct(adm.get(k, (0, 0))[1], n)})
         rows.sort(key=lambda x: -x['leads'])
@@ -240,7 +240,7 @@ class OtmLeadReports(models.AbstractModel):
         s, e = self._bounds(f)
         grp = self._grp('otomater.lead.reattempt', [('request_date', '>=', s), ('request_date', '<', e)],
                         'existing_owner_id')
-        rows = sorted(({'name': self._name(r[0]), 'requests': r[1]} for r in grp.values()), key=lambda x: -x['requests'])
+        rows = sorted(({'name': self._nm(r[0]), 'requests': r[1]} for r in grp.values()), key=lambda x: -x['requests'])
         return {'columns': [_col('name', 'Current lead owner'), _col('requests', 'Re-attempt requests', 'int')],
                 'rows': rows, 'totals': self._tot(rows, ['requests']),
                 'chart': self._bar('name', [('requests', 'Requests')])}
@@ -313,9 +313,9 @@ class OtmLeadReports(models.AbstractModel):
             return stats.setdefault(eid, {'name': name, 'leads': 0, 'calls': 0, 'connected': 0, 'secs': 0,
                                            'longest': 0, 'fdone': 0, 'fsched': 0, 'fover': 0, 'adm': 0})
         for k, r in tot.items():
-            st(k, self._name(r[0]))['leads'] = r[1]
+            st(k, self._nm(r[0]))['leads'] = r[1]
         for k, r in adm.items():
-            st(k, self._name(r[0]))['adm'] = r[1]
+            st(k, self._nm(r[0]))['adm'] = r[1]
         users = self.env['res.users'].sudo()
         for c in self._calls(f):
             uid = c['user_id'][0] if c['user_id'] else 0
@@ -481,7 +481,7 @@ class OtmLeadReports(models.AbstractModel):
         for r in H._read_group(dom, ['lead_quality'], ['__count']):
             rows.append({'name': 'To: ' + labels.get(r[0], r[0] or '-'), 'changes': r[1]})
         rows.sort(key=lambda r: -r['changes'])
-        by_user = [{'name': 'By: ' + self._name(r[0]), 'changes': r[1]}
+        by_user = [{'name': 'By: ' + self._nm(r[0]), 'changes': r[1]}
                    for r in H._read_group(dom, ['user_id'], ['__count'])]
         by_user.sort(key=lambda r: -r['changes'])
         rows += by_user
@@ -570,7 +570,7 @@ class OtmLeadReports(models.AbstractModel):
         dom = [('appointment_date', '>=', s), ('appointment_date', '<', e)] + self._lf(f, 'lead_id.', skip_owner=True)
         per = defaultdict(lambda: defaultdict(int))
         for r in self.env['lead.counselling']._read_group(dom, ['counsellor_id', 'state', 'outcome'], ['__count']):
-            x = per[self._name(r[0])]
+            x = per[self._nm(r[0])]
             x['total'] += r[3]
             x[r[1]] += r[3]
             if r[2] == 'admission_confirmed':
@@ -601,7 +601,7 @@ class OtmLeadReports(models.AbstractModel):
         L = self.env['leads.logic']
         tot = self._grp('leads.logic', dom, 'course_inter')
         adm = self._grp('leads.logic', dom + [('admission_status', '=', True)], 'course_inter')
-        rows = [{'name': self._name(r[0], '(none)'), 'leads': r[1], 'adm': adm.get(k, (0, 0))[1],
+        rows = [{'name': self._nm(r[0], '(none)'), 'leads': r[1], 'adm': adm.get(k, (0, 0))[1],
                  'conv': self._pct(adm.get(k, (0, 0))[1], r[1])} for k, r in tot.items()]
         rows.sort(key=lambda r: -r['leads'])
         return {'columns': [_col('name', 'Course interested'), _col('leads', 'Leads', 'int'),
@@ -638,7 +638,7 @@ class OtmLeadReports(models.AbstractModel):
 
     def _r_auto_reassigned(self, f):
         g = self._grp('leads.logic', self._ldom(f) + [('auto_reassign_count', '>', 0)], 'lead_owner', ['auto_reassign_count:sum'])
-        rows = [{'name': self._name(r[0]), 'leads': r[1], 'moves': r[2] or 0} for r in g.values()]
+        rows = [{'name': self._nm(r[0]), 'leads': r[1], 'moves': r[2] or 0} for r in g.values()]
         rows.sort(key=lambda r: -r['moves'])
         return {'columns': [_col('name', 'Current officer'), _col('leads', 'Leads moved to them', 'int'),
                             _col('moves', 'Automatic moves', 'int')],
@@ -648,7 +648,7 @@ class OtmLeadReports(models.AbstractModel):
         s, e = self._bounds(f)
         dom = [('assigned_date', '>=', s), ('assigned_date', '<', e)] + self._lf(f, 'lead_id.', skip_owner=True)
         g = self._grp('lead.assignment.history', dom, 'owner_id')
-        rows = [{'name': self._name(r[0]), 'leads': r[1]} for r in g.values()]
+        rows = [{'name': self._nm(r[0]), 'leads': r[1]} for r in g.values()]
         rows.sort(key=lambda r: -r['leads'])
         n = sum(r['leads'] for r in rows)
         avg = n / len(rows) if rows else 0
