@@ -4,7 +4,7 @@
         <xpath expr="//thead/tr" position="after">
             <tr class="o_otm_filter_row">
                 <th t-if="hasSelectors"/>
-                <t t-foreach="state.columns" t-as="column" t-key="column.id">
+                <t t-foreach="filterColumns" t-as="column" t-key="column_index">
                     <th class="o_otm_filter_cell">
                         <t t-set="kind" t-value="colFilterKind(column)"/>
                         <input t-if="kind === 'text'" type="text" class="form-control form-control-sm"

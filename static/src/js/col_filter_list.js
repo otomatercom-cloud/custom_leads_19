@@ -18,6 +18,12 @@ export class ColFilterListRenderer extends ListRenderer {
         this._colFilterTimer = null;
     }
 
+    /** Visible columns - the property name differs between Odoo versions, so try each. */
+    get filterColumns() {
+        const cols = (this.state && this.state.columns) || this.columns || [];
+        return Array.isArray(cols) ? cols : [];
+    }
+
     colFilterField(column) {
         if (!column || column.type !== "field") {
             return null;
@@ -63,7 +69,7 @@ export class ColFilterListRenderer extends ListRenderer {
 
     applyColFilters() {
         const domain = [];
-        for (const column of this.state.columns) {
+        for (const column of this.filterColumns) {
             const v = this.colFilter[column.name];
             const f = this.colFilterField(column);
             if (!v || !f) {
