@@ -65,4 +65,42 @@
         <field name="perm_unlink" eval="False"/>
     </record>
 
+
+    <!-- ═══ Follow-ups: officers see their own, team leads see their team's ═══ -->
+    <record id="rule_followup_all" model="ir.rule">
+        <field name="name">Follow-ups: Manager / Super Admin — all</field>
+        <field name="model_id" ref="model_lead_followup"/>
+        <field name="domain_force">[(1,'=',1)]</field>
+        <field name="groups" eval="[(4, ref('custom_leads_19.group_lead_manager')), (4, ref('custom_leads_19.group_super_admin'))]"/>
+    </record>
+
+    <record id="rule_followup_team_lead" model="ir.rule">
+        <field name="name">Follow-ups: Team Lead — own team</field>
+        <field name="model_id" ref="model_lead_followup"/>
+        <field name="domain_force">['|', ('user_id', '=', user.id), ('lead_id.team_id.team_lead_ids.user_id', '=', user.id)]</field>
+        <field name="groups" eval="[(4, ref('custom_leads_19.group_lead_team_lead'))]"/>
+    </record>
+
+    <record id="rule_followup_officer" model="ir.rule">
+        <field name="name">Follow-ups: Admission Officer — own only</field>
+        <field name="model_id" ref="model_lead_followup"/>
+        <field name="domain_force">['|', ('user_id', '=', user.id), ('lead_id.lead_owner.user_id', '=', user.id)]</field>
+        <field name="groups" eval="[(4, ref('custom_leads_19.group_lead_users'))]"/>
+    </record>
+
+    <record id="rule_followup_tele_caller" model="ir.rule">
+        <field name="name">Follow-ups: Tele Caller — own only</field>
+        <field name="model_id" ref="model_lead_followup"/>
+        <field name="domain_force">['|', ('user_id', '=', user.id), ('lead_id.tele_caller_id', '=', user.id)]</field>
+        <field name="groups" eval="[(4, ref('custom_leads_19.group_lead_tele_callers'))]"/>
+    </record>
+
+    <!-- Team lead may toggle the assignment pool only for their own team's officers -->
+    <record id="rule_team_member_team_lead" model="ir.rule">
+        <field name="name">Team members: Team Lead — own team</field>
+        <field name="model_id" ref="model_lead_team_member"/>
+        <field name="domain_force">[('team_id.team_lead_ids.user_id', '=', user.id)]</field>
+        <field name="groups" eval="[(4, ref('custom_leads_19.group_lead_team_lead'))]"/>
+        <field name="perm_read" eval="False"/>
+    </record>
 </odoo>

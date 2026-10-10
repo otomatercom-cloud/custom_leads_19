@@ -15,8 +15,12 @@
                             string="Assign Now"
                             class="btn-primary"
                             icon="fa-bolt"
-                            invisible="not id"
+                            invisible="not id or assignment_type == 'attendance_pool'"
                             confirm="This will immediately assign ALL currently unassigned leads using this rule's configuration. Continue?"/>
+                    <button name="action_pool_run_now" type="object" string="Assign waiting leads now"
+                            class="btn-primary" icon="fa-bolt"
+                            invisible="not id or assignment_type != 'attendance_pool'"
+                            confirm="Assign all waiting leads to the officers who are eligible right now (ignores working hours). Continue?"/>
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box"/>
@@ -57,6 +61,40 @@
                         Leads will be distributed across <strong>all active teams</strong>
                         in alphabetical order using round-robin rotation.
                         Within each team, members are assigned in round-robin order.
+                    </div>
+
+                    <!-- Pool Round Robin -->
+                    <div invisible="assignment_type != 'attendance_pool'">
+                        <div class="alert alert-info mb-2">
+                            <i class="fa fa-info-circle me-1"/>
+                            New leads without an admission officer wait until the pool opens, then are shared
+                            one by one (round robin) between the eligible officers.
+                            Team leads choose the manual pool under <strong>Leads → Assignment Pool</strong>.
+                        </div>
+                        <group>
+                            <group string="Who is in the pool">
+                                <field name="pool_mode" widget="radio"/>
+                                <field name="pool_require_attendance" invisible="pool_mode != 'manual'"/>
+                                <field name="pool_require_checked_in"/>
+                                <field name="team_ids" widget="many2many_tags" options="{'no_create': True}"
+                                       string="Only these teams (empty = all)"/>
+                            </group>
+                            <group string="Working hours">
+                                <field name="use_window"/>
+                                <label for="window_start" invisible="not use_window"/>
+                                <div class="o_row" invisible="not use_window">
+                                    <field name="window_start" widget="float_time"/> <span>to</span>
+                                    <field name="window_end" widget="float_time"/>
+                                </div>
+                                <field name="window_tz" invisible="not use_window"/>
+                                <field name="backlog_days"/>
+                            </group>
+                        </group>
+                        <group string="Status">
+                            <field name="pool_preview" nolabel="1" colspan="2" readonly="1"/>
+                            <field name="pending_count"/>
+                            <field name="pool_last_employee_id"/>
+                        </group>
                     </div>
 
                     <!-- Source Rules Notebook -->
@@ -132,6 +170,8 @@
                         domain="[('assignment_type','=','selected_teams')]"/>
                 <filter string="Source Based" name="source_based"
                         domain="[('assignment_type','=','source_based')]"/>
+                <filter string="Pool Round Robin" name="attendance_pool"
+                        domain="[('assignment_type','=','attendance_pool')]"/>
             </search>
         </field>
     </record>

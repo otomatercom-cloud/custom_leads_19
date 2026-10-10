@@ -93,6 +93,17 @@ class BonvoiceWebhookController(http.Controller):
             return request.make_response('forbidden', status=403)
         return self._handle(env)
 
+    @http.route('/bonvoice/owns', type='http', auth='public', methods=['GET', 'POST'], csrf=False)
+    def bonvoice_owns(self, number='', **kwargs):
+        """Used by the Bonvoice router: does this server have a lead with this number?"""
+        env = request.env
+        expected = env['ir.config_parameter'].sudo().get_param(PARAM_TOKEN)
+        if not expected or not hmac.compare_digest(str(request.params.get('token', '')), str(expected)):
+            return request.make_response('forbidden', status=403)
+        number = (number or '').strip()
+        found = bool(number and _V._find_lead(env, number))
+        return request.make_response('1' if found else '0', headers=[('Content-Type', 'text/plain')])
+
     @http.route(['/callcenterbridging', '/api/voxbay/callcenterbridging'], type='http',
                 auth='public', methods=['POST', 'GET'], csrf=False)
     def legacy_callcenterbridging(self, **kwargs):

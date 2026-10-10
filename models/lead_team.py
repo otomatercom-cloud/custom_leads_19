@@ -84,6 +84,37 @@ class LeadTeamMember(models.Model):
         'res.users', string='User', related='employee_id.user_id', store=True
     )
 
+    in_pool = fields.Boolean(
+        string='In pool', default=True,
+        help='Manual pool: only ticked officers receive leads from the Pool Round Robin rule.')
+    signed_in_today = fields.Boolean(string='Signed in today', compute='_compute_attendance_today')
+    first_check_in = fields.Datetime(string='First check-in today', compute='_compute_attendance_today')
+    assigned_today = fields.Integer(string='Leads today', compute='_compute_attendance_today')
+
+    def _compute_attendance_today(self):
+        rule = self.env['lead.assignment.rule'].search(
+            [('active', '=', True), ('assignment_type', '=', 'attendance_pool')], limit=1)
+        for rec in self:
+            rec.signed_in_today, rec.first_check_in, rec.assigned_today = False, False, 0
+        if not self:
+            return
+        rule = rule or self.env['lead.assignment.rule'].new({'window_tz': 'Asia/Kolkata'})
+        start, end = rule._pool_today_bounds_utc()
+        att = {}
+        if 'hr.attendance' in self.env:
+            for a in self.env['hr.attendance'].sudo().search([
+                    ('employee_id', 'in', self.employee_id.ids), ('check_in', '>=', start), ('check_in', '<', end)],
+                    order='check_in'):
+                att.setdefault(a.employee_id.id, a.check_in)
+        hist = self.env['lead.assignment.history'].sudo()._read_group(
+            [('owner_id', 'in', self.employee_id.ids), ('assigned_date', '>=', start), ('assigned_date', '<', end)],
+            ['owner_id'], ['__count'])
+        counts = {o.id: c for o, c in hist}
+        for rec in self:
+            rec.first_check_in = att.get(rec.employee_id.id, False)
+            rec.signed_in_today = bool(rec.first_check_in)
+            rec.assigned_today = counts.get(rec.employee_id.id, 0)
+
     _sql_constraints = [
         (
             'unique_member_per_team',

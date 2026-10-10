@@ -849,7 +849,8 @@ class LeadsForm(models.Model):
                 "legBDestination": destination, "legBCallerID": leg_b_cid or agent_no,
                 "legBChannelID": "1", "legBDialAttempts": "1",
                 "eventID": f"ld{self.id}{fields.Datetime.now().strftime('%M%S')}"[:16],
-                "callBackParams": {"lead_id": str(self.id)[:50], "agent_id": str(self.env.user.id)[:50]}
+                "callBackParams": {"lead_id": str(self.id)[:50], "agent_id": str(self.env.user.id)[:50],
+                                  "srv": "o19"}  # tells the Bonvoice router which Odoo made the call
             }
             call_response = requests.post(api_url, json=call_payload, headers=headers, timeout=10)
             api_status = f"HTTP {call_response.status_code}\nResponse: {call_response.text}"
@@ -1771,7 +1772,7 @@ class LeadFollowUp(models.Model):
 
     @api.model
     def action_view_today_followups(self):
-        followup_ids = [row['id'] for row in self.get_today_followups()]
+        followup_ids = [row['id'] for row in self.get_today_followups(mine_only=False)]
         return {
             'type': 'ir.actions.act_window',
             'name': _("Today's Follow-Ups"),
@@ -1783,13 +1784,19 @@ class LeadFollowUp(models.Model):
         }
 
     @api.model
-    def get_today_followups(self):
-        """Return today's scheduled follow-ups for the popup (user timezone)."""
+    def get_today_followups(self, mine_only=True):
+        """Today's scheduled follow-ups (user timezone).
+
+        mine_only=True  -> the reminder popup: only the user's own follow-ups.
+        mine_only=False -> the "Today's Follow-Ups" menu: everything the record
+                           rules allow (team lead = whole team, manager = all).
+        """
         today = fields.Date.context_today(self)
-        candidates = self.search([
-            ('status', '=', 'scheduled'),
-            ('next_followup_date', '!=', False),
-        ], order='next_followup_date asc', limit=200)
+        domain = [('status', '=', 'scheduled'), ('next_followup_date', '!=', False)]
+        if mine_only:
+            uid = self.env.uid
+            domain += ['|', ('user_id', '=', uid), ('lead_id.lead_owner.user_id', '=', uid)]
+        candidates = self.search(domain, order='next_followup_date asc', limit=200)
         result = []
         for followup in candidates:
             local_dt = fields.Datetime.context_timestamp(self, followup.next_followup_date)

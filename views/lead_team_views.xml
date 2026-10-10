@@ -49,6 +49,7 @@
                                            options="{'no_create': True}"
                                            string="Reporting To"/>
                                     <field name="user_id" readonly="1" optional="show"/>
+                                    <field name="in_pool"/>
                                 </list>
                             </field>
                         </page>
@@ -96,6 +97,60 @@
         <field name="search_view_id" ref="view_lead_team_search"/>
         <field name="context">{'search_default_active': 1}</field>
     </record>
+
+    <!-- ─── Assignment Pool (team lead / admin) ─────────────────────────── -->
+    <record id="view_lead_pool_list" model="ir.ui.view">
+        <field name="name">lead.team.member.pool.list</field>
+        <field name="model">lead.team.member</field>
+        <field name="arch" type="xml">
+            <list string="Assignment Pool" editable="bottom" create="0" delete="0"
+                  decoration-muted="not signed_in_today">
+                <field name="team_id" readonly="1"/>
+                <field name="employee_id" readonly="1"/>
+                <field name="signed_in_today" readonly="1"/>
+                <field name="first_check_in" readonly="1" widget="datetime"/>
+                <field name="assigned_today" readonly="1"/>
+                <field name="in_pool"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_lead_pool_search" model="ir.ui.view">
+        <field name="name">lead.team.member.pool.search</field>
+        <field name="model">lead.team.member</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="employee_id"/>
+                <field name="team_id"/>
+                <filter name="f_in_pool" string="In pool" domain="[('in_pool','=',True)]"/>
+                <filter name="f_out_pool" string="Not in pool" domain="[('in_pool','=',False)]"/>
+                <group><filter name="g_team" string="Team" context="{'group_by': 'team_id'}"/></group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_lead_pool" model="ir.actions.act_window">
+        <field name="name">Assignment Pool</field>
+        <field name="res_model">lead.team.member</field>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_lead_pool_list"/>
+        <field name="search_view_id" ref="view_lead_pool_search"/>
+    </record>
+
+    <record id="action_lead_pool_run" model="ir.actions.server">
+        <field name="name">Assign waiting leads now</field>
+        <field name="model_id" ref="model_lead_assignment_rule"/>
+        <field name="state">code</field>
+        <field name="code">rule = model.search([('active', '=', True)], order='sequence, id', limit=1)
+action = rule.action_pool_run_now() if rule and rule.assignment_type == 'attendance_pool' else {
+    'type': 'ir.actions.client', 'tag': 'display_notification',
+    'params': {'title': 'Pool', 'message': 'The active assignment rule is not a Pool Round Robin rule.', 'type': 'warning'}}</field>
+    </record>
+
+    <menuitem id="menu_lead_pool" name="Assignment Pool" parent="menu_leads_root" action="action_lead_pool" sequence="8"
+              groups="custom_leads_19.group_lead_manager,custom_leads_19.group_super_admin,custom_leads_19.group_lead_team_lead"/>
+    <menuitem id="menu_lead_pool_run" name="Assign Waiting Leads Now" parent="menu_leads_root" action="action_lead_pool_run" sequence="9"
+              groups="custom_leads_19.group_lead_manager,custom_leads_19.group_super_admin,custom_leads_19.group_lead_team_lead"/>
 
     <!-- ─── Menu under Configuration ───────────────────────────────────── -->
     <menuitem id="menu_lead_teams"

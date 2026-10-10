@@ -32,6 +32,7 @@ class LeadAssignmentHistoryExtended(models.Model):
         ('all_teams',      'All Teams (Round Robin)'),
         ('selected_teams', 'Selected Teams (Bucket)'),
         ('source_based',   'Source Based'),
+        ('attendance_pool', 'Pool Round Robin'),
         ('manual',         'Manual Reassignment'),
     ], string='Assignment Type')
 
@@ -117,6 +118,11 @@ class LeadsLogicAssignment(models.Model):
             limit=1,
         )
         if not rule:
+            return
+
+        # Pool rule: outside working hours the lead simply waits (cron picks it up when the pool opens)
+        if (rule.assignment_type == 'attendance_pool' and not self.env.context.get('pool_force')
+                and not rule._pool_is_open()):
             return
 
         team, employee = rule.assign_lead(lead)

@@ -11,6 +11,10 @@ All DB mutations that must survive concurrent requests use
 SELECT … FOR UPDATE SKIP LOCKED (PostgreSQL) to prevent double-assignment.
 """
 
+from datetime import datetime, timedelta
+
+import pytz
+
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
 import logging
@@ -57,7 +61,35 @@ class LeadAssignmentRule(models.Model):
         ('all_teams', 'Auto – All Active Teams (Round Robin)'),
         ('selected_teams', 'Selected Teams (Bucket)'),
         ('source_based', 'Source Based'),
+        ('attendance_pool', 'Pool Round Robin (attendance / manual pool, working hours)'),
     ], string='Assignment Type', required=True, default='all_teams', tracking=True)
+
+    # ── Pool round-robin (assignment_type = attendance_pool) ───────────────
+    pool_mode = fields.Selection([
+        ('attendance', "Officers signed in today"),
+        ('manual', "Manual pool (Leads > Assignment Pool)"),
+    ], string='Pool', default='attendance', tracking=True,
+        help="Signed in today: every admission officer with an attendance check-in today.\n"
+             "Manual pool: only officers ticked 'In pool' on the Assignment Pool screen.")
+    pool_require_attendance = fields.Boolean(
+        string='Manual pool: also require sign-in today', default=True,
+        help="When using the manual pool, skip officers who have not signed in today.")
+    pool_require_checked_in = fields.Boolean(
+        string='Only officers currently checked in', default=False,
+        help="Ignore officers who already checked out.")
+    use_window = fields.Boolean(string='Assign only in working hours', default=True, tracking=True)
+    window_start = fields.Float(string='Pool starts', default=10.75, tracking=True,
+                                help='10.75 = 10:45')
+    window_end = fields.Float(string='Pool ends', default=19.0, tracking=True)
+    window_tz = fields.Selection(
+        lambda self: [(t, t) for t in pytz.common_timezones], string='Time zone', default='Asia/Kolkata')
+    backlog_days = fields.Integer(
+        string='Pick up unassigned leads from last (days)', default=7,
+        help="Leads that arrived outside working hours (or when nobody was signed in) are assigned "
+             "as soon as the pool opens. 0 = no limit.")
+    pool_last_employee_id = fields.Many2one('hr.employee', string='Last assigned officer', readonly=True, copy=False)
+    pool_preview = fields.Text(string='Pool right now', compute='_compute_pool_preview')
+    pending_count = fields.Integer(string='Waiting leads', compute='_compute_pool_preview')
 
     # ── Selected-teams config ───────────────────────────────────────────────
     team_ids = fields.Many2many(
@@ -149,7 +181,160 @@ class LeadAssignmentRule(models.Model):
             return self._assign_selected_teams(lead)
         elif self.assignment_type == 'source_based':
             return self._assign_source_based(lead)
+        elif self.assignment_type == 'attendance_pool':
+            return self._assign_pool(lead)
         return False, False
+
+    # ════════════════════════════════════════════════════════════════════════
+    #  POOL ROUND ROBIN
+    # ════════════════════════════════════════════════════════════════════════
+    def _pool_local_now(self):
+        self.ensure_one()
+        tz = pytz.timezone(self.window_tz or 'Asia/Kolkata')
+        return datetime.now(pytz.utc).astimezone(tz)
+
+    def _pool_is_open(self):
+        """True when the pool may hand out leads right now (working hours)."""
+        self.ensure_one()
+        if not self.use_window:
+            return True
+        now = self._pool_local_now()
+        hour = now.hour + now.minute / 60.0
+        start, end = self.window_start, self.window_end
+        if start <= end:
+            return start <= hour < end
+        return hour >= start or hour < end          # window crossing midnight
+
+    def _pool_today_bounds_utc(self):
+        """Start / end of the local calendar day, as naive UTC datetimes (Odoo storage)."""
+        now = self._pool_local_now()
+        start_local = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        to_utc = lambda d: d.astimezone(pytz.utc).replace(tzinfo=None)
+        return to_utc(start_local), to_utc(start_local + timedelta(days=1))
+
+    def _pool_signed_in_ids(self, employees):
+        """ids of employees with an attendance check-in today (hr.attendance)."""
+        self.ensure_one()
+        if not employees:
+            return set()
+        if 'hr.attendance' not in self.env:
+            _logger.warning('Pool round robin: hr_attendance is not installed - nobody counts as signed in.')
+            return set()
+        start, end = self._pool_today_bounds_utc()
+        domain = [('employee_id', 'in', employees.ids), ('check_in', '>=', start), ('check_in', '<', end)]
+        if self.pool_require_checked_in:
+            domain.append(('check_out', '=', False))
+        return set(self.env['hr.attendance'].sudo().search(domain).mapped('employee_id').ids)
+
+    def _pool_candidates(self):
+        """Employees that belong to the rule's teams (all active teams when none selected)."""
+        self.ensure_one()
+        self = self.sudo()  # tele callers / HR-restricted users create leads too
+        teams = self.team_ids.filtered('active') or self.env['lead.team'].search([('active', '=', True)])
+        employees = self.env['hr.employee']
+        for team in teams:
+            if self.pool_mode == 'manual':
+                employees |= team.member_ids.filtered('in_pool').mapped('employee_id').filtered(
+                    lambda e: e.user_id and e.user_id.active)
+                if self.include_team_leads:
+                    employees |= team.team_lead_ids.filtered(lambda e: e.user_id and e.user_id.active)
+            else:
+                employees |= self._get_assignable_employees(team)
+        return employees.sorted('id')
+
+    def _pool_eligible(self):
+        """Officers who can receive a lead right now."""
+        self.ensure_one()
+        self = self.sudo()
+        employees = self._pool_candidates()
+        if self.pool_mode == 'attendance' or self.pool_require_attendance:
+            present = self._pool_signed_in_ids(employees)
+            employees = employees.filtered(lambda e: e.id in present)
+        return employees.sorted('id')
+
+    def _pool_pick(self, employees):
+        """Next officer after the last one served (id order, wraps around). Race-safe."""
+        self.ensure_one()
+        self.env.cr.execute(
+            'SELECT pool_last_employee_id FROM lead_assignment_rule WHERE id = %s FOR UPDATE', (self.id,))
+        row = self.env.cr.fetchone()
+        last = row[0] if row and row[0] else 0
+        ordered = sorted(employees.ids)
+        nxt = next((i for i in ordered if i > last), ordered[0])
+        self.env.cr.execute(
+            'UPDATE lead_assignment_rule SET pool_last_employee_id = %s WHERE id = %s', (nxt, self.id))
+        self.invalidate_recordset(['pool_last_employee_id'])
+        return self.env['hr.employee'].browse(nxt)
+
+    def _assign_pool(self, lead):
+        eligible = self._pool_eligible()
+        if not eligible:
+            _logger.info('Pool round robin: nobody eligible right now (rule %s).', self.name)
+            return False, False
+        employee = self._pool_pick(eligible)
+        team = self.env['lead.team.member'].search([('employee_id', '=', employee.id)], limit=1).team_id
+        if not team:
+            team = self.env['lead.team'].search([('team_lead_ids', 'in', employee.id)], limit=1)
+        return team, employee
+
+    def _pool_pending_leads(self, limit=None):
+        self.ensure_one()
+        domain = [('lead_owner', '=', False), ('state', '!=', 'lost')]
+        if self.backlog_days:
+            domain.append(('create_date', '>=', fields.Datetime.now() - timedelta(days=self.backlog_days)))
+        return self.env['leads.logic'].search(domain, order='create_date asc, id asc', limit=limit)
+
+    def run_pool(self, force=False):
+        """Assign waiting leads to the pool, oldest first. Returns number assigned."""
+        self.ensure_one()
+        if self.assignment_type != 'attendance_pool':
+            return 0
+        if not force and not self._pool_is_open():
+            return 0
+        done = 0
+        Lead = self.env['leads.logic'].with_context(pool_force=True)
+        for lead in self._pool_pending_leads(limit=300):
+            if not self._pool_eligible():
+                break
+            try:
+                with self.env.cr.savepoint():
+                    Lead._auto_assign_lead(lead)
+                    self.env.flush_all()
+                if lead.lead_owner:
+                    done += 1
+            except Exception as e:  # noqa: BLE001 - one bad lead must not stop the batch
+                _logger.error('Pool round robin: lead %s failed: %s', lead.id, e)
+        return done
+
+    @api.model
+    def cron_assign_pool(self):
+        """Runs every few minutes: when the pool is open, assign everything that is waiting."""
+        rule = self.search([('active', '=', True)], order='sequence, id', limit=1)
+        if rule and rule.assignment_type == 'attendance_pool':
+            n = rule.run_pool()
+            if n:
+                _logger.info('Pool round robin: assigned %s waiting lead(s).', n)
+
+    def action_pool_run_now(self):
+        self.ensure_one()
+        n = self.sudo().run_pool(force=True)
+        return {'type': 'ir.actions.client', 'tag': 'display_notification', 'params': {
+            'title': _('Pool'), 'type': 'success' if n else 'warning', 'sticky': False,
+            'message': _('%s waiting lead(s) assigned.') % n if n else
+            _('Nothing assigned: no waiting leads, or nobody is eligible (signed in / in pool) right now.')}}
+
+    @api.depends('assignment_type', 'pool_mode', 'use_window', 'window_start', 'window_end',
+                 'window_tz', 'pool_require_attendance', 'pool_require_checked_in', 'team_ids',
+                 'backlog_days', 'include_team_leads')
+    def _compute_pool_preview(self):
+        for rule in self:
+            if rule.assignment_type != 'attendance_pool' or not rule.id:
+                rule.pool_preview, rule.pending_count = False, 0
+                continue
+            names = ', '.join(rule._pool_eligible().mapped('name')) or '— nobody —'
+            state = _('OPEN') if rule._pool_is_open() else _('CLOSED (leads wait until it opens)')
+            rule.pool_preview = _('Pool is %(state)s\nEligible now: %(names)s') % {'state': state, 'names': names}
+            rule.pending_count = len(rule._pool_pending_leads())
 
     # ── Button: Assign Now ──────────────────────────────────────────────────
     def action_assign_now(self):
