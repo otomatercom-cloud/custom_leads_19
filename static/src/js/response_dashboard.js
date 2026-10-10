@@ -85,7 +85,8 @@ export class ResponseDashboard extends Component {
             ]);
         } catch (e) {
             console.error("Response dashboard failed", e);
-            this.state.error = "Could not load the dashboard. Refresh and try again.";
+            const msg = (e && e.data && e.data.message) || (e && e.message) || "";
+            this.state.error = "Could not load the dashboard. " + String(msg).slice(0, 300);
         } finally {
             this.state.loading = false;
         }

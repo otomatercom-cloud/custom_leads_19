@@ -103,7 +103,7 @@ class LeadsLogicResponseDashboard(models.Model):
             if k in rows:
                 rows[k]['call'] = v or 0.0
         out = []
-        for k in sorted(rows, key=lambda x: x or datetime.min):
+        for k in sorted(rows, key=lambda x: str(x or '')):
             r = rows[k]
             out.append({'label': self._rd_label(k, group), 'leads': r['leads'],
                         'assign': round(r['assign'], 2), 'call': round(r['call'], 2)})
