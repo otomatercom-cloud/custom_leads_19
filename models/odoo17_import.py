@@ -21,7 +21,8 @@ SKIP_FIELDS = {
 }
 
 # One2many children imported in a dedicated step: (remote model, local model, link field)
-CHILD_MODELS = ('lead.response', 'lead.call.log', 'lead.followup', 'lead.quality.history')
+CHILD_MODELS = ('lead.response', 'lead.call.log', 'lead.followup', 'lead.quality.history',
+                'lead.assignment.history')
 
 
 class OtmLeadsOdoo17ImportLog(models.Model):
@@ -103,7 +104,7 @@ class OtmLeadsOdoo17ImportWizard(models.TransientModel):
         [('create_date', 'Created On (system)'), ('date_of_adding', 'Date of Adding')],
         string='Filter By', default='create_date', required=True)
     import_children = fields.Boolean(
-        string='Import Responses, Call Logs, Follow-ups & Quality History', default=True)
+        string='Import Responses, Call Logs, Follow-ups & Quality & Assignment History', default=True)
     import_chatter = fields.Boolean(
         string='Import Chatter Messages', default=False,
         help='Copies comments/notes from the Odoo 17 chatter. Slower.')
@@ -655,6 +656,7 @@ class OtmLeadsOdoo17ImportWizard(models.TransientModel):
                               'call_status', 'duration', 'recording_url', 'call_type'],
             'lead.followup': ['user_id', 'next_followup_date', 'remarks', 'phone_number', 'status'],
             'lead.quality.history': ['lead_quality', 'user_id', 'change_date'],
+            'lead.assignment.history': ['owner_id', 'assigned_date', 'assigned_by'],
         }
         for model, flds in specs.items():
             if model not in env:
@@ -685,6 +687,19 @@ class OtmLeadsOdoo17ImportWizard(models.TransientModel):
                 if r.get('create_date'):
                     env.cr.execute('UPDATE "%s" SET create_date=%%s WHERE id=%%s' % Local._table,
                                    (r['create_date'], rec.id))
+        # Leads that had an owner in Odoo 17 but no assignment history rows there still get one entry,
+        # so "assigned to / assigned on" is never empty after the import.
+        if 'lead.assignment.history' in env and lead.lead_owner and not lead.assignment_history_ids:
+            env['lead.assignment.history'].create({
+                'lead_id': lead.id,
+                'owner_id': lead.lead_owner.id,
+                'assigned_date': lead.reassign_date or lead.create_date or fields.Datetime.now(),
+                'assigned_by': lead.lead_creator_id.id or env.uid,
+            })
+        # response-time columns were computed before the original create date was restored
+        lead.invalidate_recordset()
+        if hasattr(lead, '_compute_response_times'):
+            lead._compute_response_times()
 
     def _import_chatter(self, call, lead, remote_lead_id, ctx):
         Msg = self.env['mail.message']
