@@ -92,11 +92,14 @@ class OtmLeadsOdoo17ImportLog(models.Model):
         """Switch the background job back on and continue this import now."""
         self.ensure_one()
         cron = self.env.ref('custom_leads_19.cron_otm_leads_odoo17_import', raise_if_not_found=False)
-        if cron:
-            cron.sudo().write({'active': True})
         self.write({'state': 'running', 'last_activity': fields.Datetime.now()})
         if cron:
-            cron.sudo()._trigger()
+            try:  # fails harmlessly while the cron is mid-run ("currently being executed")
+                if not cron.sudo().active:
+                    cron.sudo().write({'active': True})
+                cron.sudo()._trigger()
+            except Exception as e:  # noqa: BLE001
+                _logger.info('Odoo17 resume: cron busy, it will pick the log up itself: %s', e)
         return {'type': 'ir.actions.client', 'tag': 'display_notification',
                 'params': {'title': _('Import'), 'message': _('Import resumed in the background. Refresh in a minute.'),
                            'type': 'success'}}

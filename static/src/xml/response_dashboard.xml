@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+<t t-name="custom_leads_19.ResponseDashboard">
+<div class="otm-rd">
+    <div class="otm-rd-head">
+        <div>
+            <h1>Response Performance</h1>
+            <p>How fast new leads are assigned and called</p>
+        </div>
+        <div class="otm-rd-ranges">
+            <t t-foreach="[['today','Today'],['d7','7 days'],['d30','30 days'],['month','This month'],['year','This year']]" t-as="r" t-key="r[0]">
+                <button t-attf-class="otm-rd-chip {{state.range === r[0] ? 'on' : ''}}" t-on-click="() => this.setRange(r[0])" t-esc="r[1]"/>
+            </t>
+            <input type="date" class="otm-rd-in" t-att-value="state.dateFrom" t-on-change="(ev) => this.onDate('dateFrom', ev)"/>
+            <span class="otm-rd-to">to</span>
+            <input type="date" class="otm-rd-in" t-att-value="state.dateTo" t-on-change="(ev) => this.onDate('dateTo', ev)"/>
+        </div>
+    </div>
+
+    <div class="otm-rd-filters">
+        <label>Lead source
+            <select t-on-change="(ev) => this.onFilter('source', ev)">
+                <option value="">All sources</option>
+                <t t-foreach="state.options.sources" t-as="o" t-key="o.id">
+                    <option t-att-value="o.id" t-att-selected="(o.id + '') === state.source" t-esc="o.name"/>
+                </t>
+            </select>
+        </label>
+        <label>Team
+            <select t-on-change="(ev) => this.onFilter('team', ev)">
+                <option value="">All teams</option>
+                <t t-foreach="state.options.teams" t-as="o" t-key="o.id">
+                    <option t-att-value="o.id" t-att-selected="(o.id + '') === state.team" t-esc="o.name"/>
+                </t>
+            </select>
+        </label>
+        <label>Admission officer
+            <select t-on-change="(ev) => this.onFilter('owner', ev)">
+                <option value="">All officers</option>
+                <t t-foreach="state.options.owners" t-as="o" t-key="o.id">
+                    <option t-att-value="o.id" t-att-selected="(o.id + '') === state.owner" t-esc="o.name"/>
+                </t>
+            </select>
+        </label>
+        <button class="otm-rd-link" t-if="state.source or state.team or state.owner" t-on-click="resetFilters">Clear filters</button>
+        <span class="otm-rd-load" t-if="state.loading">Loading…</span>
+    </div>
+
+    <div class="otm-rd-err" t-if="state.error" t-esc="state.error"/>
+
+    <t t-if="state.data">
+        <div class="otm-rd-kpis">
+            <div class="otm-rd-kpi">
+                <span>Leads</span><b t-esc="state.data.kpi.total"/>
+                <small><t t-esc="state.data.kpi.assigned"/> assigned</small>
+            </div>
+            <div class="otm-rd-kpi assign">
+                <span>Avg time to assign</span><b t-esc="fmt(state.data.kpi.avg_assign)"/>
+                <small><t t-esc="state.data.kpi.not_assigned"/> not assigned</small>
+            </div>
+            <div class="otm-rd-kpi call">
+                <span>Avg time to first call</span><b t-esc="fmt(state.data.kpi.avg_call)"/>
+                <small><t t-esc="state.data.kpi.called_pct"/>% called</small>
+            </div>
+            <div class="otm-rd-kpi">
+                <span>Called within <t t-esc="state.data.fast_hours"/>h</span><b><t t-esc="state.data.kpi.fast_pct"/>%</b>
+                <small><t t-esc="state.data.kpi.fast"/> leads</small>
+            </div>
+            <div class="otm-rd-kpi warn">
+                <span>Not called yet</span><b t-esc="state.data.kpi.not_called"/>
+                <small>in this period</small>
+            </div>
+        </div>
+
+        <div class="otm-rd-avgs">
+            <t t-foreach="state.data.averages" t-as="a" t-key="a.title">
+                <div class="otm-rd-avg">
+                    <h4><t t-esc="a.title"/> average <small t-esc="a.sub"/></h4>
+                    <div class="otm-rd-avgrow"><i class="dot assign"/> Assign <b t-esc="fmt(a.avg_assign)"/></div>
+                    <div class="otm-rd-avgrow"><i class="dot call"/> First call <b t-esc="fmt(a.avg_call)"/></div>
+                    <div class="otm-rd-avgfoot"><t t-esc="a.leads"/> leads · <t t-esc="a.not_called"/> not called</div>
+                </div>
+            </t>
+        </div>
+
+        <div class="otm-rd-card">
+            <div class="otm-rd-cardhead">
+                <h3>Delay trend</h3>
+                <div class="otm-rd-seg">
+                    <t t-foreach="[['day','Daily'],['week','Weekly'],['month','Monthly'],['year','Yearly']]" t-as="g" t-key="g[0]">
+                        <button t-attf-class="{{state.group === g[0] ? 'on' : ''}}" t-on-click="() => this.setGroup(g[0])" t-esc="g[1]"/>
+                    </t>
+                </div>
+                <div class="otm-rd-legend">
+                    <span><i class="dot assign"/> Assign delay</span>
+                    <span><i class="dot call"/> Call delay</span>
+                    <span><i class="dot bar"/> Leads</span>
+                </div>
+            </div>
+            <t t-if="state.data.trend.length">
+                <t t-set="c" t-value="chart"/>
+                <svg class="otm-rd-svg" t-att-viewBox="'0 0 ' + c.W + ' ' + c.H" preserveAspectRatio="xMidYMid meet">
+                    <t t-foreach="c.grid" t-as="g" t-key="g_index">
+                        <line t-att-x1="c.L" t-att-x2="c.W - c.R" t-att-y1="g.y" t-att-y2="g.y" class="grid"/>
+                        <text t-att-x="c.L - 6" t-att-y="g.y + 4" text-anchor="end" class="axis" t-esc="g.text"/>
+                    </t>
+                    <t t-foreach="c.bars" t-as="b" t-key="b_index">
+                        <rect t-att-x="b.x" t-att-y="b.y" t-att-width="b.w" t-att-height="b.h" class="bar"><title t-esc="b.label + ': ' + b.leads + ' leads'"/></rect>
+                    </t>
+                    <path t-att-d="c.assignPath" class="ln assign"/>
+                    <path t-att-d="c.callPath" class="ln call"/>
+                    <t t-foreach="c.pts" t-as="p" t-key="p_index">
+                        <circle t-att-cx="p.x" t-att-cy="p.ya" r="3.2" class="pt assign"><title t-esc="p.tip"/></circle>
+                        <circle t-att-cx="p.x" t-att-cy="p.yc" r="3.2" class="pt call"><title t-esc="p.tip"/></circle>
+                        <text t-if="p.showLabel" t-att-x="p.x" t-att-y="c.H - 12" text-anchor="middle" class="axis" t-esc="p.label"/>
+                    </t>
+                </svg>
+            </t>
+            <div class="otm-rd-empty" t-else="">No leads in this period.</div>
+        </div>
+
+        <div class="otm-rd-card">
+            <div class="otm-rd-cardhead">
+                <h3>Performance by</h3>
+                <div class="otm-rd-seg">
+                    <button t-attf-class="{{state.tab === 'owner' ? 'on' : ''}}" t-on-click="() => this.setTab('owner')">Admission officer</button>
+                    <button t-attf-class="{{state.tab === 'team' ? 'on' : ''}}" t-on-click="() => this.setTab('team')">Team</button>
+                    <button t-attf-class="{{state.tab === 'source' ? 'on' : ''}}" t-on-click="() => this.setTab('source')">Lead source</button>
+                </div>
+            </div>
+            <div class="otm-rd-tablewrap">
+            <table class="otm-rd-table">
+                <thead>
+                    <tr>
+                        <th t-esc="tabTitle"/>
+                        <th class="num">Leads</th>
+                        <th>Avg assign</th>
+                        <th>Avg first call</th>
+                        <th class="num">Called</th>
+                        <th class="num">Not called</th>
+                        <th class="num">Called in <t t-esc="state.data.fast_hours"/>h</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <t t-foreach="rows" t-as="r" t-key="r.id">
+                        <tr>
+                            <td class="name" t-esc="r.name"/>
+                            <td class="num" t-esc="r.leads"/>
+                            <td>
+                                <div class="mini"><span class="fill assign" t-att-style="'width:' + pct(r.assign, maxDelay)"/></div>
+                                <small t-esc="fmt(r.assign)"/>
+                            </td>
+                            <td>
+                                <div class="mini"><span class="fill call" t-att-style="'width:' + pct(r.call, maxDelay)"/></div>
+                                <small t-esc="fmt(r.call)"/>
+                            </td>
+                            <td class="num" t-esc="r.called"/>
+                            <td t-attf-class="num {{r.not_called ? 'bad' : ''}}" t-esc="r.not_called"/>
+                            <td class="num"><t t-esc="r.fast_pct"/>%</td>
+                        </tr>
+                    </t>
+                    <tr t-if="!rows.length"><td colspan="7" class="otm-rd-empty">No data for these filters.</td></tr>
+                </tbody>
+            </table>
+            </div>
+        </div>
+    </t>
+</div>
+</t>
+</templates>
