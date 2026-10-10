@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+<t t-name="custom_leads_19.LeadReports">
+  <div class="o_lr">
+    <aside class="o_lr_nav">
+      <input class="o_lr_search" type="search" placeholder="Search reports" t-model="state.search"/>
+      <t t-foreach="groups" t-as="g" t-key="g.group">
+        <div class="o_lr_group" t-esc="g.group"/>
+        <button t-foreach="g.reports" t-as="r" t-key="r.id" type="button"
+                t-attf-class="o_lr_item {{state.report === r.id ? 'on' : ''}}" t-on-click="() => this.pick(r.id)" t-esc="r.title"/>
+      </t>
+    </aside>
+    <main class="o_lr_main">
+      <div class="o_lr_bar">
+        <div class="o_lr_ranges">
+          <button t-foreach="[['today','Today'],['d7','7 days'],['d30','30 days'],['month','This month'],['year','This year']]" t-as="r" t-key="r[0]"
+                  type="button" t-attf-class="o_lr_chip {{state.range === r[0] ? 'on' : ''}}" t-on-click="() => this.setRange(r[0])" t-esc="r[1]"/>
+        </div>
+        <input type="date" t-att-value="state.f.date_from" t-on-change="(e) => this.onFilter('date_from', e)"/>
+        <input type="date" t-att-value="state.f.date_to" t-on-change="(e) => this.onFilter('date_to', e)"/>
+        <select t-on-change="(e) => this.onFilter('source', e)"><option value="">All sources</option>
+          <option t-foreach="state.opts.sources" t-as="o" t-key="o.id" t-att-value="o.id" t-esc="o.name"/></select>
+        <select t-on-change="(e) => this.onFilter('team', e)"><option value="">All teams</option>
+          <option t-foreach="state.opts.teams" t-as="o" t-key="o.id" t-att-value="o.id" t-esc="o.name"/></select>
+        <select t-on-change="(e) => this.onFilter('owner', e)"><option value="">All officers</option>
+          <option t-foreach="state.opts.owners" t-as="o" t-key="o.id" t-att-value="o.id" t-esc="o.name"/></select>
+        <select t-on-change="(e) => this.onFilter('course', e)"><option value="">All courses</option>
+          <option t-foreach="state.opts.courses" t-as="o" t-key="o.id" t-att-value="o.id" t-esc="o.name"/></select>
+        <select t-if="isTrend" t-on-change="(e) => this.onFilter('group', e)">
+          <option value="day">Per day</option><option value="week">Per week</option><option value="month">Per month</option></select>
+      </div>
+      <div class="o_lr_head">
+        <div>
+          <h2 t-esc="state.data ? state.data.title : ''"/>
+          <p t-esc="desc"/>
+        </div>
+        <div class="o_lr_actions">
+          <button type="button" class="btn btn-primary" t-on-click="exportCsv" t-att-disabled="!state.data">Export to Excel</button>
+          <button type="button" class="btn btn-secondary" t-on-click="print">Print</button>
+        </div>
+      </div>
+      <div t-if="state.error" class="alert alert-danger" t-esc="state.error"/>
+      <div t-if="state.loading" class="o_lr_loading">Loading report...</div>
+      <t t-elif="state.data">
+        <div t-if="state.data.note" class="o_lr_note" t-esc="state.data.note"/>
+        <t t-set="c" t-value="chart"/>
+        <div t-if="c" class="o_lr_chart">
+          <svg t-att-viewBox="'0 0 ' + c.W + ' ' + c.H" preserveAspectRatio="xMidYMid meet">
+            <g t-foreach="c.ticks" t-as="t" t-key="t_index">
+              <line t-att-x1="c.L" t-att-x2="c.W - 8" t-att-y1="t.y" t-att-y2="t.y" stroke="#e3e6ea"/>
+              <text t-att-x="c.L - 6" t-att-y="t.y + 4" text-anchor="end" font-size="10" fill="#6b7280" t-esc="t.label"/>
+            </g>
+            <rect t-foreach="c.bars || []" t-as="b" t-key="b_index" t-att-x="b.x" t-att-y="b.y" t-att-width="b.w" t-att-height="b.h" t-att-fill="b.color" rx="2"><title t-esc="b.tip"/></rect>
+            <polyline t-foreach="c.lines || []" t-as="l" t-key="l_index" t-att-points="l.points" fill="none" t-att-stroke="l.color" stroke-width="2"/>
+            <t t-foreach="c.labels" t-as="lb" t-key="lb_index"><text t-if="lb.show" t-att-x="lb.x" t-att-y="c.T + c.ph + 14" font-size="10" fill="#6b7280" text-anchor="end" t-att-transform="'rotate(-30 ' + lb.x + ' ' + (c.T + c.ph + 14) + ')'" t-esc="lb.text"/></t>
+          </svg>
+          <div class="o_lr_legend"><span t-foreach="c.legend" t-as="g" t-key="g_index"><i t-att-style="'background:' + g.color"/><t t-esc="g.label"/></span></div>
+        </div>
+        <div class="o_lr_tablewrap">
+          <table class="o_lr_table">
+            <thead><tr><th t-foreach="state.data.columns" t-as="col" t-key="col.key" t-attf-class="{{col.type === 'text' or col.type === 'dt' ? '' : 'num'}}" t-esc="col.label"/></tr></thead>
+            <tbody>
+              <tr t-foreach="state.data.rows" t-as="row" t-key="row_index">
+                <td t-foreach="state.data.columns" t-as="col" t-key="col.key" t-attf-class="{{col.type === 'text' or col.type === 'dt' ? '' : 'num'}}"
+                    t-att-style="heat(col, row[col.key])" t-esc="fmt(col, row[col.key])"/>
+              </tr>
+              <tr t-if="!state.data.rows.length"><td t-att-colspan="state.data.columns.length" class="o_lr_empty">No data for these filters. Widen the dates or clear a filter.</td></tr>
+            </tbody>
+            <tfoot t-if="state.data.rows.length and Object.keys(state.data.totals).length">
+              <tr><td t-foreach="state.data.columns" t-as="col" t-key="col.key" t-attf-class="{{col.type === 'text' or col.type === 'dt' ? '' : 'num'}}"
+                      t-esc="col_index === 0 ? 'Total' : (state.data.totals[col.key] !== undefined ? fmt(col, state.data.totals[col.key]) : '')"/></tr>
+            </tfoot>
+          </table>
+        </div>
+        <div class="o_lr_foot"><t t-esc="state.data.count"/> rows</div>
+      </t>
+    </main>
+  </div>
+</t>
+</templates>

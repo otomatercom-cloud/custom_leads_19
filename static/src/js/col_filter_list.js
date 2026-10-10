@@ -3,6 +3,7 @@
 import { registry } from "@web/core/registry";
 import { listView } from "@web/views/list/list_view";
 import { ListRenderer } from "@web/views/list/list_renderer";
+import { Domain } from "@web/core/domain";
 import { useState } from "@odoo/owl";
 
 const TEXT_TYPES = ["char", "text", "many2one", "many2many", "one2many"];
@@ -92,9 +93,32 @@ export class ColFilterListRenderer extends ListRenderer {
                 }
             }
         }
+        this.pushColFilterDomain(domain);
+    }
+
+    /** Odoo 19 has no setDomainParts: keep one hidden-id filter group in the search model and swap it. */
+    pushColFilterDomain(domain) {
         const model = this.env.searchModel;
-        if (model && model.setDomainParts) {
-            model.setDomainParts({ otmColFilter: { domain, facetLabel: "Column filters" } });
+        if (!model) {
+            return;
+        }
+        const old = this._colFilterGroupId;
+        model.blockNotification = true;
+        try {
+            if (old) {
+                model.deactivateGroup(old);
+                this._colFilterGroupId = null;
+            }
+        } finally {
+            model.blockNotification = false;
+        }
+        if (domain.length) {
+            this._colFilterGroupId = model.nextGroupId;
+            model.createNewFilters([
+                { description: "Column filters", domain: new Domain(domain).toString() },
+            ]);
+        } else if (old) {
+            model.search ? model._notify() : null;
         }
     }
 }

@@ -64,4 +64,12 @@
     <menuitem id="menu_leads_response_dashboard" name="Response Performance"
               parent="menu_leads_assignment" action="action_response_dashboard" sequence="4"
               groups="custom_leads_19.group_lead_manager,custom_leads_19.group_super_admin,custom_leads_19.group_lead_team_lead"/>
+
+    <record id="action_lead_reports" model="ir.actions.client">
+        <field name="name">Lead Reports</field>
+        <field name="tag">custom_leads_19.lead_reports</field>
+    </record>
+    <menuitem id="menu_leads_reports" name="Lead Reports"
+              parent="menu_leads_assignment" action="action_lead_reports" sequence="5"
+              groups="custom_leads_19.group_lead_manager,custom_leads_19.group_super_admin,custom_leads_19.group_lead_team_lead"/>
 </odoo>

@@ -1,0 +1,31 @@
+.o_lr{display:flex;height:100%;background:#f6f7f9;color:#1f2933;font-size:13px}
+.o_lr_nav{width:250px;flex:none;overflow:auto;background:#fff;border-right:1px solid #e3e6ea;padding:12px 8px}
+.o_lr_search{width:100%;margin-bottom:8px;padding:6px 10px;border:1px solid #d5d9de;border-radius:6px}
+.o_lr_group{margin:12px 8px 4px;font-weight:600;color:#2f6f73}
+.o_lr_item{display:block;width:100%;text-align:left;border:0;background:none;padding:5px 10px;border-radius:6px;color:#374151}
+.o_lr_item:hover{background:#eef2f3}
+.o_lr_item.on{background:#2f6f73;color:#fff}
+.o_lr_main{flex:1;min-width:0;overflow:auto;padding:14px 18px}
+.o_lr_bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+.o_lr_bar select,.o_lr_bar input{padding:5px 8px;border:1px solid #d5d9de;border-radius:6px;background:#fff;max-width:170px}
+.o_lr_ranges{display:flex;gap:4px;margin-right:6px}
+.o_lr_chip{border:1px solid #d5d9de;background:#fff;border-radius:14px;padding:3px 11px}
+.o_lr_chip.on{background:#2f6f73;color:#fff;border-color:#2f6f73}
+.o_lr_head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:8px}
+.o_lr_head h2{margin:0;font-size:20px}
+.o_lr_head p{margin:2px 0 0;color:#6b7280}
+.o_lr_actions{display:flex;gap:6px;flex:none}
+.o_lr_note{background:#fff7e6;border:1px solid #f0d9a8;border-radius:6px;padding:6px 10px;margin-bottom:10px}
+.o_lr_chart{background:#fff;border:1px solid #e3e6ea;border-radius:8px;padding:10px;margin-bottom:12px}
+.o_lr_chart svg{width:100%;height:auto}
+.o_lr_legend{display:flex;gap:14px;justify-content:center}
+.o_lr_legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px}
+.o_lr_tablewrap{background:#fff;border:1px solid #e3e6ea;border-radius:8px;overflow:auto}
+.o_lr_table{width:100%;border-collapse:collapse}
+.o_lr_table th{position:sticky;top:0;background:#f0f3f4;text-align:left;padding:7px 10px;font-weight:600;white-space:nowrap;border-bottom:1px solid #d5d9de}
+.o_lr_table td{padding:6px 10px;border-bottom:1px solid #eef0f2;white-space:nowrap}
+.o_lr_table .num{text-align:right;font-variant-numeric:tabular-nums}
+.o_lr_table tfoot td{font-weight:700;background:#f0f3f4}
+.o_lr_empty,.o_lr_loading{padding:30px;text-align:center;color:#6b7280}
+.o_lr_foot{margin-top:6px;color:#6b7280}
+@media print{.o_lr_nav,.o_lr_bar,.o_lr_actions{display:none}.o_lr{background:#fff}.o_lr_main{overflow:visible}}
