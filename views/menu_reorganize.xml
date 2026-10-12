@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-    <!-- Two extra main menus. Existing menu items are only moved (parent changed); nothing is removed. -->
+    <!-- Two extra main menus, each with only a few folders so the top bar stays short.
+         Existing menu items are only moved (parent changed); nothing is removed. -->
 
     <record id="action_lead_settings" model="ir.actions.act_window">
         <field name="name">Settings</field>
@@ -14,60 +15,67 @@
     <menuitem id="menu_lead_settings_root" name="Lead Management Settings" sequence="11"
               web_icon="custom_leads_19,static/description/icon.png"/>
     <menuitem id="menu_lead_settings_page" name="Settings" parent="menu_lead_settings_root"
-              action="action_lead_settings" sequence="1"
-              groups="custom_leads_19.group_super_admin"/>
-
+              action="action_lead_settings" sequence="1" groups="custom_leads_19.group_super_admin"/>
+    <menuitem id="menu_lead_set_assign" name="Assignment" parent="menu_lead_settings_root" sequence="2"/>
+    <menuitem id="menu_lead_set_master" name="Master Data" parent="menu_lead_settings_root" sequence="3"/>
+    <menuitem id="menu_lead_set_access" name="Access" parent="menu_lead_settings_root" sequence="4"/>
+    <menuitem id="menu_lead_set_tools" name="Tools" parent="menu_lead_settings_root" sequence="5"/>
     <record id="menu_lead_assignment_rules" model="ir.ui.menu">
-        <field name="parent_id" ref="menu_lead_settings_root"/><field name="sequence">10</field></record>
+        <field name="parent_id" ref="menu_lead_set_assign"/><field name="sequence">1</field></record>
     <record id="menu_lead_source_assignment_rules" model="ir.ui.menu">
-        <field name="parent_id" ref="menu_lead_settings_root"/><field name="sequence">11</field></record>
+        <field name="parent_id" ref="menu_lead_set_assign"/><field name="sequence">2</field></record>
     <record id="menu_lead_pool" model="ir.ui.menu">
-        <field name="parent_id" ref="menu_lead_settings_root"/><field name="sequence">12</field></record>
+        <field name="parent_id" ref="menu_lead_set_assign"/><field name="sequence">3</field></record>
     <record id="menu_lead_pool_run" model="ir.ui.menu">
-        <field name="parent_id" ref="menu_lead_settings_root"/><field name="sequence">13</field></record>
+        <field name="parent_id" ref="menu_lead_set_assign"/><field name="sequence">4</field></record>
     <record id="menu_lead_assignment_history" model="ir.ui.menu">
-        <field name="parent_id" ref="menu_lead_settings_root"/><field name="sequence">14</field></record>
+        <field name="parent_id" ref="menu_lead_set_assign"/><field name="sequence">5</field></record>
     <record id="menu_lead_teams" model="ir.ui.menu">
-        <field name="parent_id" ref="menu_lead_settings_root"/><field name="sequence">20</field></record>
+        <field name="parent_id" ref="menu_lead_set_master"/><field name="sequence">1</field></record>
     <record id="menu_leads_source" model="ir.ui.menu">
-        <field name="parent_id" ref="menu_lead_settings_root"/><field name="sequence">21</field></record>
+        <field name="parent_id" ref="menu_lead_set_master"/><field name="sequence">2</field></record>
     <record id="menu_course_interested" model="ir.ui.menu">
-        <field name="parent_id" ref="menu_lead_settings_root"/><field name="sequence">22</field></record>
+        <field name="parent_id" ref="menu_lead_set_master"/><field name="sequence">3</field></record>
     <record id="menu_lead_source_campaign" model="ir.ui.menu">
-        <field name="parent_id" ref="menu_lead_settings_root"/><field name="sequence">23</field></record>
+        <field name="parent_id" ref="menu_lead_set_master"/><field name="sequence">4</field></record>
     <record id="menu_lead_user_permissions" model="ir.ui.menu">
-        <field name="parent_id" ref="menu_lead_settings_root"/><field name="sequence">30</field></record>
+        <field name="parent_id" ref="menu_lead_set_access"/><field name="sequence">1</field></record>
     <record id="menu_lead_user_permissions_bulk" model="ir.ui.menu">
-        <field name="parent_id" ref="menu_lead_settings_root"/><field name="sequence">31</field></record>
+        <field name="parent_id" ref="menu_lead_set_access"/><field name="sequence">2</field></record>
     <record id="menu_coaching_items" model="ir.ui.menu">
-        <field name="parent_id" ref="menu_lead_settings_root"/><field name="sequence">40</field></record>
+        <field name="parent_id" ref="menu_lead_set_tools"/><field name="sequence">1</field></record>
     <record id="menu_lead_missed_call_wa" model="ir.ui.menu">
-        <field name="parent_id" ref="menu_lead_settings_root"/><field name="sequence">41</field></record>
+        <field name="parent_id" ref="menu_lead_set_tools"/><field name="sequence">2</field></record>
     <record id="menu_lead_merge" model="ir.ui.menu">
-        <field name="parent_id" ref="menu_lead_settings_root"/><field name="sequence">50</field></record>
+        <field name="parent_id" ref="menu_lead_set_tools"/><field name="sequence">3</field></record>
     <record id="menu_lead_merge_log" model="ir.ui.menu">
-        <field name="parent_id" ref="menu_lead_settings_root"/><field name="sequence">51</field></record>
-    <record id="menu_leads_odoo17_import" model="ir.ui.menu">
-        <field name="parent_id" ref="menu_lead_settings_root"/><field name="sequence">90</field></record>
+        <field name="parent_id" ref="menu_lead_set_tools"/><field name="sequence">4</field></record>
+    <record id="menu_leads_odoo17_import_wizard" model="ir.ui.menu">
+        <field name="parent_id" ref="menu_lead_set_tools"/><field name="sequence">5</field></record>
+    <record id="menu_leads_odoo17_import_log" model="ir.ui.menu">
+        <field name="parent_id" ref="menu_lead_set_tools"/><field name="sequence">6</field></record>
+    <record id="menu_leads_odoo17_sync_queue" model="ir.ui.menu">
+        <field name="parent_id" ref="menu_lead_set_tools"/><field name="sequence">7</field></record>
 
     <!-- ═══ Main menu 2: Lead Reports & Coaching ═══ -->
     <menuitem id="menu_lead_reports_root" name="Lead Reports &amp; Coaching" sequence="12"
               web_icon="custom_leads_19,static/description/icon.png"/>
-
+    <menuitem id="menu_lead_rep_reports" name="Reports" parent="menu_lead_reports_root" sequence="1"/>
+    <menuitem id="menu_lead_rep_calls" name="Calls" parent="menu_lead_reports_root" sequence="2"/>
     <record id="menu_leads_reports" model="ir.ui.menu">
-        <field name="parent_id" ref="menu_lead_reports_root"/><field name="sequence">1</field></record>
-    <record id="menu_leads_response_dashboard" model="ir.ui.menu">
-        <field name="parent_id" ref="menu_lead_reports_root"/><field name="sequence">2</field></record>
-    <record id="menu_leads_response_time" model="ir.ui.menu">
-        <field name="parent_id" ref="menu_lead_reports_root"/><field name="sequence">3</field></record>
-    <record id="menu_call_report_dashboard" model="ir.ui.menu">
-        <field name="parent_id" ref="menu_lead_reports_root"/><field name="sequence">4</field></record>
-    <record id="menu_lead_call_log_report" model="ir.ui.menu">
-        <field name="parent_id" ref="menu_lead_reports_root"/><field name="sequence">5</field></record>
-    <record id="menu_lead_counselling_performance" model="ir.ui.menu">
-        <field name="parent_id" ref="menu_lead_reports_root"/><field name="sequence">6</field></record>
+        <field name="parent_id" ref="menu_lead_rep_reports"/><field name="sequence">1</field></record>
     <record id="menu_leads_stage_analysis" model="ir.ui.menu">
-        <field name="parent_id" ref="menu_lead_reports_root"/><field name="sequence">7</field></record>
+        <field name="parent_id" ref="menu_lead_rep_reports"/><field name="sequence">2</field></record>
+    <record id="menu_lead_counselling_performance" model="ir.ui.menu">
+        <field name="parent_id" ref="menu_lead_rep_reports"/><field name="sequence">3</field></record>
+    <record id="menu_leads_response_dashboard" model="ir.ui.menu">
+        <field name="parent_id" ref="menu_lead_rep_calls"/><field name="sequence">1</field></record>
+    <record id="menu_leads_response_time" model="ir.ui.menu">
+        <field name="parent_id" ref="menu_lead_rep_calls"/><field name="sequence">2</field></record>
+    <record id="menu_call_report_dashboard" model="ir.ui.menu">
+        <field name="parent_id" ref="menu_lead_rep_calls"/><field name="sequence">3</field></record>
+    <record id="menu_lead_call_log_report" model="ir.ui.menu">
+        <field name="parent_id" ref="menu_lead_rep_calls"/><field name="sequence">4</field></record>
     <record id="menu_leads_coaching" model="ir.ui.menu">
-        <field name="parent_id" ref="menu_lead_reports_root"/><field name="sequence">8</field></record>
+        <field name="parent_id" ref="menu_lead_reports_root"/><field name="sequence">3</field></record>
 </odoo>

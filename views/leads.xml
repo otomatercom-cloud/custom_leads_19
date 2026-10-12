@@ -27,15 +27,15 @@
                 <field name="called_after"/>
                 <field name="lead_creator_id" string="Lead Created By"/>
                 <field name="lead_owner"/>
-                <!-- everything below is hidden by default; switch on from the column picker -->
-                <field name="call_response" string="Last Response" optional="hide"/>
-                <field name="team_id" optional="hide" string="Team"/>
-                <field name="next_follow_up_date" optional="hide"/>
-                <field name="date_of_adding" optional="hide"/>
-                <field name="last_update_date" optional="hide"/>
-                <field name="assign_delay_hrs" widget="float_time" optional="hide"/>
-                <field name="call_delay_hrs" widget="float_time" optional="hide"/>
-                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+                <!-- all columns shown; hide any from the column picker -->
+                <field name="call_response" string="Last Response" optional="show"/>
+                <field name="team_id" optional="show" string="Team"/>
+                <field name="next_follow_up_date" optional="show"/>
+                <field name="date_of_adding" optional="show"/>
+                <field name="last_update_date" optional="show"/>
+                <field name="assign_delay_hrs" widget="float_time" optional="show"/>
+                <field name="call_delay_hrs" widget="float_time" optional="show"/>
+                <field name="company_id" groups="base.group_multi_company" optional="show"/>
             </list>
         </field>
     </record>
