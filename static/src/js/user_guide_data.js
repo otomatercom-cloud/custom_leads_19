@@ -46,6 +46,83 @@ export const GUIDE = [
         ],
     },
     {
+        id: "whatsnew", icon: "★", title: "What's new",
+        intro: "The latest changes to Leads Management, newest first. Each item says where to find it.",
+        items: [
+            {
+                t: "All Leads menu", path: "Leads Management > All Leads", who: ["Everyone"],
+                what: "Every lead in one list: all qualities, including Admission Done, Junk and Abroad, which are hidden from the Leads menu. You still see only the leads your role allows.",
+                tips: ["Use the Lead Quality filter or group by Lead Quality to find one kind of lead."],
+            },
+            {
+                t: "Abroad leads", path: "Leads Management > Abroad", who: ["Everyone", "Managers"],
+                what: "Leads from abroad answer on WhatsApp, not on the phone, so they must not follow the 3-call Ringing Not Responding rule. Tick Abroad Lead on the lead and it moves to its own Abroad menu.",
+                steps: [
+                    "Open the lead and tick Abroad Lead (Assignment section), then Save. Or select leads in the list and use Action > Mark as Abroad.",
+                    "The lead leaves the Leads menu and shows in Leads Management > Abroad.",
+                    "To bring it back, untick Abroad Lead or use Action > Move back from Abroad.",
+                ],
+                opts: [
+                    ["Not applied to Abroad leads", "Automatic Ringing Not Responding after unanswered calls, the minimum-calls check for RNR, all pool reassign rules, and the RNR-after-noon popup."],
+                    ["Still applied", "The URGENT popup for a new lead."],
+                ],
+            },
+            {
+                t: "Admission (Odoo 17) button", path: "Lead form > header", who: ["Admission Officer", "Manager"],
+                what: "Admission is still done in Odoo 17. The button sends the lead with its details to Odoo 17 and opens it there.",
+                steps: [
+                    "Open the lead and press Admission (Odoo 17). Confirm.",
+                    "The lead is created in Odoo 17 (or the existing one is found by phone number) and opens there.",
+                ],
+                tips: ["Switch the button on or off in Lead Management Settings > Odoo 17 admission.", "If Odoo 17 refuses the lead, the reason is shown (for example a missing batch, branch or course)."],
+            },
+            {
+                t: "Cross-check with Odoo 17", path: "Leads Management > Odoo 17 > Cross-check with Odoo 17", who: ["Super Admin"],
+                what: "Compares Odoo 19 leads created in a date range with Odoo 17 and adds what Odoo 19 is missing: responses, call logs, follow-ups, quality history, assignment history, empty fields and, if ticked, chatter. Nothing is deleted.",
+                steps: [
+                    "Choose From and To dates.",
+                    "Choose what to do with Lead Quality and Admission Officer: take Odoo 17's value always, only when Odoo 19 is still New or has no officer, or leave as it is.",
+                    "Press Preview to see the numbers without any change.",
+                    "Press Cross-check & Add Missing Data. If it says some leads were not reached, press it again.",
+                ],
+                tips: ["Leads that came through the Odoo 17 import or sync are included; they are matched by their Odoo 17 id and phone number.", "Always means Odoo 17 wins even if the lead was worked in Odoo 19. Try a small date range first."],
+            },
+            {
+                t: "Incoming calls and lead owner", path: "Automatic", who: ["Everyone"],
+                what: "A lead with no owner goes to the officer who talks to the customer.",
+                steps: [
+                    "Incoming call answered by an officer: that officer gets the lead (if it is a new Incoming Call lead or has no owner).",
+                    "Call missed, then an officer calls back and the call connects: the lead goes to that officer.",
+                    "A lead that already has an owner is not taken away.",
+                    "Leads created by an incoming call are never auto-reassigned by the pool rules.",
+                ],
+                tips: ["If a lead stays unassigned after a connected call, the officer's user must have the Voxbay or Bonvoice agent number and an employee record."],
+            },
+            {
+                t: "Ringing Not Responding popup after noon", path: "Popup, Settings > Urgent popup", who: ["Admission Officer"],
+                what: "A new lead gets an URGENT popup. It hides once the officer has called it. If the lead is still New or First Attempt after noon (hour can be changed in Settings) a second popup, RNR call needed, asks for another call.",
+                tips: ["Several popups stack as small cards. Click one to open it and see its buttons.", "A popup also closes after the call is made."],
+            },
+            {
+                t: "Back to the same place after a call", path: "Lead > Call", who: ["Admission Officer"],
+                what: "After a call you return to the lead you were on, with the list position kept (for example 5 / 80), so you can press Next instead of starting the list again.",
+            },
+            {
+                t: "Leads per campaign", path: "Leads > select > Add to Call Campaign", who: ["Manager", "Team Lead"],
+                what: "Split a big selection into several campaigns of a fixed size. Enter Leads per Campaign and the wizard shows how many campaigns will be made.",
+            },
+            {
+                t: "Junk menu and newest-first list", path: "Leads Management > Junk, Leads", who: ["Everyone"],
+                what: "Junk leads (wrong number, not an enquiry) show only in Leads Management > Junk, not in the main Leads menu. The Leads list now shows the newest lead first.",
+            },
+            {
+                t: "Call Report: officer filter and unique counts", path: "Leads Management > Reports > Call Report", who: ["Team Lead", "Manager"],
+                what: "Filter the report by admission officer. Two new columns count Unique Leads called and Unique Connected, so repeat calls to the same lead are counted once.",
+                tips: ["Pending = assigned leads minus unique leads called."],
+            },
+        ],
+    },
+    {
         id: "daily", icon: "☎", title: "Daily work",
         intro: "The Leads Management menu is what officers use every day.",
         items: [

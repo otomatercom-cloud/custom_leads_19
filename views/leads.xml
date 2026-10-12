@@ -678,6 +678,16 @@
         <field name="context">{'search_default_filter_my': 0}</field>
     </record>
 
+    <!-- ─── All Leads: every lead in one place (all qualities incl. Admission Done, Junk, Abroad) ─── -->
+    <record id="action_leads_logic_all" model="ir.actions.act_window">
+        <field name="name">All Leads</field>
+        <field name="res_model">leads.logic</field>
+        <field name="view_mode">list,kanban,form</field>
+        <field name="domain">[]</field>
+        <field name="search_view_id" ref="view_leads_logic_search"/>
+        <field name="context">{'search_default_filter_my': 0}</field>
+    </record>
+
     <!-- ─── Menu ──────────────────────────────────────────────────────── -->
     <menuitem id="menu_leads_root" name="Leads Management" sequence="10" web_icon="custom_leads_19,static/description/icon.png" groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager,custom_leads_19.group_lead_team_lead,custom_leads_19.group_lead_users,custom_leads_19.group_lead_tele_callers,custom_leads_19.group_lead_digital_team,custom_leads_19.group_lead_digital_head,custom_leads_19.group_lead_branch_head,custom_leads_19.group_crash_head,custom_leads_19.group_crash_user"/>
 
@@ -686,6 +696,8 @@
     <menuitem id="menu_leads_abroad" name="Abroad" parent="menu_leads_root" action="action_leads_logic_abroad" sequence="4" groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager,custom_leads_19.group_lead_team_lead,custom_leads_19.group_lead_users,custom_leads_19.group_lead_tele_callers,custom_leads_19.group_lead_digital_team,custom_leads_19.group_lead_digital_head,custom_leads_19.group_lead_branch_head,custom_leads_19.group_crash_head,custom_leads_19.group_crash_user"/>
 
     <menuitem id="menu_leads_junk" name="Junk" parent="menu_leads_root" action="action_leads_logic_junk" sequence="5" groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager,custom_leads_19.group_lead_team_lead,custom_leads_19.group_lead_users,custom_leads_19.group_lead_tele_callers,custom_leads_19.group_lead_digital_team,custom_leads_19.group_lead_digital_head,custom_leads_19.group_lead_branch_head,custom_leads_19.group_crash_head,custom_leads_19.group_crash_user"/>
+
+    <menuitem id="menu_leads_all" name="All Leads" parent="menu_leads_root" action="action_leads_logic_all" sequence="6" groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager,custom_leads_19.group_lead_team_lead,custom_leads_19.group_lead_users,custom_leads_19.group_lead_tele_callers,custom_leads_19.group_lead_digital_team,custom_leads_19.group_lead_digital_head,custom_leads_19.group_lead_branch_head,custom_leads_19.group_crash_head,custom_leads_19.group_crash_user"/>
 
     <menuitem id="menu_leads_config" name="Configuration" parent="menu_leads_root" sequence="50" groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager"/>
 
