@@ -32,6 +32,7 @@ from . import lead_counselling
 # must load AFTER lead_reattempt / leads (they extend models defined there)
 from . import odoo17_import
 from . import odoo17_sync
+from . import odoo17_crosscheck
 from . import demo_data
 from . import telegram_notify
 

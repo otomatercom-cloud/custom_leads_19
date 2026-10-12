@@ -55,6 +55,8 @@
         <field name="parent_id" ref="menu_lead_set_tools"/><field name="sequence">4</field></record>
     <record id="menu_leads_odoo17_import_wizard" model="ir.ui.menu">
         <field name="parent_id" ref="menu_lead_set_tools"/><field name="sequence">5</field></record>
+    <record id="menu_leads_odoo17_crosscheck" model="ir.ui.menu">
+        <field name="parent_id" ref="menu_lead_set_tools"/><field name="sequence">5</field></record>
     <record id="menu_leads_odoo17_import_log" model="ir.ui.menu">
         <field name="parent_id" ref="menu_lead_set_tools"/><field name="sequence">6</field></record>
     <record id="menu_leads_odoo17_sync_queue" model="ir.ui.menu">
