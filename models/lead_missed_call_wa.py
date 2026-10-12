@@ -29,7 +29,7 @@ class ResConfigSettingsMissedWa(models.TransientModel):
     _inherit = 'res.config.settings'
 
     wa_missed_enabled = fields.Boolean(string='WhatsApp after a missed call', config_parameter=P_ON)
-    wa_missed_template = fields.Text(string='Message', config_parameter=P_TEXT, default=DEFAULT_TEXT,
+    wa_missed_template = fields.Char(string='Message', config_parameter=P_TEXT, default=DEFAULT_TEXT,
                                      help='Placeholders: {name} {officer} {course} {institute}')
     wa_missed_from_hour = fields.Integer(string='Send from (hour)', config_parameter=P_FROM, default=9)
     wa_missed_to_hour = fields.Integer(string='Send until (hour)', config_parameter=P_TO, default=19)
