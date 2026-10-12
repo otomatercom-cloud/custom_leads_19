@@ -18,6 +18,23 @@ class LeadsLogicPoolRules(models.Model):
     _inherit = 'leads.logic'
 
     auto_reassign_count = fields.Integer(string='Auto Reassignments', default=0, copy=False, readonly=True)
+    is_abroad = fields.Boolean(
+        string='Abroad Lead', index=True, copy=False, tracking=True,
+        help='Tick for a lead living abroad (they usually answer on WhatsApp, not the phone). The lead moves to '
+             'the Abroad menu and is left out of the automatic rules: no automatic Ringing Not Responding '
+             'after N calls, no automatic reassignment, no RNR popup.')
+
+    def action_mark_abroad(self):
+        self.write({'is_abroad': True})
+        return {'type': 'ir.actions.client', 'tag': 'display_notification',
+                'params': {'title': _('Abroad'), 'message': _('%s lead(s) moved to the Abroad menu.') % len(self),
+                           'type': 'success'}}
+
+    def action_unmark_abroad(self):
+        self.write({'is_abroad': False})
+        return {'type': 'ir.actions.client', 'tag': 'display_notification',
+                'params': {'title': _('Abroad'), 'message': _('%s lead(s) moved back to Leads.') % len(self),
+                           'type': 'success'}}
 
     def _pool_rule(self):
         rules = self.env['lead.assignment.rule'].sudo().search([('active', '=', True)], order='sequence, id')
@@ -36,7 +53,7 @@ class LeadsLogicPoolRules(models.Model):
             need = self.env['otm.lead.rule.params'].param('custom_leads_19.rnr_min_calls')
             if need and new_q == 'not_responding':
                 for rec in self:
-                    if rec.lead_quality != 'not_responding' and rec.call_count < need:
+                    if rec.lead_quality != 'not_responding' and rec.call_count < need and not rec.is_abroad:
                         raise UserError(_(
                             "'Ringing Not Responding' needs at least %(need)s calls and this lead has "
                             "only %(have)s. Call the lead again first.") % {'need': need, 'have': rec.call_count})
@@ -45,7 +62,7 @@ class LeadsLogicPoolRules(models.Model):
             mode = rule.pool_reassign_on_quality
             if mode in ('no_call', 'always') and new_q and new_q != 'new':
                 for rec in self:
-                    if (rec.lead_quality in (False, 'new') and rec.lead_owner
+                    if (not rec.is_abroad and rec.lead_quality in (False, 'new') and rec.lead_owner
                             and rec.sudo().lead_owner.user_id.id == self.env.uid
                             and (mode == 'always' or not rec.call_count)):
                         reassign |= rec
@@ -65,7 +82,7 @@ class LeadAssignmentRulePoolRules(models.Model):
         self.ensure_one()
         lead = lead.sudo()
         old = lead.lead_owner
-        if not old or lead.auto_reassign_count >= self.pool_max_reassigns:
+        if not old or lead.auto_reassign_count >= self.pool_max_reassigns or lead.is_abroad:
             return False
         # leads created by an incoming call stay with whoever got them
         if lead.leads_source and lead.leads_source.name == 'Incoming Call Leads':
@@ -220,7 +237,7 @@ class LeadCallLogPoolRules(models.Model):
             if not need:
                 return
             for lead in self.mapped('lead_id').sudo():
-                if lead.lead_quality not in UNWORKED or lead.state == 'lost':
+                if lead.lead_quality not in UNWORKED or lead.state == 'lost' or lead.is_abroad:
                     continue
                 rule = lead._pool_rule()
                 if not rule or not rule.pool_auto_rnr:

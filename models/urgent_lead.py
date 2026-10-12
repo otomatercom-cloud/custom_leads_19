@@ -95,7 +95,7 @@ class LeadUrgentAlert(models.Model):
         Lead = self.env['leads.logic'].sudo()
         leads = Lead.search([
             ('lead_owner', '!=', False), ('state', '!=', 'lost'),
-            ('lead_quality', 'in', list(UNWORKED)),
+            ('lead_quality', 'in', list(UNWORKED)), ('is_abroad', '=', False),
             ('create_date', '>=', today - timedelta(days=self._age_days())),
         ], limit=500)
         for lead in leads:
@@ -160,7 +160,8 @@ class LeadUrgentAlert(models.Model):
         for a in alerts:
             lead = a.lead_id
             ok_quality = (lead.lead_quality in UNWORKED) if a.kind == 'rnr' else (lead.lead_quality == 'new')
-            if (not ok_quality or lead.lead_owner.user_id.id != me or not self._source_ok(lead)
+            if (not ok_quality or (a.kind == 'rnr' and lead.is_abroad) or lead.lead_owner.user_id.id != me
+                    or not self._source_ok(lead)
                     or a.create_date < self._today_start()):   # the popup is for leads assigned today only
                 a._close('no longer needed')
                 continue

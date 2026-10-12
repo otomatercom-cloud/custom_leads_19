@@ -171,6 +171,7 @@
                                 <field name="lead_quality"/>
                                 <field name="attendance_percentage" string="Attendance %"/>
                                 <field name="lead_stage_category" readonly="1"/>
+                                <field name="is_abroad"/>
                                 <field name="admission_status"/>
                                 <field name="admission_date" invisible="not admission_status"/>
                             </group>
@@ -594,6 +595,7 @@
                 <field name="team_id" string="Team"/>
                 <field name="lead_creator_id"/>
                 <field name="tele_caller_id"/>
+                <filter string="Abroad" name="filter_abroad" domain="[('is_abroad', '=', True)]"/>
                 <filter string="My Created Leads" name="filter_my_created_leads"
                         domain="[('lead_creator_id', '=', uid)]"/>
                 <!-- ── Daily Queue Filters ──────────────────────────────── -->
@@ -634,9 +636,36 @@
         <field name="name">Leads</field>
         <field name="res_model">leads.logic</field>
         <field name="view_mode">list,kanban,form</field>
-        <field name="domain">[('lead_stage_category', 'not in', ['admission_done', 'junk'])]</field>
+        <field name="domain">[('lead_stage_category', 'not in', ['admission_done', 'junk']), ('is_abroad', '=', False)]</field>
         <field name="search_view_id" ref="view_leads_logic_search"/>
         <field name="context">{'search_default_filter_my': 0}</field>
+    </record>
+
+    <!-- ─── Abroad leads - own menu, left out of the automatic call rules ─── -->
+    <record id="action_leads_logic_abroad" model="ir.actions.act_window">
+        <field name="name">Abroad Leads</field>
+        <field name="res_model">leads.logic</field>
+        <field name="view_mode">list,kanban,form</field>
+        <field name="domain">[('is_abroad', '=', True)]</field>
+        <field name="search_view_id" ref="view_leads_logic_search"/>
+        <field name="context">{'search_default_filter_my': 0}</field>
+    </record>
+
+    <record id="action_server_lead_mark_abroad" model="ir.actions.server">
+        <field name="name">🌍 Mark as Abroad</field>
+        <field name="model_id" ref="custom_leads_19.model_leads_logic"/>
+        <field name="binding_model_id" ref="custom_leads_19.model_leads_logic"/>
+        <field name="binding_view_types">list,form</field>
+        <field name="state">code</field>
+        <field name="code">action = records.action_mark_abroad()</field>
+    </record>
+    <record id="action_server_lead_unmark_abroad" model="ir.actions.server">
+        <field name="name">↩ Move back from Abroad</field>
+        <field name="model_id" ref="custom_leads_19.model_leads_logic"/>
+        <field name="binding_model_id" ref="custom_leads_19.model_leads_logic"/>
+        <field name="binding_view_types">list,form</field>
+        <field name="state">code</field>
+        <field name="code">action = records.action_unmark_abroad()</field>
     </record>
 
     <!-- ─── Junk leads (Wrong number / Not enquiry) - kept out of the Leads menu ─── -->
@@ -653,6 +682,8 @@
     <menuitem id="menu_leads_root" name="Leads Management" sequence="10" web_icon="custom_leads_19,static/description/icon.png" groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager,custom_leads_19.group_lead_team_lead,custom_leads_19.group_lead_users,custom_leads_19.group_lead_tele_callers,custom_leads_19.group_lead_digital_team,custom_leads_19.group_lead_digital_head,custom_leads_19.group_lead_branch_head,custom_leads_19.group_crash_head,custom_leads_19.group_crash_user"/>
 
     <menuitem id="menu_leads_leads" name="Leads" parent="menu_leads_root" action="action_leads_logic" sequence="1" groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager,custom_leads_19.group_lead_team_lead,custom_leads_19.group_lead_users,custom_leads_19.group_lead_tele_callers,custom_leads_19.group_lead_digital_team,custom_leads_19.group_lead_digital_head,custom_leads_19.group_lead_branch_head,custom_leads_19.group_crash_head,custom_leads_19.group_crash_user"/>
+
+    <menuitem id="menu_leads_abroad" name="Abroad" parent="menu_leads_root" action="action_leads_logic_abroad" sequence="4" groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager,custom_leads_19.group_lead_team_lead,custom_leads_19.group_lead_users,custom_leads_19.group_lead_tele_callers,custom_leads_19.group_lead_digital_team,custom_leads_19.group_lead_digital_head,custom_leads_19.group_lead_branch_head,custom_leads_19.group_crash_head,custom_leads_19.group_crash_user"/>
 
     <menuitem id="menu_leads_junk" name="Junk" parent="menu_leads_root" action="action_leads_logic_junk" sequence="5" groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager,custom_leads_19.group_lead_team_lead,custom_leads_19.group_lead_users,custom_leads_19.group_lead_tele_callers,custom_leads_19.group_lead_digital_team,custom_leads_19.group_lead_digital_head,custom_leads_19.group_lead_branch_head,custom_leads_19.group_crash_head,custom_leads_19.group_crash_user"/>
 
