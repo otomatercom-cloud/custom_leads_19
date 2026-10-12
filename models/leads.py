@@ -70,7 +70,7 @@ class LeadsForm(models.Model):
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = 'Leads'
     _rec_name = 'name'
-    _order = 'id desc'
+    _order = 'create_date desc, id desc'
 
     # ── Basic Information ──────────────────────────────────────────────────
     leads_source = fields.Many2one('leads.sources', string='Leads Source', required=True)

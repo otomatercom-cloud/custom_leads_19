@@ -5,7 +5,7 @@
         <field name="name">leads.logic.list</field>
         <field name="model">leads.logic</field>
         <field name="arch" type="xml">
-            <list string="Leads" default_order="id desc"
+            <list string="Leads" default_order="create_date desc, id desc"
                   decoration-danger="lead_quality in ['not_responding','not_reachable','wrong_number','not_interested']"
                   decoration-success="lead_quality in ['admission','waiting_for_admission']"
                   decoration-warning="lead_quality in ['hot','warm']">
