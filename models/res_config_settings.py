@@ -42,6 +42,14 @@ class ResConfigSettings(models.TransientModel):
         inverse='_inverse_enable_followup_popup',
     )
 
+    urgent_source_ids = fields.Many2many(
+        'leads.sources', string='Urgent popup only for these sources',
+        compute='_compute_urgent_source_ids', inverse='_inverse_urgent_source_ids',
+        help='The URGENT popup is shown only for leads from these sources (for example Meta). '
+             'Leave empty to show it for every source.')
+    urgent_age_days = fields.Integer(
+        string='Urgent popup: lead arrived within (days)', config_parameter='custom_leads_19.urgent_age_days', default=1,
+        help='0 = only leads that arrived today. 1 = yesterday and today. Older leads never raise the popup.')
     urgent_lead_popup = fields.Boolean(
         string='Urgent New-Lead Popup',
         help='Show an "URGENT - call now" popup with the lead details to the admission officer '
@@ -109,6 +117,17 @@ class ResConfigSettings(models.TransientModel):
             )
 
     @api.depends_context('company')
+    def _compute_urgent_source_ids(self):
+        ids = self.env['lead.urgent.alert']._source_ids()
+        recs = self.env['leads.sources'].browse(ids).exists()
+        for rec in self:
+            rec.urgent_source_ids = recs
+
+    def _inverse_urgent_source_ids(self):
+        for rec in self:
+            self.env['ir.config_parameter'].sudo().set_param(
+                'custom_leads_19.urgent_source_ids', ','.join(str(i) for i in rec.urgent_source_ids.ids))
+
     def _compute_urgent_lead_popup(self):
         enabled = self.env['ir.config_parameter'].sudo().get_param(PARAM_URGENT) != '0'
         for rec in self:

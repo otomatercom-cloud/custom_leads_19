@@ -7,12 +7,16 @@ assigned by the round-robin / pool, or reassigned), the officer's browser shows 
 The card keeps coming back (every few minutes) until the lead's quality changes from New.
 """
 import logging
-from datetime import timedelta
+from datetime import datetime, timedelta
+
+import pytz
 
 from odoo import api, fields, models, _
 
 _logger = logging.getLogger(__name__)
 PARAM_URGENT = 'custom_leads_19.urgent_lead_popup'
+PARAM_URGENT_AGE = 'custom_leads_19.urgent_age_days'      # lead must have arrived within this many days before today (0 = today only)
+PARAM_URGENT_SRC = 'custom_leads_19.urgent_source_ids'   # comma separated lead source ids, empty = all
 BUS_OPEN = 'urgent_lead'
 BUS_CLOSE = 'urgent_lead_close'
 MAX_AGE_HOURS = 24
@@ -34,6 +38,35 @@ class LeadUrgentAlert(models.Model):
     @api.model
     def _enabled(self):
         return self.env['ir.config_parameter'].sudo().get_param(PARAM_URGENT) != '0'
+
+    @api.model
+    def _source_ids(self):
+        raw = self.env['ir.config_parameter'].sudo().get_param(PARAM_URGENT_SRC) or ''
+        return [int(x) for x in raw.split(',') if x.strip().isdigit()]
+
+    @api.model
+    def _today_start(self):
+        """Start of today (Asia/Kolkata) as naive UTC."""
+        tz = pytz.timezone('Asia/Kolkata')
+        local = datetime.now(pytz.utc).astimezone(tz).replace(hour=0, minute=0, second=0, microsecond=0)
+        return local.astimezone(pytz.utc).replace(tzinfo=None)
+
+    @api.model
+    def _age_days(self):
+        raw = self.env['ir.config_parameter'].sudo().get_param(PARAM_URGENT_AGE)
+        try:
+            return max(0, int(raw)) if raw not in (None, False, '') else 1
+        except ValueError:
+            return 1
+
+    @api.model
+    def _source_ok(self, lead):
+        """True when the popup applies to this lead: right source (empty = all) and it arrived yesterday or today."""
+        ids = self._source_ids()
+        if ids and lead.leads_source.id not in ids:
+            return False
+        limit = self._today_start() - timedelta(days=self._age_days())
+        return not lead.create_date or lead.create_date >= limit
 
     def _payload(self):
         self.ensure_one()
@@ -75,8 +108,8 @@ class LeadUrgentAlert(models.Model):
         out = []
         for a in alerts:
             lead = a.lead_id
-            if (lead.lead_quality != 'new' or lead.lead_owner.user_id.id != me
-                    or a.create_date < now - timedelta(hours=MAX_AGE_HOURS)):
+            if (lead.lead_quality != 'new' or lead.lead_owner.user_id.id != me or not self._source_ok(lead)
+                    or a.create_date < self._today_start()):   # the popup is for leads assigned today only
                 a._close('no longer needed')
                 continue
             if a.snooze_until and a.snooze_until > now:
@@ -117,7 +150,7 @@ class LeadsLogicUrgent(models.Model):
         Alert = self.env['lead.urgent.alert'].sudo()
         for lead in self.sudo():
             user = lead.lead_owner.user_id
-            if (lead.lead_quality != 'new' or not user or not user.active
+            if (lead.lead_quality != 'new' or not user or not user.active or not Alert._source_ok(lead)
                     or user.id == self.env.uid):        # an officer creating a lead for themselves needs no alert
                 continue
             alert = Alert.search([('lead_id', '=', lead.id), ('user_id', '=', user.id), ('state', '=', 'pending')], limit=1)

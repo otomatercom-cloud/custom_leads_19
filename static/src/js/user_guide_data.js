@@ -158,6 +158,8 @@ export const GUIDE = [
                 opts: [
                     ["Enable Follow-Up Popup", "Shows today's follow-ups when a lead screen is opened."],
                     ["Urgent New-Lead Popup", "Shows an URGENT call-now card when a New lead is given to an officer. It returns every few minutes until the quality changes."],
+                    ["Urgent popup only for these sources", "Pick Meta (or any sources) so the popup appears only for their leads. Empty = every source. Waiting popups of other sources are closed."],
+                    ["Only recent leads", "Days back a lead may have arrived. 1 = yesterday and today (default), 0 = today only. The popup also shows only on the day the lead is assigned."],
                     ["Enable Call Timer Popup", "Opens a timer while a call is going on."],
                     ["Require Batch and Fee for Admission", "Officers must pick batch and fee structure before a lead can be marked Admission."],
                     ["Daily Call Goal", "The number of calls each officer should make per day. Shown on the dashboard and in the target report."],

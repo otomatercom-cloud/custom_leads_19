@@ -71,6 +71,15 @@
                                  help="When a lead with quality New is assigned to an admission officer, a red 'Urgent - call now' card with the lead details appears on their screen (even during another call) and returns every few minutes until the lead is worked.">
                             <field name="urgent_lead_popup"/>
                         </setting>
+                        <setting string="Only for these lead sources"
+                                 help="Choose Meta (or any sources) to show the urgent popup only for them. Leave empty for every source. Popups already waiting for other sources are closed automatically.">
+                            <field name="urgent_source_ids" widget="many2many_tags" options="{'no_create': True}"
+                                   invisible="not urgent_lead_popup"/>
+                        </setting>
+                        <setting string="Only recent leads" invisible="not urgent_lead_popup"
+                                 help="Days back a lead may have arrived and still raise the popup. 0 = today only, 1 = yesterday and today. The popup also shows only on the day the lead is assigned.">
+                            <field name="urgent_age_days"/>
+                        </setting>
                     </block>
                     <block title="Call Timer Popup">
                         <setting string="Enable Call Timer Popup"
