@@ -177,13 +177,40 @@ class LeadCallLogPoolRules(models.Model):
         recs = super().create(vals_list)
         if not self.env.context.get('otm_odoo17_import'):
             recs._pool_auto_rnr()
+            recs._incoming_assign_owner()
         return recs
 
     def write(self, vals):
         res = super().write(vals)
-        if 'call_status' in vals or 'duration' in vals:
+        if 'call_status' in vals or 'duration' in vals or 'user_id' in vals:
             self._pool_auto_rnr()
+            if not self.env.context.get('otm_odoo17_import'):
+                self._incoming_assign_owner()
         return res
+
+    def _incoming_assign_owner(self):
+        """An incoming call answered by an officer: that officer gets the lead when it is a new
+        'Incoming Call Leads' lead or has no owner yet. Leads owned by someone else are left alone."""
+        from .call_report import _parse_duration_seconds, _is_connected
+        try:
+            for log in self.sudo():
+                lead, user = log.lead_id, log.user_id
+                if log.call_type != 'incoming' or not lead or not user or lead.state == 'lost':
+                    continue
+                if not _is_connected(log.call_status, _parse_duration_seconds(log.duration)):
+                    continue
+                emp = user.employee_id
+                if not emp or lead.lead_owner == emp:
+                    continue
+                incoming_src = lead.leads_source and lead.leads_source.name == 'Incoming Call Leads'
+                if lead.lead_owner and not incoming_src:
+                    continue
+                old = lead.lead_owner
+                lead.with_context(skip_pool_rules=True, urgent_lead_skip=True).write({'lead_owner': emp.id})
+                lead.message_post(body=_("Incoming call answered by %(new)s: lead assigned to %(new)s%(old)s.") % {
+                    'new': emp.name, 'old': (_(' (was %s)') % old.name) if old else ''})
+        except Exception:  # noqa: BLE001 - never block call logging
+            _logger.exception('Incoming call auto-assign failed')
 
     def _pool_auto_rnr(self):
         """New / First Attempt lead with N calls and none answered -> Ringing Not Responding."""
