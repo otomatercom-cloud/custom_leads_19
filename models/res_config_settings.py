@@ -50,6 +50,10 @@ class ResConfigSettings(models.TransientModel):
     urgent_age_days = fields.Integer(
         string='Urgent popup: lead arrived within (days)', config_parameter='custom_leads_19.urgent_age_days', default=1,
         help='0 = only leads that arrived today. 1 = yesterday and today. Older leads never raise the popup.')
+    urgent_rnr_hour = fields.Integer(
+        string='RNR call needed popup: after hour', config_parameter='custom_leads_19.urgent_rnr_hour', default=12,
+        help='After this hour (24h, India time) an officer gets an "RNR call needed" popup for a lead they called '
+             'but nobody answered and that was not called again since. 0 = off.')
     urgent_lead_popup = fields.Boolean(
         string='Urgent New-Lead Popup',
         help='Show an "URGENT - call now" popup with the lead details to the admission officer '

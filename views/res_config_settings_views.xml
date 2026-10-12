@@ -80,6 +80,10 @@
                                  help="Days back a lead may have arrived and still raise the popup. 0 = today only, 1 = yesterday and today. The popup also shows only on the day the lead is assigned.">
                             <field name="urgent_age_days"/>
                         </setting>
+                        <setting string="RNR call needed popup" invisible="not urgent_lead_popup"
+                                 help="After this hour (24h clock, India time) the officer gets a popup for a lead they called but nobody answered, if it was not called again since that hour. Hidden as soon as they call. 0 = off.">
+                            <field name="urgent_rnr_hour"/>
+                        </setting>
                     </block>
                     <block title="Call Timer Popup">
                         <setting string="Enable Call Timer Popup"

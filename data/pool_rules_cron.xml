@@ -18,4 +18,13 @@
         <field name="interval_type">minutes</field>
         <field name="active" eval="True"/>
     </record>
+    <record id="cron_urgent_rnr_alerts" model="ir.cron">
+        <field name="name">Leads: RNR call needed popup (after noon)</field>
+        <field name="model_id" ref="model_lead_urgent_alert"/>
+        <field name="state">code</field>
+        <field name="code">model.cron_rnr_alerts()</field>
+        <field name="interval_number">10</field>
+        <field name="interval_type">minutes</field>
+        <field name="active" eval="True"/>
+    </record>
 </odoo>

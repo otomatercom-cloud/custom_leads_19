@@ -67,6 +67,9 @@ class LeadAssignmentRulePoolRules(models.Model):
         old = lead.lead_owner
         if not old or lead.auto_reassign_count >= self.pool_max_reassigns:
             return False
+        # leads created by an incoming call stay with whoever got them
+        if lead.leads_source and lead.leads_source.name == 'Incoming Call Leads':
+            return False
         Lead = lead.with_context(pool_force=True, pool_exclude_employee_ids=old.ids, skip_pool_rules=True)
         try:
             with self.env.cr.savepoint():
