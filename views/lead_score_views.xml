@@ -3,6 +3,7 @@
     <record id="view_leads_call_next_list" model="ir.ui.view">
         <field name="name">leads.logic.call.next.list</field>
         <field name="model">leads.logic</field>
+        <field name="priority">99</field>
         <field name="arch" type="xml">
             <list string="Call next" default_order="call_score desc, id desc" create="false" edit="false"
                   decoration-danger="call_count == 0 and call_score >= 70">
@@ -22,6 +23,7 @@
     <record id="view_leads_call_next_search" model="ir.ui.view">
         <field name="name">leads.logic.call.next.search</field>
         <field name="model">leads.logic</field>
+        <field name="priority">99</field>
         <field name="arch" type="xml">
             <search>
                 <field name="name"/>
