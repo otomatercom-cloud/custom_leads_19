@@ -142,6 +142,11 @@
                             </div>
                         </setting>
                     </block>
+                    <block title="User guide">
+                        <setting string="Show the user guide menu" help="Adds a 'Lead User Guide' main menu that explains every menu and option. Switch off to hide it.">
+                            <field name="lead_guide_enabled"/>
+                        </setting>
+                    </block>
                     <block title="Daily Call Goal">
                         <setting string="Calls per officer per day" help="Shown as the progress ring on each officer's dashboard in the Next.js app.">
                             <field name="daily_call_goal"/>

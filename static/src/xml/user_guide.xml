@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+<t t-name="custom_leads_19.UserGuide">
+  <div class="o_ug">
+    <aside class="o_ug_nav">
+      <div class="o_ug_brand">
+        <div class="o_ug_brand_mark">LM</div>
+        <div>
+          <div class="o_ug_brand_t">Lead User Guide</div>
+          <div class="o_ug_brand_s"><t t-esc="total"/> topics, every menu explained</div>
+        </div>
+      </div>
+      <input class="o_ug_search" type="search" placeholder="Search the guide" t-model="state.q"/>
+      <nav>
+        <button t-foreach="guide" t-as="s" t-key="s.id" type="button"
+                t-attf-class="o_ug_navbtn #{s.id === state.active and !state.q ? 'is_on' : ''}"
+                t-on-click="() => this.select(s.id)">
+          <span class="o_ug_ico" t-esc="s.icon"/>
+          <span class="o_ug_navt" t-esc="s.title"/>
+          <span class="o_ug_cnt" t-esc="s.items.length"/>
+        </button>
+      </nav>
+      <button type="button" class="o_ug_print" t-on-click="print">Print this guide</button>
+    </aside>
+
+    <main class="o_ug_main">
+      <t t-if="state.q">
+        <header class="o_ug_head">
+          <h1>Search results</h1>
+          <p><t t-esc="results.length"/> topic(s) for "<t t-esc="state.q"/>"</p>
+        </header>
+        <div t-if="!results.length" class="o_ug_empty">Nothing found. Try a shorter word such as "pool", "call" or "report".</div>
+        <t t-foreach="results" t-as="r" t-key="r_index">
+          <t t-set="sec" t-value="r.section"/>
+          <t t-set="it" t-value="r.item"/>
+          <section class="o_ug_card is_open" t-attf-style="--i:#{Math.min(r_index, 8)}">
+            <div class="o_ug_card_h" t-on-click="() => this.openFromSearch(r)">
+              <div>
+                <div class="o_ug_card_t" t-esc="it.t"/>
+                <div class="o_ug_path" t-esc="sec.title + '  ›  ' + it.path"/>
+              </div>
+              <span class="o_ug_go">Open</span>
+            </div>
+            <p class="o_ug_what" t-esc="it.what"/>
+          </section>
+        </t>
+      </t>
+
+      <t t-else="">
+        <header class="o_ug_head" t-key="current.id">
+          <h1 t-esc="current.title"/>
+          <p t-esc="current.intro"/>
+          <div class="o_ug_tools">
+            <button type="button" t-on-click="() => this.collapseAll(false)">Expand all</button>
+            <button type="button" t-on-click="() => this.collapseAll(true)">Collapse all</button>
+          </div>
+        </header>
+
+        <section t-if="current.id === 'start'" class="o_ug_flow">
+          <div class="o_ug_flow_t">The journey of one lead</div>
+          <div class="o_ug_flow_row">
+            <div t-foreach="flow" t-as="f" t-key="f_index" class="o_ug_node" t-attf-style="--i:#{f_index}">
+              <div class="o_ug_node_n" t-esc="f_index + 1"/>
+              <div class="o_ug_node_t" t-esc="f[0]"/>
+              <div class="o_ug_node_d" t-esc="f[1]"/>
+            </div>
+          </div>
+        </section>
+
+        <t t-foreach="current.items" t-as="it" t-key="current.id + it.t">
+          <section t-attf-class="o_ug_card #{isClosed(current, it) ? '' : 'is_open'}" t-attf-style="--i:#{Math.min(it_index, 8)}">
+            <div class="o_ug_card_h" t-on-click="() => this.toggle(current, it)">
+              <div>
+                <div class="o_ug_card_t" t-esc="it.t"/>
+                <div class="o_ug_path" t-esc="it.path"/>
+              </div>
+              <div class="o_ug_who">
+                <span t-foreach="it.who || []" t-as="w" t-key="w" class="o_ug_chip" t-esc="w"/>
+                <span class="o_ug_caret"/>
+              </div>
+            </div>
+            <div t-if="!isClosed(current, it)" class="o_ug_body">
+              <p class="o_ug_what" t-esc="it.what"/>
+
+              <div t-if="it.steps and it.steps.length" class="o_ug_block">
+                <div class="o_ug_block_t">How to use it</div>
+                <ol class="o_ug_steps">
+                  <li t-foreach="it.steps" t-as="s" t-key="s_index" t-attf-style="--j:#{s_index}">
+                    <span class="o_ug_stepn" t-esc="s_index + 1"/>
+                    <span t-esc="s"/>
+                  </li>
+                </ol>
+              </div>
+
+              <div t-if="it.opts and it.opts.length" class="o_ug_block">
+                <div class="o_ug_block_t">Options</div>
+                <div class="o_ug_opts">
+                  <div t-foreach="it.opts" t-as="o" t-key="o_index" class="o_ug_opt">
+                    <div class="o_ug_opt_n" t-esc="o[0]"/>
+                    <div class="o_ug_opt_d">
+                      <t t-esc="o[1]"/>
+                      <div t-if="o[2]" class="o_ug_opt_tip" t-esc="o[2]"/>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div t-foreach="it.tips || []" t-as="tp" t-key="tp_index" class="o_ug_tip">
+                <span class="o_ug_tip_b">Good to know</span>
+                <span t-esc="tp"/>
+              </div>
+            </div>
+          </section>
+        </t>
+      </t>
+    </main>
+  </div>
+</t>
+</templates>

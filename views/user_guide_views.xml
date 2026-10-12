@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="action_lead_user_guide" model="ir.actions.client">
+        <field name="name">Lead User Guide</field>
+        <field name="tag">custom_leads_19.user_guide</field>
+    </record>
+    <menuitem id="menu_lead_user_guide" name="Lead User Guide" sequence="13"
+              web_icon="custom_leads_19,static/description/icon.png"
+              action="action_lead_user_guide" groups="custom_leads_19.group_lead_guide"/>
+</odoo>
