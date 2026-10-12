@@ -317,6 +317,9 @@
                                     <field name="duration"/>
                                     <field name="recording_url" widget="url"/>
                                     <field name="remarks"/>
+                                    <field name="ai_interest" optional="show"/>
+                                    <field name="ai_score" optional="show"/>
+                                    <field name="ai_flag" column_invisible="1"/>
                                     <field name="has_recording" column_invisible="1"/>
                                     <button name="action_upload_recording" type="object" string="&#128206; Upload Recording" class="btn-sm btn-secondary" invisible="has_recording"/>
                                     <button name="action_upload_recording" type="object" string="&#128260; Replace Recording" class="btn-sm btn-secondary" invisible="not has_recording"/>
@@ -349,6 +352,18 @@
                                             <button name="action_upload_recording" type="object" string="&#128206; Upload Recording" class="btn-primary"/>
                                         </div>
                                         <field name="has_recording" invisible="1"/>
+                                        <group string="AI Call Analysis" invisible="not has_recording">
+                                            <button name="action_ai_analyse" type="object" string="&#129302; Analyse with AI" class="btn-secondary" invisible="ai_state == 'done'"/>
+                                            <field name="ai_state" readonly="1"/>
+                                            <field name="ai_error" readonly="1" invisible="not ai_error"/>
+                                            <field name="ai_summary" readonly="1" invisible="not ai_summary"/>
+                                            <field name="ai_interest" readonly="1" invisible="not ai_interest"/>
+                                            <field name="ai_score" readonly="1" invisible="not ai_score"/>
+                                            <field name="ai_issues" readonly="1" invisible="not ai_issues"/>
+                                            <field name="ai_next_step" readonly="1" invisible="not ai_next_step"/>
+                                            <field name="ai_suggested_quality" readonly="1" invisible="not ai_suggested_quality"/>
+                                            <field name="ai_transcript" readonly="1" invisible="not ai_transcript"/>
+                                        </group>
                                     </sheet>
                                 </form>
                             </field>

@@ -34,6 +34,7 @@ from . import odoo17_import
 from . import odoo17_sync
 from . import odoo17_crosscheck
 from . import odoo17_admission
+from . import call_ai
 from . import demo_data
 from . import telegram_notify
 

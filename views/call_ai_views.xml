@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_lead_call_ai_list" model="ir.ui.view">
+        <field name="name">lead.call.log.ai.list</field>
+        <field name="model">lead.call.log</field>
+        <field name="priority">99</field>
+        <field name="arch" type="xml">
+            <list string="AI Call Analysis" create="0" decoration-danger="ai_flag">
+                <field name="call_time"/>
+                <field name="user_id"/>
+                <field name="lead_id"/>
+                <field name="call_type"/>
+                <field name="duration"/>
+                <field name="ai_interest"/>
+                <field name="ai_score"/>
+                <field name="ai_quality_ok" optional="show"/>
+                <field name="ai_suggested_quality" optional="show"/>
+                <field name="ai_summary"/>
+                <field name="ai_issues" optional="hide"/>
+                <field name="ai_flag" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_lead_call_ai_form" model="ir.ui.view">
+        <field name="name">lead.call.log.ai.form</field>
+        <field name="model">lead.call.log</field>
+        <field name="priority">99</field>
+        <field name="arch" type="xml">
+            <form string="AI Call Analysis" create="0" edit="0">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="lead_id"/>
+                            <field name="user_id"/>
+                            <field name="call_time"/>
+                            <field name="call_type"/>
+                            <field name="duration"/>
+                        </group>
+                        <group>
+                            <field name="ai_state"/>
+                            <field name="ai_interest"/>
+                            <field name="ai_score"/>
+                            <field name="ai_quality_ok"/>
+                            <field name="ai_suggested_quality"/>
+                            <field name="ai_error"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="ai_summary"/>
+                        <field name="ai_issues"/>
+                        <field name="ai_next_step"/>
+                        <field name="ai_transcript"/>
+                    </group>
+                    <field name="has_recording" invisible="1"/>
+                    <button name="action_ai_analyse" type="object" string="Analyse again" class="btn-secondary" invisible="not has_recording"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_lead_call_ai_pivot" model="ir.ui.view">
+        <field name="name">lead.call.log.ai.pivot</field>
+        <field name="model">lead.call.log</field>
+        <field name="priority">99</field>
+        <field name="arch" type="xml">
+            <pivot string="Officer score">
+                <field name="user_id" type="row"/>
+                <field name="ai_interest" type="col"/>
+                <field name="ai_score" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_lead_call_ai_search" model="ir.ui.view">
+        <field name="name">lead.call.log.ai.search</field>
+        <field name="model">lead.call.log</field>
+        <field name="priority">99</field>
+        <field name="arch" type="xml">
+            <search string="AI Call Analysis">
+                <field name="user_id"/>
+                <field name="lead_id"/>
+                <field name="ai_summary"/>
+                <filter name="flag" string="Needs review" domain="[('ai_flag', '=', True)]"/>
+                <filter name="low" string="Score 4 or less" domain="[('ai_score', '&gt;', 0), ('ai_score', '&lt;=', 4)]"/>
+                <filter name="hot" string="Interest: Hot" domain="[('ai_interest', '=', 'hot')]"/>
+                <filter name="failed" string="Failed" domain="[('ai_state', '=', 'failed')]"/>
+                <separator/>
+                <filter name="today" string="Today" domain="[('call_time', '&gt;=', context_today().strftime('%Y-%m-%d'))]"/>
+                <group>
+                    <filter name="g_user" string="Officer" context="{'group_by': 'user_id'}"/>
+                    <filter name="g_interest" string="Interest" context="{'group_by': 'ai_interest'}"/>
+                    <filter name="g_day" string="Day" context="{'group_by': 'call_time:day'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_lead_call_ai" model="ir.actions.act_window">
+        <field name="name">AI Call Analysis</field>
+        <field name="res_model">lead.call.log</field>
+        <field name="view_mode">list,pivot,form</field>
+        <field name="domain">[('ai_state', '=', 'done')]</field>
+        <field name="search_view_id" ref="view_lead_call_ai_search"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('view_lead_call_ai_list')}),
+            (0, 0, {'view_mode': 'pivot', 'view_id': ref('view_lead_call_ai_pivot')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('view_lead_call_ai_form')})]"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No analysed calls yet</p>
+            <p>Switch on AI call analysis in Settings. Connected calls with a recording show here with a summary and an officer score.</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_lead_call_ai" name="AI Call Analysis" parent="menu_leads_root"
+              action="action_lead_call_ai" sequence="8"
+              groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager,custom_leads_19.group_lead_branch_head,custom_leads_19.group_lead_team_lead"/>
+</odoo>

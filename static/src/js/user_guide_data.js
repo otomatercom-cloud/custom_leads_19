@@ -50,6 +50,23 @@ export const GUIDE = [
         intro: "The latest changes to Leads Management, newest first. Each item says where to find it.",
         items: [
             {
+                t: "AI call analysis", path: "Settings > AI call analysis, Leads Management > AI Call Analysis", who: ["Manager", "Team Lead"],
+                what: "Call recordings are transcribed and reviewed by AI. Each analysed call gets a summary, the student's real interest (Hot, Warm, Cold ...), an officer score from 1 to 10, the problems found and whether the lead quality matches the conversation. Switch it on or off in Settings.",
+                steps: [
+                    "Settings > Lead Management > AI call analysis: tick the switch and enter the speech-to-text key (OpenAI) and the AI key (Anthropic or OpenAI). Save.",
+                    "Every 10 minutes connected calls with a recording are analysed. Open Leads Management > AI Call Analysis to see the results.",
+                    "Use the filters Needs review, Score 4 or less and Interest: Hot. Switch to the pivot to compare officers by average score.",
+                    "To analyse one call at once open it in the lead's Call History and press Analyse with AI.",
+                ],
+                opts: [
+                    ["Only calls longer than", "Short calls are skipped. Default 30 seconds."],
+                    ["Maximum calls analysed per day", "Stops the cost. Default 100."],
+                    ["Only calls from the last (days)", "Old recordings are not analysed. Default 2 days."],
+                    ["Needs review", "Officer score 4 or less, or the quality set by the officer does not match the call."],
+                ],
+                tips: ["The recording audio is sent to the AI companies you chose and is charged by call minutes.", "The call must have a recording. If a call has none, upload it in Call History."],
+            },
+            {
                 t: "All Leads menu", path: "Leads Management > All Leads", who: ["Everyone"],
                 what: "Every lead in one list: all qualities, including Admission Done, Junk and Abroad, which are hidden from the Leads menu. You still see only the leads your role allows.",
                 tips: ["Use the Lead Quality filter or group by Lead Quality to find one kind of lead."],
