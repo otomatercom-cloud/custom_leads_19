@@ -53,3 +53,4 @@ from . import lead_merge
 from . import lead_daily_summary
 from . import lead_indexes
 from . import lead_user_guide
+from . import lead_call_button

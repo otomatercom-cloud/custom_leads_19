@@ -13,6 +13,12 @@
                         lead(s) selected for assignment.
                     </div>
 
+                    <div class="alert alert-warning" role="alert" invisible="team_id">
+                        Choose a <b>Team</b> first. The member list (Assign To) shows only the members of that team.
+                    </div>
+                    <div class="alert alert-warning" role="alert" invisible="not team_id or team_member_ids">
+                        This team has no active member with a user login. Add members in Lead Management Settings &gt; Master Data &gt; Teams.
+                    </div>
                     <group>
                         <group string="Team">
                             <field name="team_id" options="{'no_create': True}"/>
@@ -22,6 +28,8 @@
                             <field name="assign_mode" widget="radio"/>
                             <field name="employee_id"
                                    options="{'no_create': True}"
+                                   placeholder="Select a team first"
+                                   readonly="not team_id"
                                    invisible="assign_mode != 'specific_member'"
                                    required="assign_mode == 'specific_member'"/>
                         </group>

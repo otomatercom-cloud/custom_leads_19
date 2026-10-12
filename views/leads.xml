@@ -68,6 +68,8 @@
                             class="btn-success" invisible="state == 'qualified'"/>
                     <button name="act_not_connected" string="📵 Not Connected" type="object"
                             class="btn-warning" invisible="state == 'qualified'"/>
+                    <button name="action_call_lead" string="📞 Call" type="object" class="btn-success"
+                            invisible="state == 'lost'"/>
                     <!--<button name="action_voxbay_call" string="📞 Voxbay Call" type="object"/>
                     <button name="action_bonvoice_call" string="📞 BV Call" type="object"/>
                     <button name="action_open_funnel_wizard" string="🔵 Funnel" type="object"/>-->

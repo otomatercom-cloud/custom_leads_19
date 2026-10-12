@@ -142,6 +142,11 @@
                             </div>
                         </setting>
                     </block>
+                    <block title="Call button">
+                        <setting string="Call button uses" help="The 📞 Call button on a lead dials through this service and the call is recorded and logged by it.">
+                            <field name="call_provider"/>
+                        </setting>
+                    </block>
                     <block title="User guide">
                         <setting string="Show the user guide menu" help="Adds a 'Lead User Guide' main menu that explains every menu and option. Switch off to hide it.">
                             <field name="lead_guide_enabled"/>

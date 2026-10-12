@@ -4,7 +4,10 @@
         <field name="name">Lead User Guide</field>
         <field name="tag">custom_leads_19.user_guide</field>
     </record>
-    <menuitem id="menu_lead_user_guide" name="Lead User Guide" sequence="13"
-              web_icon="custom_leads_19,static/description/icon.png"
-              action="action_lead_user_guide" groups="custom_leads_19.group_lead_guide"/>
+    <!-- noupdate: the menu is switched on/off from Settings, an upgrade must not reset it -->
+    <data noupdate="1">
+        <menuitem id="menu_lead_user_guide" name="Lead User Guide" sequence="13"
+                  web_icon="custom_leads_19,static/description/icon.png"
+                  action="action_lead_user_guide" active="False"/>
+    </data>
 </odoo>
