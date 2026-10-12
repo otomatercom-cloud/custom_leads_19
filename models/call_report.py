@@ -167,7 +167,7 @@ class LeadCallLogReport(models.Model):
     # Main dashboard RPC
     # ------------------------------------------------------------------
     @api.model
-    def get_call_report(self, date_from=None, date_to=None):
+    def get_call_report(self, date_from=None, date_to=None, user_id=None):
         d_from, d_to, start_utc, end_utc = self._report_utc_bounds(date_from, date_to)
         scope, teams, allowed_user_ids = self._report_scope()
         assigned_map = self._assigned_counts(allowed_user_ids)
@@ -193,7 +193,7 @@ class LeadCallLogReport(models.Model):
                 'user_id': uid, 'name': uname,
                 'calls': 0, 'outgoing': 0, 'incoming': 0,
                 'connected': 0, 'not_connected': 0,
-                'duration_seconds': 0, 'lead_ids': set(),
+                'duration_seconds': 0, 'lead_ids': set(), 'conn_lead_ids': set(),
             })
             rec['calls'] += 1
             ctype = log.get('call_type')
@@ -205,6 +205,8 @@ class LeadCallLogReport(models.Model):
             rec['duration_seconds'] += dur
             if _is_connected(log.get('call_status'), dur):
                 rec['connected'] += 1
+                if log.get('lead_id'):
+                    rec['conn_lead_ids'].add(log['lead_id'][0])
             else:
                 rec['not_connected'] += 1
             if log.get('lead_id'):
@@ -214,7 +216,7 @@ class LeadCallLogReport(models.Model):
             base = per_user.get(uid) or {
                 'calls': 0, 'outgoing': 0, 'incoming': 0,
                 'connected': 0, 'not_connected': 0,
-                'duration_seconds': 0, 'lead_ids': set(),
+                'duration_seconds': 0, 'lead_ids': set(), 'conn_lead_ids': set(),
             }
             calls = base['calls']
             secs = base['duration_seconds']
@@ -236,6 +238,7 @@ class LeadCallLogReport(models.Model):
                 'connected': base['connected'],
                 'not_connected': base['not_connected'],
                 'unique_leads': called_leads,
+                'unique_connected': len(base['conn_lead_ids']),
                 'assigned': assigned,
                 'pending': pending,
                 'duration': _fmt_duration(secs),
@@ -294,6 +297,38 @@ class LeadCallLogReport(models.Model):
             all_rows.append(row)
         others.sort(key=lambda r: -r['calls'])
 
+        # ---- officer filter (dropdown lists everyone, filter keeps one) -
+        officers = sorted(({'user_id': r['user_id'], 'name': r['name']} for r in all_rows),
+                          key=lambda o: (o['name'] or '').lower())
+        uniq, seen_o = [], set()
+        for o in officers:
+            if o['user_id'] not in seen_o:
+                seen_o.add(o['user_id'])
+                uniq.append(o)
+        officers = uniq
+        try:
+            user_id = int(user_id) if user_id else 0
+        except (TypeError, ValueError):
+            user_id = 0
+        if user_id:
+            all_rows = [r for r in all_rows if r['user_id'] == user_id]
+            others = [r for r in others if r['user_id'] == user_id]
+            per_user = {k: v for k, v in per_user.items() if k == user_id}
+            kept = []
+            for tb in team_blocks:
+                rows = [r for r in tb['rows'] if r['user_id'] == user_id]
+                if not rows:
+                    continue
+                tb.update({
+                    'rows': rows,
+                    'total_calls': sum(r['calls'] for r in rows),
+                    'total_connected': sum(r['connected'] for r in rows),
+                    'total_assigned': sum(r['assigned'] for r in rows),
+                    'total_pending': sum(r['pending'] for r in rows),
+                })
+                kept.append(tb)
+            team_blocks = kept
+
         # ---- summary (distinct users, so TL in 2 teams not doubled) --
         total_calls = sum(r['calls'] for r in per_user.values())
         summary = {
@@ -303,6 +338,7 @@ class LeadCallLogReport(models.Model):
             'connected': sum(r['connected'] for r in per_user.values()),
             'not_connected': sum(r['not_connected'] for r in per_user.values()),
             'unique_leads': len(set().union(*[r['lead_ids'] for r in per_user.values()])) if per_user else 0,
+            'unique_connected': len(set().union(*[r['conn_lead_ids'] for r in per_user.values()])) if per_user else 0,
             'active_callers': len(per_user),
             'total_duration': _fmt_duration(
                 sum(r['duration_seconds'] for r in per_user.values())),
@@ -318,6 +354,8 @@ class LeadCallLogReport(models.Model):
             'date_to': fields.Date.to_string(d_to),
             'scope': scope,
             'summary': summary,
+            'officers': officers,
+            'user_id': user_id or False,
             'teams': team_blocks,
             'others': others,
         }

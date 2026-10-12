@@ -43,6 +43,13 @@
                     t-on-click="() => this.setQuickRange('month')">This Month</button>
         </div>
         <div class="o_crd_dates">
+            <label>Officer</label>
+            <select class="form-select form-select-sm" t-on-change="onOfficerChange">
+                <option value="" t-att-selected="!state.userId">All officers</option>
+                <t t-foreach="officers" t-as="o" t-key="o.user_id">
+                    <option t-att-value="o.user_id" t-att-selected="'' + o.user_id === '' + state.userId" t-esc="o.name"/>
+                </t>
+            </select>
             <label>From</label>
             <input type="date" class="form-control form-control-sm"
                    t-att-value="state.dateFrom" t-on-change="onDateFromChange"/>
@@ -102,7 +109,12 @@
             <div class="o_crd_card o_crd_card_leads">
                 <div class="o_crd_card_icon"><i class="fa fa-users"/></div>
                 <div class="o_crd_card_value" t-esc="summary.unique_leads"/>
-                <div class="o_crd_card_label">Called Leads</div>
+                <div class="o_crd_card_label">Unique Leads Called</div>
+            </div>
+            <div class="o_crd_card o_crd_card_connected">
+                <div class="o_crd_card_icon"><i class="fa fa-user-circle"/></div>
+                <div class="o_crd_card_value" t-esc="summary.unique_connected"/>
+                <div class="o_crd_card_label">Unique Leads Connected</div>
             </div>
             <div class="o_crd_card o_crd_card_pending">
                 <div class="o_crd_card_icon"><i class="fa fa-hourglass-half"/></div>
@@ -157,7 +169,8 @@
                                 <th class="o_crd_num">In</th>
                                 <th class="o_crd_num">Connected</th>
                                 <th class="o_crd_num">Not Conn.</th>
-                                <th class="o_crd_num">Called Leads</th>
+                                <th class="o_crd_num">Unique Leads</th>
+                                <th class="o_crd_num">Unique Conn.</th>
                                 <th class="o_crd_num">Pending</th>
                                 <th class="o_crd_num">Talk Time</th>
                                 <th class="o_crd_num">Avg</th>
@@ -185,6 +198,7 @@
                                     <td class="o_crd_num o_crd_green" t-esc="row.connected"/>
                                     <td class="o_crd_num o_crd_red" t-esc="row.not_connected"/>
                                     <td class="o_crd_num" t-esc="row.unique_leads"/>
+                                    <td class="o_crd_num o_crd_green" t-esc="row.unique_connected"/>
                                     <td class="o_crd_num o_crd_amber" t-esc="row.pending"/>
                                     <td class="o_crd_num" t-esc="row.duration"/>
                                     <td class="o_crd_num" t-esc="row.avg_duration"/>
@@ -224,7 +238,8 @@
                                 <th class="o_crd_num">In</th>
                                 <th class="o_crd_num">Connected</th>
                                 <th class="o_crd_num">Not Conn.</th>
-                                <th class="o_crd_num">Called Leads</th>
+                                <th class="o_crd_num">Unique Leads</th>
+                                <th class="o_crd_num">Unique Conn.</th>
                                 <th class="o_crd_num">Pending</th>
                                 <th class="o_crd_num">Talk Time</th>
                                 <th class="o_crd_num">Avg</th>
@@ -241,6 +256,7 @@
                                     <td class="o_crd_num o_crd_green" t-esc="row.connected"/>
                                     <td class="o_crd_num o_crd_red" t-esc="row.not_connected"/>
                                     <td class="o_crd_num" t-esc="row.unique_leads"/>
+                                    <td class="o_crd_num o_crd_green" t-esc="row.unique_connected"/>
                                     <td class="o_crd_num o_crd_amber" t-esc="row.pending"/>
                                     <td class="o_crd_num" t-esc="row.duration"/>
                                     <td class="o_crd_num" t-esc="row.avg_duration"/>
@@ -256,6 +272,7 @@
             Period: <t t-esc="state.dateFrom"/> → <t t-esc="state.dateTo"/>
             · Click any row to open the underlying call logs
             · Connected = answered status or duration &gt; 0
+            · Unique Leads = different leads called (repeat calls to one lead count once)
         </div>
     </t>
 </div>

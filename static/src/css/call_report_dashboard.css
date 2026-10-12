@@ -271,3 +271,4 @@
     .o_crd_header h1 { font-size: 20px; }
     .o_crd_dates input[type="date"] { width: 130px; }
 }
+.o_crd_dates select { width: 190px; }

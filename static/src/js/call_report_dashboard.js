@@ -23,6 +23,7 @@ export class CallReportDashboard extends Component {
             loading: true,
             dateFrom: today,
             dateTo: today,
+            userId: "",
             activeRange: "today",
             data: null,
             error: "",
@@ -38,7 +39,7 @@ export class CallReportDashboard extends Component {
             this.state.data = await this.orm.call(
                 "lead.call.log",
                 "get_call_report",
-                [this.state.dateFrom, this.state.dateTo]
+                [this.state.dateFrom, this.state.dateTo, this.state.userId ? parseInt(this.state.userId) : false]
             );
             // Sync back normalized dates from server
             this.state.dateFrom = this.state.data.date_from;
@@ -49,6 +50,15 @@ export class CallReportDashboard extends Component {
         } finally {
             this.state.loading = false;
         }
+    }
+
+    onOfficerChange(ev) {
+        this.state.userId = ev.target.value;
+        this.loadData();
+    }
+
+    get officers() {
+        return (this.state.data && this.state.data.officers) || [];
     }
 
     onDateFromChange(ev) {
