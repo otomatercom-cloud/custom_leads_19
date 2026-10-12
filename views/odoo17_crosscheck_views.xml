@@ -8,8 +8,9 @@
                 <div class="alert alert-info" role="alert">
                     Takes the Odoo 19 leads created in the date range, finds the same phone number in
                     Odoo 17 and <b>adds what Odoo 19 is missing</b> (responses, call logs, follow-ups,
-                    lead quality, assignment history ...). Nothing is removed or overwritten and the lead
-                    owner never changes. Click <b>Preview</b> first to see the numbers.
+                    lead quality, assignment history ...). Nothing is removed. The <b>Admission Officer</b>
+                    and <b>Lead Quality</b> can also be taken from Odoo 17 (choose below).
+                    Click <b>Preview</b> first to see the numbers.
                 </div>
                 <group>
                     <group string="Odoo 19 leads created between">
@@ -21,7 +22,8 @@
                     <group string="What to add from Odoo 17">
                         <field name="copy_children"/>
                         <field name="fill_fields"/>
-                        <field name="copy_quality"/>
+                        <field name="quality_mode"/>
+                        <field name="owner_mode"/>
                         <field name="copy_chatter"/>
                         <field name="connection_info"/>
                     </group>

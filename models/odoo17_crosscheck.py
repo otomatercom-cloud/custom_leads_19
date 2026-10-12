@@ -3,7 +3,7 @@
 
 Anything Odoo 17 has and Odoo 19 does not - responses, call logs, follow-ups, quality history,
 assignment history, empty lead fields, (optionally) chatter - is ADDED to the Odoo 19 lead.
-Nothing is ever removed or overwritten in Odoo 19, and the lead owner is never changed."""
+Nothing is ever removed. Optionally the Admission Officer and Lead Quality are also taken from Odoo 17."""
 import logging
 import re as _re
 import time as _time
@@ -80,9 +80,9 @@ class OtmLeadsOdoo17Crosscheck(models.TransientModel):
     date_to = fields.Date(string='To Date', required=True,
                           default=lambda s: fields.Date.context_today(s))
     only_unlinked = fields.Boolean(
-        string='Skip leads imported from Odoo 17', default=True,
-        help='Leads that the Odoo 17 import already created have their history. Tick this off to '
-             'check them too (they are matched by phone number as well).')
+        string='Skip leads imported from Odoo 17', default=False,
+        help='Tick to check only leads created in Odoo 19. Leave off to include leads that the '
+             'Odoo 17 import / sync created (they are matched by their Odoo 17 id and phone number).')
     recheck = fields.Boolean(
         string='Check again leads already cross-checked', default=False,
         help='Leads cross-checked before are skipped unless this is ticked.')
@@ -93,10 +93,19 @@ class OtmLeadsOdoo17Crosscheck(models.TransientModel):
     fill_fields = fields.Boolean(
         string='Fill empty lead fields (course, place, email ...)', default=True,
         help='Only fields that are empty in Odoo 19 are filled. Nothing is overwritten.')
-    copy_quality = fields.Boolean(
-        string='Copy Lead Quality when Odoo 19 is still "New"', default=True,
-        help='If the Odoo 19 lead is still New and Odoo 17 has a worked quality (Hot, Warm, RNR ...), '
-             'the Odoo 17 quality is added. A quality already worked in Odoo 19 is never changed.')
+    quality_mode = fields.Selection(
+        [('new', 'Only when Odoo 19 lead is still "New"'),
+         ('always', 'Always take Lead Quality from Odoo 17'),
+         ('never', 'Do not change Lead Quality')],
+        string='Lead Quality', default='always', required=True,
+        help='Odoo 17 quality = the quality of the newest matching Odoo 17 lead (New is ignored).')
+    owner_mode = fields.Selection(
+        [('empty', 'Only when Odoo 19 lead has no Admission Officer'),
+         ('always', 'Always take Admission Officer from Odoo 17'),
+         ('never', 'Do not change Admission Officer')],
+        string='Admission Officer', default='always', required=True,
+        help='The officer is matched to the Odoo 19 employee by name. If no employee matches, the '
+             'lead keeps its current officer.')
     connection_info = fields.Char(readonly=True)
     result_text = fields.Text(string='Result', readonly=True)
 
@@ -133,16 +142,22 @@ class OtmLeadsOdoo17Crosscheck(models.TransientModel):
         """{local lead id: [remote lead ids]} by the last 10 digits of the phone number."""
         phones = {l.id: _last10(l.phone_number) for l in leads}
         wanted = sorted({p for p in phones.values() if len(p) >= 8})
-        if not wanted:
-            return {}
-        dom = [('phone_number', 'ilike', p) for p in wanted]
-        dom = ['|'] * (len(dom) - 1) + dom
-        rows = call('leads.logic', 'search_read', dom, fields=['phone_number'],
-                    context={'active_test': False})
         by_phone = {}
-        for r in rows:
-            by_phone.setdefault(_last10(r.get('phone_number')), []).append(r['id'])
-        return {lid: by_phone[p] for lid, p in phones.items() if p in by_phone}
+        if wanted:
+            dom = [('phone_number', 'ilike', p) for p in wanted]
+            dom = ['|'] * (len(dom) - 1) + dom
+            rows = call('leads.logic', 'search_read', dom, fields=['phone_number'],
+                        context={'active_test': False})
+            for r in rows:
+                by_phone.setdefault(_last10(r.get('phone_number')), []).append(r['id'])
+        out = {}
+        for l in leads:
+            ids = list(by_phone.get(phones[l.id], []))
+            if l.odoo17_lead_id:                       # linked by the import / sync: use it first
+                ids = [l.odoo17_lead_id] + [i for i in ids if i != l.odoo17_lead_id]
+            if ids:
+                out[l.id] = ids
+        return out
 
     def _run(self, dry):
         self.ensure_one()
@@ -159,7 +174,7 @@ class OtmLeadsOdoo17Crosscheck(models.TransientModel):
             if d.get('store') and (f in local_fields or f in ('lead_owner', 'write_date', 'create_date'))
             and d.get('type') not in ('one2many', 'binary', 'html'))
         ctx = {'cache': {}, 'sources_created': 0, 'campaigns_created': 0, 'warnings': []}
-        stats = {'checked': 0, 'matched': 0, 'not_found': 0, 'fields_filled': 0, 'quality': 0}
+        stats = {'checked': 0, 'matched': 0, 'not_found': 0, 'fields_filled': 0, 'quality': 0, 'owner': 0}
         added = {k: 0 for k in LABELS}
         touched = []
         t0 = _time.time()
@@ -208,9 +223,10 @@ class OtmLeadsOdoo17Crosscheck(models.TransientModel):
             'Found in Odoo 17: %d   not in Odoo 17: %d' % (stats['matched'], stats['not_found']),
             ('Would add' if dry else 'Added') + ': ' + (', '.join(
                 '%d %s' % (n, LABELS[k]) for k, n in added.items() if n) or 'nothing missing'),
-            '%s empty fields: %d   lead quality %s: %d' % (
+            '%s empty fields: %d   lead quality %s: %d   admission officer %s: %d' % (
                 'Would fill' if dry else 'Filled', stats['fields_filled'],
-                'would be copied' if dry else 'copied', stats['quality']),
+                'would change' if dry else 'changed', stats['quality'],
+                'would change' if dry else 'changed', stats['owner']),
         ]
         if remaining:
             lines.append('%d lead(s) not reached (time limit) - click again to continue%s.' % (
@@ -232,13 +248,15 @@ class OtmLeadsOdoo17Crosscheck(models.TransientModel):
         remote_rows = sorted((rows[r] for r in rids if r in rows), key=lambda r: r.get('write_date') or '',
                              reverse=True)          # newest Odoo 17 record first
 
-        # ---- empty fields + quality ------------------------------------
-        if self.fill_fields or self.copy_quality:
-            fill, quality = {}, False
+        # ---- empty fields + quality + admission officer ------------------
+        if self.fill_fields or self.quality_mode != 'never' or self.owner_mode != 'never':
+            fill, quality, owner = {}, False, False
             for row in remote_rows:
                 vals = helper._convert_vals(call, row, rfields, ctx)
-                if self.copy_quality and not quality and vals.get('lead_quality') not in (None, False, 'new'):
+                if not quality and vals.get('lead_quality') not in (None, False, 'new'):
                     quality = vals['lead_quality']
+                if not owner and self.owner_mode != 'never' and row.get('lead_owner'):
+                    owner = helper._map_many2one(call, 'hr.employee', row['lead_owner'][0], ctx) or False
                 if self.fill_fields:
                     for k, v in vals.items():
                         if k in NO_FILL or k in fill:
@@ -252,11 +270,19 @@ class OtmLeadsOdoo17Crosscheck(models.TransientModel):
                 stats['fields_filled'] += len(fill)
                 changes += len(fill)
                 notes.append('fields: ' + ', '.join(sorted(fill)))
-            if quality and lead.lead_quality in (False, 'new'):
+            if quality and quality != lead.lead_quality and (
+                    self.quality_mode == 'always'
+                    or (self.quality_mode == 'new' and lead.lead_quality in (False, 'new'))):
                 stats['quality'] += 1
                 changes += 1
-                notes.append('quality: %s' % quality)
+                notes.append('quality: %s -> %s' % (lead.lead_quality or '-', quality))
                 fill['lead_quality'] = quality
+            if owner and owner != lead.lead_owner.id and (
+                    self.owner_mode == 'always' or (self.owner_mode == 'empty' and not lead.lead_owner)):
+                stats['owner'] += 1
+                changes += 1
+                notes.append('officer: %s -> %s' % (lead.lead_owner.name or '-', env['hr.employee'].sudo().browse(owner).name))
+                fill['lead_owner'] = owner
             if fill and not dry:
                 lead.write(fill)
 
