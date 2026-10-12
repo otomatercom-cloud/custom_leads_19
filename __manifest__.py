@@ -1,6 +1,6 @@
 {
     'name': 'Leads Management',
-    'version': '19.0.3.4.0',
+    'version': '19.0.3.4.1',
     'summary': 'Custom Leads Management Module',
     'description': """
         Standalone Leads Management module for Odoo 19.
@@ -74,6 +74,7 @@
         'views/admission_menu_views.xml',
         'data/odoo17_import_sequence.xml',
         'views/odoo17_import_views.xml',
+        'views/menu_reorganize.xml',
         'data/odoo17_sync_cron.xml',
         'data/pool_cron.xml',
         'data/odoo17_import_cron.xml',
