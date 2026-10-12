@@ -20,8 +20,10 @@ class LeadsLogicPoolRules(models.Model):
     auto_reassign_count = fields.Integer(string='Auto Reassignments', default=0, copy=False, readonly=True)
 
     def _pool_rule(self):
-        rule = self.env['lead.assignment.rule'].sudo().search(
-            [('active', '=', True)], order='sequence, id', limit=1)
+        rules = self.env['lead.assignment.rule'].sudo().search([('active', '=', True)], order='sequence, id')
+        lead = self[:1]
+        rule = next((r for r in rules
+                     if r.assignment_type != 'attendance_pool' or not lead or r._pool_accepts(lead)), False)
         return rule if rule and rule.assignment_type == 'attendance_pool' else False
 
     def write(self, vals):
@@ -115,7 +117,7 @@ class LeadAssignmentRulePoolRules(models.Model):
             ('lead_quality', 'in', list(UNWORKED)),
             ('reassign_date', '>=', today_start - timedelta(days=1)), ('reassign_date', '<', today_start),
             ('auto_reassign_count', '<', rule.pool_max_reassigns),
-        ], order='reassign_date asc', limit=200)
+        ] + ([('leads_source', 'in', rule.pool_source_ids.ids)] if rule.pool_source_ids else []), order='reassign_date asc', limit=200)
         moved = 0
         for lead in leads:
             calls = len(lead.call_log_ids.filtered(lambda c: c.call_time and c.call_time >= lead.reassign_date))

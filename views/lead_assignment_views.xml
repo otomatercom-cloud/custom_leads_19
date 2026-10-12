@@ -78,6 +78,8 @@
                                 <field name="pool_require_checked_in"/>
                                 <field name="team_ids" widget="many2many_tags" options="{'no_create': True}"
                                        string="Only these teams (empty = all)"/>
+                                <field name="pool_source_ids" widget="many2many_tags"
+                                       options="{'no_create': True}"/>
                             </group>
                             <group string="Working hours">
                                 <field name="use_window"/>

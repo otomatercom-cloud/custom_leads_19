@@ -112,11 +112,10 @@ class LeadsLogicAssignment(models.Model):
 
     def _auto_assign_lead(self, lead):
         """Find the first active rule and run assignment."""
-        rule = self.env['lead.assignment.rule'].search(
-            [('active', '=', True)],
-            order='sequence, id',
-            limit=1,
-        )
+        rules = self.env['lead.assignment.rule'].search([('active', '=', True)], order='sequence, id')
+        # a pool rule limited to some lead sources is skipped for other sources
+        rule = next((r for r in rules
+                     if r.assignment_type != 'attendance_pool' or r._pool_accepts(lead)), False)
         if not rule:
             return
 

@@ -108,6 +108,11 @@ class LeadAssignmentRule(models.Model):
         string='Pick up unassigned leads from last (days)', default=7,
         help="Leads that arrived outside working hours (or when nobody was signed in) are assigned "
              "as soon as the pool opens. 0 = no limit.")
+    pool_source_ids = fields.Many2many(
+        'leads.sources', 'lead_assign_rule_pool_source_rel', 'rule_id', 'source_id',
+        string='Only these lead sources (empty = all)',
+        help="The pool takes only leads from the selected lead sources. Leave empty for every source. "
+             "Leads from other sources are left to the next assignment rule, or stay unassigned.")
     pool_last_employee_id = fields.Many2one('hr.employee', string='Last assigned officer', readonly=True, copy=False)
     pool_preview = fields.Text(string='Pool right now', compute='_compute_pool_preview')
     pending_count = fields.Integer(string='Waiting leads', compute='_compute_pool_preview')
@@ -287,7 +292,14 @@ class LeadAssignmentRule(models.Model):
         self.invalidate_recordset(['pool_last_employee_id'])
         return self.env['hr.employee'].browse(nxt)
 
+    def _pool_accepts(self, lead):
+        """True when this pool rule takes the lead's source (no source selected = every source)."""
+        self.ensure_one()
+        return not self.pool_source_ids or lead.leads_source in self.pool_source_ids
+
     def _assign_pool(self, lead):
+        if not self._pool_accepts(lead):
+            return False, False
         eligible = self._pool_eligible()
         excluded = self.env.context.get('pool_exclude_employee_ids') or []
         if excluded:
@@ -304,6 +316,8 @@ class LeadAssignmentRule(models.Model):
     def _pool_pending_leads(self, limit=None):
         self.ensure_one()
         domain = [('lead_owner', '=', False), ('state', '!=', 'lost')]
+        if self.pool_source_ids:
+            domain.append(('leads_source', 'in', self.pool_source_ids.ids))
         if self.backlog_days:
             domain.append(('create_date', '>=', fields.Datetime.now() - timedelta(days=self.backlog_days)))
         return self.env['leads.logic'].search(domain, order='create_date asc, id asc', limit=limit)
@@ -333,11 +347,11 @@ class LeadAssignmentRule(models.Model):
     @api.model
     def cron_assign_pool(self):
         """Runs every few minutes: when the pool is open, assign everything that is waiting."""
-        rule = self.search([('active', '=', True)], order='sequence, id', limit=1)
-        if rule and rule.assignment_type == 'attendance_pool':
+        for rule in self.search([('active', '=', True), ('assignment_type', '=', 'attendance_pool')],
+                                order='sequence, id'):
             n = rule.run_pool()
             if n:
-                _logger.info('Pool round robin: assigned %s waiting lead(s).', n)
+                _logger.info('Pool round robin (%s): assigned %s waiting lead(s).', rule.name, n)
 
     def action_pool_run_now(self):
         self.ensure_one()
@@ -349,7 +363,7 @@ class LeadAssignmentRule(models.Model):
 
     @api.depends('assignment_type', 'pool_mode', 'use_window', 'window_start', 'window_end',
                  'window_tz', 'pool_require_attendance', 'pool_require_checked_in', 'team_ids',
-                 'backlog_days', 'include_team_leads')
+                 'backlog_days', 'include_team_leads', 'pool_source_ids')
     def _compute_pool_preview(self):
         for rule in self:
             if rule.assignment_type != 'attendance_pool' or not rule.id:
