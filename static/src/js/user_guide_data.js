@@ -148,6 +148,17 @@ export const GUIDE = [
                 ],
             },
             {
+                t: "Call button", path: "Settings > Call button", who: ["Manager", "Super Admin"],
+                what: "Decides what the Call button on a lead does.",
+                opts: [
+                    ["Automatic", "Bonvoice or Voxbay if the officer has an agent / extension number, otherwise the phone app."],
+                    ["Softphone or phone app", "Opens MicroSIP, Zoiper or the phone's dialler with the number and starts the call timer. The duration is saved on the call log."],
+                    ["Voxbay / Bonvoice", "Calls through the cloud service, which also records the call."],
+                    ["Phone app link", "tel: works with most phones and softphones. Use sip: if MicroSIP or Zoiper is the handler for sip links."],
+                ],
+                tips: ["On Windows, set MicroSIP as the default app for tel: or sip: links the first time the browser asks."],
+            },
+            {
                 t: "Meta lead ads", path: "Settings > Meta", who: ["Super Admin"],
                 what: "Connects Facebook and Instagram lead forms so leads arrive in Odoo automatically.",
                 opts: [["Meta Verify Token", "The same token you enter in the Meta webhook setup."], ["Meta Page Access Token", "Lets Odoo read the lead details from Meta."]],

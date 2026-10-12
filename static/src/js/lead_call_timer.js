@@ -19,6 +19,7 @@ class LeadCallTimer extends Component {
             logId:          null,
             leadName:       p.lead_name || "Lead",
             phone:          p.phone     || "",
+            scheme:         p.dial_scheme || "tel",
             leadId:         p.lead_id,
         });
 
@@ -32,7 +33,7 @@ class LeadCallTimer extends Component {
         onMounted(() => {
             // Open phone dialler
             if (this.state.phone) {
-                window.open("tel:" + this.state.phone.replace(/\s/g, ""));
+                window.open(this.state.scheme + ":" + this.state.phone.replace(/\s/g, ""));
             }
             // Start stopwatch
             this._timerInterval = setInterval(() => {

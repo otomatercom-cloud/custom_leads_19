@@ -136,7 +136,7 @@ class LeadUrgentAlert(models.Model):
             act = lead.action_bonvoice_call()
         elif provider == 'voxbay':
             act = lead.action_voxbay_call()
-        else:
+        else:                                   # softphone / phone app
             act = lead.action_kanban_start_call()
         return self._web_action(act)
 

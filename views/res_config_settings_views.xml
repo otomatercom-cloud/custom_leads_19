@@ -155,6 +155,10 @@
                         <setting string="Call button uses" help="The 📞 Call button on a lead dials through this service and the call is recorded and logged by it.">
                             <field name="call_provider"/>
                         </setting>
+                        <setting string="Phone app link" help="Used by the Softphone option. Use sip: if MicroSIP or Zoiper is set as the handler for sip links, otherwise tel:."
+                                 invisible="call_provider not in ('softphone', 'auto')">
+                            <field name="dial_scheme"/>
+                        </setting>
                     </block>
                     <block title="User guide">
                         <setting string="Show the user guide menu" help="Adds a 'Lead User Guide' main menu that explains every menu and option. Switch off to hide it.">

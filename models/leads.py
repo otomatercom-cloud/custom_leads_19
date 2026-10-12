@@ -954,6 +954,7 @@ class LeadsForm(models.Model):
                 'params': {
                     'phone': phone,
                     'lead_id': self.id,
+                    'dial_scheme': self.env['ir.config_parameter'].sudo().get_param('custom_leads_19.dial_scheme') or 'tel',
                     'wizard_action': wizard_action,
                 },
             }
@@ -966,6 +967,7 @@ class LeadsForm(models.Model):
                 'lead_name': self.name,
                 'phone': self.phone_number or '',
                 'current_quality': self.lead_quality or 'new',
+                'dial_scheme': self.env['ir.config_parameter'].sudo().get_param('custom_leads_19.dial_scheme') or 'tel',
             },
         }
 

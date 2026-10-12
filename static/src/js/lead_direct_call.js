@@ -20,7 +20,7 @@ class LeadDirectCall extends Component {
         onMounted(async () => {
             // 1. Fire tel: — OS handles as phone dialler, does NOT navigate current page
             if (p.phone) {
-                window.open("tel:" + p.phone, "_blank");
+                window.open((p.dial_scheme || "tel") + ":" + p.phone, "_blank");
             }
 
             // 2. Navigate to the lead form first so wizard opens on top of it
