@@ -100,7 +100,8 @@ class LeadAssignmentRulePoolRules(models.Model):
                 continue
             try:
                 self.env['bus.bus'].sudo()._sendone(
-                    partner, 'simple_notification', {'title': title, 'message': msg, 'type': kind, 'sticky': True})
+                    partner, 'lead_reassign_notice',
+                    {'title': title, 'message': msg, 'type': kind, 'lead_id': lead.id, 'open': emp == new})
             except Exception:  # noqa: BLE001 - a notification problem must never block the reassignment
                 _logger.exception('Pool reassign popup failed')
 

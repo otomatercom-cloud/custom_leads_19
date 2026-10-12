@@ -32,8 +32,8 @@ function beep() {
 }
 
 export const urgentLeadService = {
-    dependencies: ["bus_service", "orm", "action"],
-    start(env, { bus_service, orm, action }) {
+    dependencies: ["bus_service", "orm", "action", "notification"],
+    start(env, { bus_service, orm, action, notification }) {
         const state = reactive({ alerts: [] });
         let disabled = false;
         let failures = 0;
@@ -73,6 +73,23 @@ export const urgentLeadService = {
         }
 
         bus_service.subscribe("urgent_lead", (payload) => add(payload, true));
+        bus_service.subscribe("lead_reassign_notice", (n) => {
+            if (!n) {
+                return;
+            }
+            const buttons = n.open && n.lead_id ? [{
+                name: "Open lead",
+                primary: true,
+                onClick: () => action.doAction({
+                    type: "ir.actions.act_window", res_model: "leads.logic", res_id: n.lead_id,
+                    view_mode: "form", views: [[false, "form"]], target: "current",
+                }),
+            }] : [];
+            notification.add(n.message, {
+                title: n.title, type: n.type || "warning", sticky: false,
+                autocloseDelay: buttons.length ? 15000 : 8000, buttons,
+            });
+        });
         bus_service.subscribe("urgent_lead_close", (payload) => remove(payload && payload.id));
         try {
             bus_service.start();
@@ -98,6 +115,7 @@ export const urgentLeadService = {
                     type: "ir.actions.act_window",
                     res_model: "leads.logic",
                     res_id: a.lead_id,
+                    view_mode: "form",
                     views: [[false, "form"]],
                     target: "current",
                 });

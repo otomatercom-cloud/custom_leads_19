@@ -131,9 +131,23 @@ class LeadUrgentAlert(models.Model):
         alert.snooze_until = fields.Datetime.now() + timedelta(minutes=15)
         lead = self.env['leads.logic'].browse(alert.lead_id.id)
         company = self.env.company
-        if company.bonvoice_username and self.env.user.bonvoice_agent_number:
-            return lead.action_bonvoice_call()
-        return lead.action_kanban_start_call()
+        provider = lead._call_provider_for_user()
+        if provider == 'bonvoice':
+            act = lead.action_bonvoice_call()
+        elif provider == 'voxbay':
+            act = lead.action_voxbay_call()
+        else:
+            act = lead.action_kanban_start_call()
+        return self._web_action(act)
+
+    @api.model
+    def _web_action(self, act):
+        """Actions returned through a plain RPC call (not a button) need `views`, or the web client
+        fails with "Cannot read properties of undefined (reading 'map')"."""
+        if isinstance(act, dict) and act.get('type') == 'ir.actions.act_window' and not act.get('views'):
+            modes = (act.get('view_mode') or 'form').split(',')
+            act = dict(act, views=[(act.get('view_id') and act['view_id'][0] or False, m.strip()) for m in modes])
+        return act
 
 
 class LeadsLogicUrgent(models.Model):

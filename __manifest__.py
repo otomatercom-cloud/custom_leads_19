@@ -1,6 +1,6 @@
 {
     'name': 'Leads Management',
-    'version': '19.0.3.6.4',
+    'version': '19.0.3.6.6',
     'summary': 'Custom Leads Management Module',
     'description': """
         Standalone Leads Management module for Odoo 19.
