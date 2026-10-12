@@ -26,6 +26,17 @@ class ResConfigSettingsLeadRules(models.TransientModel):
         string='Coaching pass score (%)', config_parameter=P_PASS, default=DEFAULTS[P_PASS],
         help='Officers whose average call review score is below this show as "Needs help".')
 
+    score_w_fresh = fields.Integer(string='Priority: new lead', config_parameter='custom_leads_19.score_w_fresh',
+                                   default=15, help='Points (of 100) for how recently the lead arrived.')
+    score_w_calls = fields.Integer(string='Priority: not called yet', config_parameter='custom_leads_19.score_w_calls',
+                                   default=10, help='Full points for a lead with no calls, fewer with every call.')
+    score_w_source = fields.Integer(string='Priority: lead source', config_parameter='custom_leads_19.score_w_source',
+                                    default=8, help='Points for sources that turn into admissions most often.')
+    score_w_course = fields.Integer(string='Priority: course', config_parameter='custom_leads_19.score_w_course',
+                                    default=4, help='Points for courses that turn into admissions most often.')
+    score_w_due = fields.Integer(string='Priority: follow-up due', config_parameter='custom_leads_19.score_w_due',
+                                 default=3, help='Points when a follow-up is due today or overdue.')
+
 
 class LeadsLogicRuleParams(models.AbstractModel):
     _name = 'otm.lead.rule.params'

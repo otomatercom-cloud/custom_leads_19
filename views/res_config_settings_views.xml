@@ -100,6 +100,26 @@
                             <field name="coaching_pass_score"/>
                         </setting>
                     </block>
+                    <block title="Call priority (Call next list)">
+                        <setting string="Points per lead quality" help="Hot, Warm, Cold ... each quality has its own points. The biggest number is called first.">
+                            <button name="%(custom_leads_19.action_lead_score_quality)d" type="action" string="Open points table" class="btn-link" icon="oi-arrow-right"/>
+                        </setting>
+                        <setting string="New lead" help="Points for how recently the lead arrived.">
+                            <field name="score_w_fresh"/>
+                        </setting>
+                        <setting string="Not called yet" help="Full points when there are no calls, fewer with every call.">
+                            <field name="score_w_calls"/>
+                        </setting>
+                        <setting string="Lead source" help="Sources with a better admission rate get more.">
+                            <field name="score_w_source"/>
+                        </setting>
+                        <setting string="Course" help="Courses with a better admission rate get more.">
+                            <field name="score_w_course"/>
+                        </setting>
+                        <setting string="Follow-up due" help="Added when a follow-up is due today or overdue.">
+                            <field name="score_w_due"/>
+                        </setting>
+                    </block>
                     <block title="WhatsApp after a missed call">
                         <setting string="Send automatically" help="When an outgoing call is not answered, a WhatsApp message goes to the lead (one per lead per day). Needs a WhatsApp sender module to be connected.">
                             <field name="wa_missed_enabled"/>

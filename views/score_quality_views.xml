@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_lead_score_quality_list" model="ir.ui.view">
+        <field name="name">lead.score.quality.list</field>
+        <field name="model">lead.score.quality</field>
+        <field name="arch" type="xml">
+            <list editable="bottom" string="Call priority points">
+                <header>
+                    <button name="action_recalc" type="object" string="Recalculate scores now" display="always"/>
+                </header>
+                <field name="quality"/>
+                <field name="points"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_lead_score_quality" model="ir.actions.act_window">
+        <field name="name">Call priority points</field>
+        <field name="res_model">lead.score.quality</field>
+        <field name="view_mode">list</field>
+    </record>
+</odoo>

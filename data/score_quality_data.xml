@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo noupdate="1">
+    <record id="score_q_hot" model="lead.score.quality"><field name="quality">hot</field><field name="points">60</field></record>
+    <record id="score_q_waiting_for_admission" model="lead.score.quality"><field name="quality">waiting_for_admission</field><field name="points">56</field></record>
+    <record id="score_q_warm" model="lead.score.quality"><field name="quality">warm</field><field name="points">50</field></record>
+    <record id="score_q_follow_up" model="lead.score.quality"><field name="quality">follow_up</field><field name="points">46</field></record>
+    <record id="score_q_new" model="lead.score.quality"><field name="quality">new</field><field name="points">44</field></record>
+    <record id="score_q_first_attempt" model="lead.score.quality"><field name="quality">first_attempt</field><field name="points">42</field></record>
+    <record id="score_q_call_later" model="lead.score.quality"><field name="quality">call_later</field><field name="points">38</field></record>
+    <record id="score_q_cold" model="lead.score.quality"><field name="quality">cold</field><field name="points">28</field></record>
+    <record id="score_q_may_be_later" model="lead.score.quality"><field name="quality">may_be_later</field><field name="points">20</field></record>
+    <record id="score_q_not_responding" model="lead.score.quality"><field name="quality">not_responding</field><field name="points">15</field></record>
+    <record id="score_q_not_reachable" model="lead.score.quality"><field name="quality">not_reachable</field><field name="points">10</field></record>
+    <record id="score_q_bad_lead" model="lead.score.quality"><field name="quality">bad_lead</field><field name="points">8</field></record>
+    <record id="score_q_crash_lead" model="lead.score.quality"><field name="quality">crash_lead</field><field name="points">8</field></record>
+</odoo>

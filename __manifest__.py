@@ -1,6 +1,6 @@
 {
     'name': 'Leads Management',
-    'version': '19.0.3.4.5',
+    'version': '19.0.3.5.0',
     'summary': 'Custom Leads Management Module',
     'description': """
         Standalone Leads Management module for Odoo 19.
@@ -55,6 +55,7 @@
         'views/kanban_quick_wizard_views.xml',
         'views/lead_admission_wizard_view.xml',
         'views/voxbay_call_wizard_views.xml',
+        'views/score_quality_views.xml',
         'views/res_config_settings_views.xml',
         'views/res_users_views.xml',
         'views/lead_daily_queue_views.xml',
@@ -69,6 +70,7 @@
         'views/call_report_views.xml',
         'views/lead_coaching_views.xml',
         'views/lead_score_views.xml',
+        'data/score_quality_data.xml',
         'views/lead_missed_call_wa_views.xml',
         'views/lead_merge_views.xml',
         'views/admission_menu_views.xml',

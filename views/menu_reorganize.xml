@@ -20,6 +20,9 @@
     <menuitem id="menu_lead_set_master" name="Master Data" parent="menu_lead_settings_root" sequence="3"/>
     <menuitem id="menu_lead_set_access" name="Access" parent="menu_lead_settings_root" sequence="4"/>
     <menuitem id="menu_lead_set_tools" name="Tools" parent="menu_lead_settings_root" sequence="5"/>
+    <menuitem id="menu_lead_score_quality" name="Call priority points" parent="menu_lead_set_assign"
+              action="action_lead_score_quality" sequence="6"
+              groups="custom_leads_19.group_lead_manager,custom_leads_19.group_super_admin"/>
     <record id="menu_lead_assignment_rules" model="ir.ui.menu">
         <field name="parent_id" ref="menu_lead_set_assign"/><field name="sequence">1</field></record>
     <record id="menu_lead_source_assignment_rules" model="ir.ui.menu">
