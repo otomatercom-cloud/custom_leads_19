@@ -117,10 +117,21 @@ class VoxbayWebhookController(http.Controller):
     @staticmethod
     def _find_user_by_extension(env, agent):
         agent = (agent or '').strip()
+        Users = env['res.users'].sudo()
         if not agent:
-            return env['res.users'].sudo().browse()
-        return env['res.users'].sudo().search(
-            [('voxbay_user_no', '=', agent)], limit=1)
+            return Users.browse()
+        user = Users.search([('voxbay_user_no', '=', agent)], limit=1)
+        if not user:
+            # extension may arrive like 'abc*017_452' or with a prefix / leading zeros
+            cands = {agent.lstrip('0')}
+            for sep in ('*', '_'):
+                if sep in agent:
+                    tail = agent.rsplit(sep, 1)[-1].strip()
+                    cands |= {tail, tail.lstrip('0')}
+            cands = [c for c in cands if c]
+            if cands:
+                user = Users.search([('voxbay_user_no', 'in', cands)], limit=1)
+        return user
 
     @staticmethod
     def _log_by_uuid(env, call_uuid):

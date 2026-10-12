@@ -171,10 +171,13 @@ class BonvoiceWebhookController(http.Controller):
         user = Users.browse()
         if agent_param.isdigit():
             user = Users.browse(int(agent_param)).exists()
-        if not user and agent_ext:
-            import re
-            clean = re.sub(r'\D', '', agent_ext) or agent_ext.strip()
-            cands = {c for c in (clean, clean.lstrip('0')) if c}
+        import re
+        # incoming: the destination can be the company number, so also try the agent fields
+        for ext in (agent_ext, g(data, 'agentnumber', 'agent_number', 'agent', 'extension', 'answeredby')):
+            if user or not ext:
+                continue
+            clean = re.sub(r'\D', '', ext) or ext.strip()
+            cands = {c for c in (clean, clean.lstrip('0'), clean[-10:]) if c}
             user = Users.search([('bonvoice_agent_number', 'in', list(cands))], limit=1)
 
         log = CallLog.browse()

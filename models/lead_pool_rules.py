@@ -206,18 +206,30 @@ class LeadCallLogPoolRules(models.Model):
         return res
 
     def _incoming_assign_owner(self):
-        """An incoming call answered by an officer: that officer gets the lead when it is a new
+        """An incoming call answered by an officer (or a connected call-back to an unowned lead): that officer gets the lead when it is a new
         'Incoming Call Leads' lead or has no owner yet. Leads owned by someone else are left alone."""
         from .call_report import _parse_duration_seconds, _is_connected
         try:
             for log in self.sudo():
                 lead, user = log.lead_id, log.user_id
-                if log.call_type != 'incoming' or not lead or not user or lead.state == 'lost':
+                if not lead or lead.state == 'lost':
+                    continue
+                # answered incoming call, or a connected call-back (outgoing) on a lead nobody owns yet
+                if log.call_type != 'incoming' and not (log.call_type == 'outgoing' and not lead.lead_owner):
                     continue
                 if not _is_connected(log.call_status, _parse_duration_seconds(log.duration)):
                     continue
+                if not user:
+                    _logger.warning('Incoming auto-assign: call %s (lead %s) answered but no officer '
+                                    'matched the agent number - check the user\'s Bonvoice/Voxbay number.',
+                                    log.id, lead.id)
+                    continue
                 emp = user.employee_id
-                if not emp or lead.lead_owner == emp:
+                if not emp:
+                    _logger.warning('Incoming auto-assign: user %s has no employee - lead %s not assigned.',
+                                    user.login, lead.id)
+                    continue
+                if lead.lead_owner == emp:
                     continue
                 incoming_src = lead.leads_source and lead.leads_source.name == 'Incoming Call Leads'
                 if lead.lead_owner and not incoming_src:
