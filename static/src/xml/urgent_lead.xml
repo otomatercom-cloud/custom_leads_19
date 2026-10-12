@@ -2,7 +2,8 @@
 <templates xml:space="preserve">
     <t t-name="custom_leads_19.UrgentLeadPopup">
         <div class="o_urgent_stack" t-if="state.alerts.length">
-            <div t-foreach="state.alerts" t-as="a" t-key="a.id" class="o_urgent_card" role="alertdialog">
+            <div t-foreach="state.alerts" t-as="a" t-key="a.id" class="o_urgent_card" role="alertdialog"
+                 t-att-class="{'o_urgent_compact': !svc.isOpen(a)}" t-on-click="() => svc.expand(a)">
                 <div class="o_urgent_head">
                     <span class="o_urgent_siren">🚨</span>
                     <span class="o_urgent_title">URGENT — new lead, call now</span>
@@ -11,6 +12,7 @@
                 <div class="o_urgent_body">
                     <div class="o_urgent_name" t-esc="a.name"/>
                     <a class="o_urgent_phone" t-att-href="'tel:' + a.phone" t-esc="a.phone"/>
+                    <div class="o_urgent_hint" t-if="!svc.isOpen(a)">Click to see Call / Open buttons</div>
                     <dl class="o_urgent_facts">
                         <t t-if="a.source"><dt>Source</dt><dd t-esc="a.source + (a.campaign ? ' / ' + a.campaign : '')"/></t>
                         <t t-if="a.course"><dt>Course</dt><dd t-esc="a.course"/></t>

@@ -34,7 +34,7 @@ function beep() {
 export const urgentLeadService = {
     dependencies: ["bus_service", "orm", "action", "notification"],
     start(env, { bus_service, orm, action, notification }) {
-        const state = reactive({ alerts: [] });
+        const state = reactive({ alerts: [], expanded: null });
         let disabled = false;
         let failures = 0;
 
@@ -101,6 +101,14 @@ export const urgentLeadService = {
 
         return {
             state,
+            isOpen(a) {
+                const first = state.alerts[0];
+                const cur = state.alerts.find((x) => x.id === state.expanded) || first;
+                return !!cur && cur.id === a.id;
+            },
+            expand(a) {
+                state.expanded = a.id;
+            },
             async call(a) {
                 remove(a.id);
                 const act = await orm.call("lead.urgent.alert", "action_call", [[a.id]]);

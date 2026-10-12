@@ -3,6 +3,13 @@
     display: flex; flex-direction: column; gap: 10px; max-width: min(380px, calc(100vw - 32px));
     max-height: calc(100vh - 32px); overflow-y: auto;
 }
+.o_urgent_card { flex: 0 0 auto; }
+.o_urgent_compact { cursor: pointer; animation: none !important; }
+.o_urgent_compact .o_urgent_facts, .o_urgent_compact .o_urgent_actions { display: none; }
+.o_urgent_compact .o_urgent_body { padding-bottom: 10px; }
+.o_urgent_compact .o_urgent_name { font-size: 16px; }
+.o_urgent_compact .o_urgent_phone { font-size: 16px; }
+.o_urgent_hint { font-size: 12px; color: #6a737d; margin-top: 2px; }
 .o_urgent_card {
     background: #fff; color: #1f2328; border-radius: 10px; overflow: hidden;
     border: 2px solid #c62828; box-shadow: 0 10px 34px rgba(198, 40, 40, .35);
