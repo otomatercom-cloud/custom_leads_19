@@ -100,6 +100,9 @@
                                 <field name="pool_uncalled_reassign"/>
                                 <field name="pool_min_daily_calls" invisible="not pool_uncalled_reassign"/>
                                 <field name="pool_max_reassigns"/>
+                                <field name="pool_auto_rnr"/>
+                                <field name="pool_first_call_reassign"/>
+                                <field name="pool_first_call_minutes" invisible="not pool_first_call_reassign"/>
                             </group>
                         </group>
                         <group string="Status">

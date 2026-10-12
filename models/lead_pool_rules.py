@@ -132,3 +132,75 @@ class LeadAssignmentRulePoolRules(models.Model):
                 moved += 1
         if moved:
             _logger.info('Pool: %s uncalled lead(s) reassigned to another officer.', moved)
+
+
+    @api.model
+    def cron_pool_reassign_not_called_quickly(self):
+        """A New lead with no call at all `pool_first_call_minutes` after assignment goes to another officer."""
+        rules = self.sudo().search([('active', '=', True), ('assignment_type', '=', 'attendance_pool'),
+                                    ('pool_first_call_reassign', '=', True)], order='sequence, id')
+        Lead = self.env['leads.logic'].sudo()
+        for rule in rules:
+            if not rule._pool_is_open() or not rule.pool_first_call_minutes:
+                continue
+            now = fields.Datetime.now()
+            limit = now - timedelta(minutes=rule.pool_first_call_minutes)
+            leads = Lead.search([
+                ('lead_owner', '!=', False), ('state', '!=', 'lost'),
+                ('lead_quality', 'in', [False, 'new']),
+                ('reassign_date', '>=', now - timedelta(days=1)), ('reassign_date', '<=', limit),
+                ('auto_reassign_count', '<', rule.pool_max_reassigns),
+            ] + ([('leads_source', 'in', rule.pool_source_ids.ids)] if rule.pool_source_ids else []),
+                order='reassign_date asc', limit=100)
+            moved = 0
+            for lead in leads:
+                if lead.call_log_ids.filtered(lambda c: (c.call_time or c.create_date) >= lead.reassign_date):
+                    continue
+                if not (rule._pool_eligible() - lead.lead_owner):
+                    break
+                if rule._pool_reassign_lead(lead, _("not called within %s minutes of assignment")
+                                            % rule.pool_first_call_minutes):
+                    moved += 1
+            if moved:
+                _logger.info('Pool: %s lead(s) not called in time were reassigned.', moved)
+
+
+class LeadCallLogPoolRules(models.Model):
+    _inherit = 'lead.call.log'
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        recs = super().create(vals_list)
+        if not self.env.context.get('otm_odoo17_import'):
+            recs._pool_auto_rnr()
+        return recs
+
+    def write(self, vals):
+        res = super().write(vals)
+        if 'call_status' in vals or 'duration' in vals:
+            self._pool_auto_rnr()
+        return res
+
+    def _pool_auto_rnr(self):
+        """New / First Attempt lead with N calls and none answered -> Ringing Not Responding."""
+        from .call_report import _parse_duration_seconds
+        try:
+            need = self.env['otm.lead.rule.params'].param('custom_leads_19.rnr_min_calls')
+            if not need:
+                return
+            for lead in self.mapped('lead_id').sudo():
+                if lead.lead_quality not in UNWORKED or lead.state == 'lost':
+                    continue
+                rule = lead._pool_rule()
+                if not rule or not rule.pool_auto_rnr:
+                    continue
+                calls = lead.call_log_ids.filtered(lambda c: c.call_type != 'incoming')
+                if len(calls) < need:
+                    continue
+                if any(_parse_duration_seconds(c.duration) > 0 for c in lead.call_log_ids):
+                    continue
+                lead.with_context(skip_pool_rules=True).write({'lead_quality': 'not_responding'})
+                lead.message_post(body=_("Set to Ringing Not Responding automatically: %s calls, none answered.")
+                                  % len(calls))
+        except Exception:  # noqa: BLE001 - never block call logging
+            _logger.exception('Pool auto RNR failed')

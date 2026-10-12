@@ -98,6 +98,16 @@ class LeadAssignmentRule(models.Model):
     pool_max_reassigns = fields.Integer(
         string='Max automatic reassignments per lead', default=2,
         help="Stops a lead from bouncing between officers forever.")
+    pool_auto_rnr = fields.Boolean(
+        string='Auto RNR after unanswered calls', default=True,
+        help="A New / First Attempt lead whose calls were all unanswered (duration 0) is set to "
+             "'Ringing Not Responding' automatically once it has the number of calls set in "
+             "Settings > Lead rules > RNR minimum calls.")
+    pool_first_call_reassign = fields.Boolean(
+        string='Reassign if not called quickly', default=True,
+        help="A New lead that gets no call at all within the minutes below after it was assigned "
+             "moves to the next officer. Both officers get a popup.")
+    pool_first_call_minutes = fields.Integer(string='Call within (minutes)', default=15)
     use_window = fields.Boolean(string='Assign only in working hours', default=True, tracking=True)
     window_start = fields.Float(string='Pool starts', default=10.75, tracking=True,
                                 help='10.75 = 10:45')

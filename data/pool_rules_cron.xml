@@ -9,4 +9,13 @@
         <field name="interval_type">minutes</field>
         <field name="active" eval="True"/>
     </record>
+    <record id="cron_pool_reassign_not_called_quickly" model="ir.cron">
+        <field name="name">Leads: Pool reassign leads not called in time</field>
+        <field name="model_id" ref="model_lead_assignment_rule"/>
+        <field name="state">code</field>
+        <field name="code">model.cron_pool_reassign_not_called_quickly()</field>
+        <field name="interval_number">2</field>
+        <field name="interval_type">minutes</field>
+        <field name="active" eval="True"/>
+    </record>
 </odoo>
