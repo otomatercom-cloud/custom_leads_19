@@ -36,6 +36,20 @@ class LeadCampaignBulkWizard(models.TransientModel):
         help='Only Draft or Running campaigns are shown — leads cannot be added to a Completed/Cancelled campaign.',
     )
     new_campaign_name = fields.Char(string='New Campaign Name')
+    leads_per_campaign = fields.Integer(
+        string='Leads per Campaign', default=0,
+        help='0 = all selected leads go into one campaign. Enter a number (for example 30) to split the '
+             'selected leads into several campaigns of that size, named "<name> - 1", "<name> - 2" ...')
+    campaign_split_info = fields.Char(compute='_compute_campaign_split_info')
+
+    @api.depends('lead_ids', 'leads_per_campaign', 'mode')
+    def _compute_campaign_split_info(self):
+        for wiz in self:
+            n, size = len(wiz.lead_ids), wiz.leads_per_campaign
+            wiz.campaign_split_info = (
+                _('%(n)s leads -> %(c)s campaigns of up to %(s)s leads each') % {
+                    'n': n, 'c': -(-n // size), 's': size}
+                if wiz.mode == 'new' and size and size > 0 and n else False)
 
     @api.depends('lead_ids')
     def _compute_lead_count(self):
@@ -62,41 +76,48 @@ class LeadCampaignBulkWizard(models.TransientModel):
         if not leads:
             raise UserError(_('No leads selected. Select leads from the list view first.'))
 
+        Campaign = self.env['call.campaign'].sudo()
         if self.mode == 'new':
             if not self.new_campaign_name:
                 raise UserError(_('Please enter a name for the new campaign.'))
+            if self.leads_per_campaign < 0:
+                raise UserError(_('Leads per Campaign cannot be negative.'))
             # Creating a campaign is normally Manager/Super-Admin-only
             # (see ir.model.access.csv); this wizard's own access is the
             # intended gate for the "quick campaign from selected leads"
             # shortcut, so the create is scoped narrowly under sudo()
             # rather than widening call.campaign's own create ACL.
-            campaign = self.env['call.campaign'].sudo().create({
-                'name': self.new_campaign_name,
-                'state': 'draft',
-            })
-        else:
-            if not self.campaign_id:
-                raise UserError(_('Please select a campaign.'))
-            campaign = self.campaign_id
-            if campaign.state not in ('draft', 'running'):
-                raise UserError(_(
-                    'Campaign "%(name)s" is %(state)s — leads can only be added '
-                    'to a Draft or Running campaign.',
-                    name=campaign.name, state=campaign.state,
-                ))
+            size = self.leads_per_campaign or len(leads)
+            ordered = list(leads)
+            chunks = [ordered[i:i + size] for i in range(0, len(ordered), size)]
+            campaigns = Campaign.browse()
+            for i, chunk in enumerate(chunks, 1):
+                name = self.new_campaign_name if len(chunks) == 1 else '%s - %s' % (self.new_campaign_name, i)
+                camp = Campaign.create({'name': name, 'state': 'draft'})
+                camp.write({'lead_ids': [(4, l.id) for l in chunk]})
+                campaigns |= camp
+            return campaigns, len(leads), 0
 
+        if not self.campaign_id:
+            raise UserError(_('Please select a campaign.'))
+        campaign = self.campaign_id
+        if campaign.state not in ('draft', 'running'):
+            raise UserError(_(
+                'Campaign "%(name)s" is %(state)s — leads can only be added '
+                'to a Draft or Running campaign.',
+                name=campaign.name, state=campaign.state,
+            ))
         existing_ids = set(campaign.lead_ids.ids)
         new_leads = leads.filtered(lambda l: l.id not in existing_ids)
-
         if new_leads:
             campaign.sudo().write({'lead_ids': [(4, lead.id) for lead in new_leads]})
-
         added = len(new_leads)
-        skipped = len(leads) - added
-        return campaign, added, skipped
+        return campaign, added, len(leads) - added
 
     def action_add(self):
         campaign, added, skipped = self._process_leads()
+        if len(campaign) > 1:
+            return self._multi_done(campaign, added, started=False)
 
         if added:
             message = _(
@@ -123,6 +144,25 @@ class LeadCampaignBulkWizard(models.TransientModel):
             },
         }
 
+    def _multi_done(self, campaigns, added, started):
+        if started:
+            for camp in campaigns.sudo(False):
+                if camp.state == 'draft' and camp.lead_ids:
+                    camp.state = 'running'
+        names = ', '.join(campaigns.mapped('name'))
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Call Campaigns Created'),
+                'message': _('%(n)s lead(s) split into %(c)s campaigns: %(names)s.%(run)s') % {
+                    'n': added, 'c': len(campaigns), 'names': names,
+                    'run': _(' All are now Running.') if started else ''},
+                'type': 'success',
+                'sticky': True,
+            },
+        }
+
     def action_add_and_start(self):
         """Add the leads and flip the campaign to Running — skips the
         extra manual "open campaign → Start Calling" step. Does NOT
@@ -131,6 +171,8 @@ class LeadCampaignBulkWizard(models.TransientModel):
         not for the person clicking the button to start calling
         themselves."""
         campaign, added, skipped = self._process_leads()
+        if len(campaign) > 1:
+            return self._multi_done(campaign, added, started=True)
 
         # campaign came back bound to a sudo() env from _process_leads
         # (new-campaign create / lead write); drop back to the real user
