@@ -54,10 +54,15 @@ class LeadsLogicResponse(models.Model):
             rec.followup_done_count = len(rec.followup_ids.filtered(lambda f: f.status == 'done'))
 
     def _compute_followup_due(self):
-        now = fields.Datetime.now()
+        # one grouped count for the whole page instead of loading every follow-up record
+        counts = {}
+        if self.ids:
+            for lead, n in self.env['lead.followup']._read_group(
+                    [('lead_id', 'in', self.ids), ('status', '=', 'scheduled'),
+                     ('next_followup_date', '<=', fields.Datetime.now())], ['lead_id'], ['__count']):
+                counts[lead.id] = n
         for rec in self:
-            rec.followup_due_count = len(rec.followup_ids.filtered(
-                lambda f: f.status == 'scheduled' and f.next_followup_date and f.next_followup_date <= now))
+            rec.followup_due_count = counts.get(rec._origin.id or rec.id, 0)
 
     @api.depends('followup_ids')
     def _compute_followup_count(self):

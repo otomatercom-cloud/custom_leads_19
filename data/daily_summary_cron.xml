@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo noupdate="1">
+    <!-- 13:30 UTC = 19:00 India time -->
+    <record id="cron_daily_summary" model="ir.cron">
+        <field name="name">Leads: Evening summary to managers</field>
+        <field name="model_id" ref="model_leads_logic"/>
+        <field name="state">code</field>
+        <field name="code">model.send_daily_summary()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="nextcall" eval="(DateTime.now() + timedelta(days=1)).strftime('%Y-%m-%d 13:30:00')"/>
+        <field name="active" eval="True"/>
+    </record>
+</odoo>

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_leads_call_next_list" model="ir.ui.view">
+        <field name="name">leads.logic.call.next.list</field>
+        <field name="model">leads.logic</field>
+        <field name="arch" type="xml">
+            <list string="Call next" default_order="call_score desc, id desc" create="false" edit="false"
+                  decoration-danger="call_count == 0 and call_score >= 70">
+                <field name="call_score" widget="progressbar" string="Priority"/>
+                <field name="create_date" string="Arrived"/>
+                <field name="name"/>
+                <field name="masked_phone" string="Mobile"/>
+                <field name="lead_quality"/>
+                <field name="leads_source"/>
+                <field name="course_inter" widget="many2many_tags" string="Course"/>
+                <field name="call_count" string="Calls"/>
+                <field name="lead_owner" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_leads_call_next_search" model="ir.ui.view">
+        <field name="name">leads.logic.call.next.search</field>
+        <field name="model">leads.logic</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="phone_number"/>
+                <field name="lead_owner"/>
+                <filter name="filter_mine" string="My leads" domain="[('lead_owner.user_id', '=', uid)]"/>
+                <filter name="filter_never" string="Never called" domain="[('call_count', '=', 0)]"/>
+                <filter name="filter_top" string="Priority 70+" domain="[('call_score', '>=', 70)]"/>
+                <group>
+                    <filter name="g_quality" string="Quality" context="{'group_by': 'lead_quality'}"/>
+                    <filter name="g_source" string="Source" context="{'group_by': 'leads_source'}"/>
+                    <filter name="g_owner" string="Officer" context="{'group_by': 'lead_owner'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="server_action_call_next" model="ir.actions.server">
+        <field name="name">Call next</field>
+        <field name="model_id" ref="model_leads_logic"/>
+        <field name="state">code</field>
+        <field name="code">action = model.action_open_call_next()</field>
+    </record>
+
+    <menuitem id="menu_leads_call_next" name="Call next" parent="menu_leads_root"
+              action="server_action_call_next" sequence="1"/>
+
+    <record id="cron_update_call_scores" model="ir.cron">
+        <field name="name">Leads: Refresh call priority scores</field>
+        <field name="model_id" ref="model_leads_logic"/>
+        <field name="state">code</field>
+        <field name="code">model.cron_update_call_scores()</field>
+        <field name="interval_number">15</field>
+        <field name="interval_type">minutes</field>
+        <field name="active" eval="True"/>
+    </record>
+</odoo>

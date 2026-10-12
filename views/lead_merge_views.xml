@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_lead_merge_wizard_form" model="ir.ui.view">
+        <field name="name">lead.merge.wizard.form</field>
+        <field name="model">lead.merge.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Merge duplicate leads">
+                <div class="alert alert-warning" role="alert">
+                    Leads with the same mobile number are merged into the lead you keep. Calls, follow-ups,
+                    counselling, history, messages and files move to it; the other lead is removed
+                    (a record is kept in <b>Merge log</b>). This cannot be undone.
+                </div>
+                <group>
+                    <field name="min_leads"/>
+                    <field name="note"/>
+                </group>
+                <div>
+                    <button name="action_find" type="object" string="Find duplicates" class="btn-primary"/>
+                    <button name="action_merge_all" type="object" string="Merge all groups (keep suggested)"
+                            class="btn-secondary ms-2" invisible="not line_ids"
+                            confirm="Merge every group below into its suggested lead? This cannot be undone."/>
+                </div>
+                <field name="line_ids" nolabel="1">
+                    <list create="false" delete="false" decoration-muted="done">
+                        <field name="phone"/>
+                        <field name="count"/>
+                        <field name="lead_ids" widget="many2many_tags"/>
+                        <field name="master_id"/>
+                        <field name="done" column_invisible="1"/>
+                        <button name="action_merge" type="object" string="Merge" icon="fa-compress"
+                                invisible="done" confirm="Merge this group into the lead you kept? This cannot be undone."/>
+                    </list>
+                    <form>
+                        <field name="phone"/>
+                        <field name="master_id"/>
+                        <field name="lead_ids" nolabel="1">
+                            <list>
+                                <field name="reference_no"/>
+                                <field name="name"/>
+                                <field name="create_date"/>
+                                <field name="lead_owner"/>
+                                <field name="lead_quality"/>
+                                <field name="leads_source"/>
+                                <field name="call_count"/>
+                                <field name="followup_count"/>
+                                <field name="admission_status"/>
+                            </list>
+                        </field>
+                    </form>
+                </field>
+                <footer><button string="Close" special="cancel"/></footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_lead_merge_wizard" model="ir.actions.act_window">
+        <field name="name">Merge duplicate leads</field>
+        <field name="res_model">lead.merge.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <record id="view_lead_merge_log_list" model="ir.ui.view">
+        <field name="name">lead.merge.log.list</field>
+        <field name="model">lead.merge.log</field>
+        <field name="arch" type="xml">
+            <list create="false" edit="false" delete="false">
+                <field name="create_date" string="Merged on"/>
+                <field name="user_id"/>
+                <field name="master_ref"/>
+                <field name="merged_ref"/>
+                <field name="merged_name"/>
+                <field name="merged_phone"/>
+                <field name="merged_created"/>
+                <field name="merged_owner"/>
+                <field name="moved"/>
+            </list>
+        </field>
+    </record>
+    <record id="action_lead_merge_log" model="ir.actions.act_window">
+        <field name="name">Merge log</field>
+        <field name="res_model">lead.merge.log</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <menuitem id="menu_lead_merge" name="Merge duplicate leads" parent="menu_leads_assignment"
+              action="action_lead_merge_wizard" sequence="7"
+              groups="custom_leads_19.group_lead_manager,custom_leads_19.group_super_admin"/>
+    <menuitem id="menu_lead_merge_log" name="Merge log" parent="menu_leads_assignment"
+              action="action_lead_merge_log" sequence="8"
+              groups="custom_leads_19.group_lead_manager,custom_leads_19.group_super_admin"/>
+</odoo>

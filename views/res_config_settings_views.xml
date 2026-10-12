@@ -86,6 +86,42 @@
                             </div>
                         </setting>
                     </block>
+                    <block title="Lead rules">
+                        <setting string="Called fast within (hours)" help="Used by the Response Performance dashboard.">
+                            <field name="lead_called_fast_hrs"/>
+                        </setting>
+                        <setting string="Calls needed before Ringing Not Responding" help="0 = no limit. Applies to every officer.">
+                            <field name="lead_rnr_min_calls"/>
+                        </setting>
+                        <setting string="Short call is under (seconds)" help="Used by the Short calls report.">
+                            <field name="lead_short_call_secs"/>
+                        </setting>
+                        <setting string="Coaching pass score (%)" help="Officers below this average show as Needs help.">
+                            <field name="coaching_pass_score"/>
+                        </setting>
+                    </block>
+                    <block title="WhatsApp after a missed call">
+                        <setting string="Send automatically" help="When an outgoing call is not answered, a WhatsApp message goes to the lead (one per lead per day). Needs a WhatsApp sender module to be connected.">
+                            <field name="wa_missed_enabled"/>
+                        </setting>
+                        <setting string="Message" help="Placeholders: {name} {officer} {course} {institute}">
+                            <field name="wa_missed_template"/>
+                        </setting>
+                        <setting string="Sending hours" help="Messages outside these hours wait until the next morning window.">
+                            <field name="wa_missed_from_hour"/> to <field name="wa_missed_to_hour"/>
+                        </setting>
+                    </block>
+                    <block title="Evening summary for managers">
+                        <setting string="Send every evening at 7 pm" help="New leads, calls, uncalled leads, missed follow-ups and admissions per officer, to managers and super admins.">
+                            <field name="daily_summary_enabled"/>
+                            <div class="mt-2"><field name="daily_summary_telegram"/> <label for="daily_summary_telegram"/>
+                                <field name="daily_summary_email" class="ms-3"/> <label for="daily_summary_email"/></div>
+                            <div class="mt-2">
+                                <button name="action_daily_summary_test" type="object" class="btn btn-secondary"
+                                        string="Save &amp; send test to me"/>
+                            </div>
+                        </setting>
+                    </block>
                     <block title="Daily Call Goal">
                         <setting string="Calls per officer per day" help="Shown as the progress ring on each officer's dashboard in the Next.js app.">
                             <field name="daily_call_goal"/>

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_lead_missed_call_wa_list" model="ir.ui.view">
+        <field name="name">lead.missed.call.wa.list</field>
+        <field name="model">lead.missed.call.wa</field>
+        <field name="arch" type="xml">
+            <list string="WhatsApp after missed call" create="false" edit="false"
+                  decoration-danger="state == 'failed'" decoration-success="state == 'sent'" decoration-muted="state == 'skipped'">
+                <field name="create_date" string="Queued"/>
+                <field name="lead_id"/>
+                <field name="officer_id"/>
+                <field name="text"/>
+                <field name="state" widget="badge"/>
+                <field name="note"/>
+                <field name="sent_date"/>
+            </list>
+        </field>
+    </record>
+    <record id="action_lead_missed_call_wa" model="ir.actions.act_window">
+        <field name="name">WhatsApp after missed call</field>
+        <field name="res_model">lead.missed.call.wa</field>
+        <field name="view_mode">list</field>
+    </record>
+    <menuitem id="menu_lead_missed_call_wa" name="WhatsApp after missed call" parent="menu_leads_assignment"
+              action="action_lead_missed_call_wa" sequence="6"
+              groups="custom_leads_19.group_lead_manager,custom_leads_19.group_super_admin"/>
+
+    <record id="cron_missed_call_wa" model="ir.cron">
+        <field name="name">Leads: Send pending missed-call WhatsApp</field>
+        <field name="model_id" ref="model_lead_missed_call_wa"/>
+        <field name="state">code</field>
+        <field name="code">model.cron_send_pending()</field>
+        <field name="interval_number">10</field>
+        <field name="interval_type">minutes</field>
+        <field name="active" eval="True"/>
+    </record>
+</odoo>

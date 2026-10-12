@@ -45,3 +45,10 @@ from . import lead_response_time
 from . import response_dashboard
 from . import lead_pool_rules
 from . import lead_reports
+from . import lead_rules_settings
+from . import lead_coaching
+from . import lead_score
+from . import lead_missed_call_wa
+from . import lead_merge
+from . import lead_daily_summary
+from . import lead_indexes

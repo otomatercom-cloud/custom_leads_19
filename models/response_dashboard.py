@@ -31,6 +31,9 @@ class LeadsLogicResponseDashboard(models.Model):
         t = datetime(d.year, d.month, d.day) + (timedelta(days=1) if end else timedelta())
         return self._rd_tz().localize(t).astimezone(pytz.utc).replace(tzinfo=None)
 
+    def _fast_hrs(self):
+        return self.env['otm.lead.rule.params'].param('custom_leads_19.called_fast_hrs') or CALLED_FAST_HRS
+
     def _rd_avg(self, dom, field, ref):
         res = self._read_group(dom + [(ref, '!=', False)], [], ['%s:avg' % field])
         return (res[0][0] if res else 0.0) or 0.0
@@ -40,7 +43,7 @@ class LeadsLogicResponseDashboard(models.Model):
         assigned = self.search_count(dom + [('first_assigned_dt', '!=', False)])
         called = self.search_count(dom + [('first_called_dt', '!=', False)])
         fast = self.search_count(dom + [('first_called_dt', '!=', False),
-                                        ('call_delay_hrs', '<=', CALLED_FAST_HRS)])
+                                        ('call_delay_hrs', '<=', self._fast_hrs())])
         return {
             'total': total, 'assigned': assigned, 'called': called,
             'not_assigned': total - assigned, 'not_called': total - called,
@@ -85,7 +88,7 @@ class LeadsLogicResponseDashboard(models.Model):
             'by_owner': self._rd_breakdown(dom, 'lead_owner'),
             'by_team': self._rd_breakdown(dom, 'team_id'),
             'by_source': self._rd_breakdown(dom, 'leads_source'),
-            'fast_hours': CALLED_FAST_HRS,
+            'fast_hours': self._fast_hrs(),
         }
 
     def _rd_label(self, val, group):
@@ -155,7 +158,7 @@ class LeadsLogicResponseDashboard(models.Model):
             r['call'] = v or 0.0
             r['called'] = cnt
         for rec, cnt in self._read_group(
-                dom + [('first_called_dt', '!=', False), ('call_delay_hrs', '<=', CALLED_FAST_HRS)],
+                dom + [('first_called_dt', '!=', False), ('call_delay_hrs', '<=', self._fast_hrs())],
                 [field], ['__count']):
             row(rec)['fast'] = cnt
         out = []

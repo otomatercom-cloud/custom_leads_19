@@ -10,6 +10,7 @@
                   decoration-success="lead_quality in ['admission','waiting_for_admission']"
                   decoration-warning="lead_quality in ['hot','warm']">
                 <field name="create_date" string="Created Date &amp; Time"/>
+                <field name="call_score" string="Priority" optional="hide"/>
                 <field name="reference_no"/>
                 <field name="name"/>
                 <field name="masked_phone" string="Mobile"/>

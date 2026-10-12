@@ -31,15 +31,17 @@ class LeadsLogicPoolRules(models.Model):
         rule = False
         if 'lead_quality' in vals and not self.env.context.get('skip_pool_rules') and not self.env.su:
             rule = self._pool_rule()
-        if rule:
             new_q = vals.get('lead_quality')
-            need = rule.pool_rnr_min_calls
+            # one setting for everyone: Settings > Leads > Lead rules
+            need = self.env['otm.lead.rule.params'].param('custom_leads_19.rnr_min_calls')
             if need and new_q == 'not_responding':
                 for rec in self:
                     if rec.lead_quality != 'not_responding' and rec.call_count < need:
                         raise UserError(_(
                             "'Ringing Not Responding' needs at least %(need)s calls and this lead has "
                             "only %(have)s. Call the lead again first.") % {'need': need, 'have': rec.call_count})
+        if rule:
+            new_q = vals.get('lead_quality')
             mode = rule.pool_reassign_on_quality
             if mode in ('no_call', 'always') and new_q and new_q != 'new':
                 for rec in self:

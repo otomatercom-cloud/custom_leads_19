@@ -65,10 +65,15 @@ CATALOG = [
         ('call_lead', 'Call duration by lead', 'Top 50 leads by talk time'),
         ('connected_split', 'Connected vs not connected', 'Answered and missed calls by officer and by source'),
         ('call_heatmap', 'Peak call hours', 'Calls by weekday and hour'),
-        ('short_calls', 'Short calls (under 30 s)', 'Connected calls shorter than 30 seconds'),
+        ('short_calls', 'Short calls', 'Connected calls shorter than the short-call limit in Settings'),
         ('calls_by_quality', 'Calls per lead by quality', 'Average calls and talk time per lead quality'),
         ('recording_coverage', 'Recording coverage', 'Calls with and without a recording'),
         ('in_out_split', 'Incoming vs outgoing', 'Call direction per officer'),
+    ]),
+    ('Coaching', [
+        ('coaching_officer', 'Coaching scorecard', 'Call review score next to calls and talk time - who needs help'),
+        ('coaching_items', 'Coaching checklist results', 'Which checklist items are weak across reviewed calls'),
+        ('coaching_pending', 'Recorded calls not reviewed', 'Connected recorded calls without a coaching review'),
     ]),
     ('Management', [
         ('weekly_summary', 'Weekly summary', 'Leads, calls, talk time, admissions and speed per week'),
@@ -740,10 +745,13 @@ class OtmLeadReports(models.AbstractModel):
         return {'columns': cols, 'rows': rows, 'totals': self._tot(rows, ['total'] + ['h%d' % h for h in range(24)]),
                 'heat': True, 'note': 'Columns are the hour of the day (24 h clock).'}
 
+    def _short_secs(self):
+        return self.env['otm.lead.rule.params'].param('custom_leads_19.short_call_secs')
+
     def _r_short_calls(self, f):
         rows = [{'when': c['call_time'], 'agent': c['user_id'][1] if c['user_id'] else '',
                  'lead': c['lead_id'][1] if c['lead_id'] else '', 'secs': c['secs'], 'status': c['call_status'] or ''}
-                for c in reversed(self._calls(f)) if c['ok'] and 0 < c['secs'] < 30][:500]
+                for c in reversed(self._calls(f)) if c['ok'] and 0 < c['secs'] < self._short_secs()][:500]
         return {'columns': [_col('when', 'Call time', 'dt'), _col('agent', 'Agent'), _col('lead', 'Lead'),
                             _col('secs', 'Duration', 'secs'), _col('status', 'Status')], 'rows': rows}
 
@@ -815,3 +823,84 @@ class OtmLeadReports(models.AbstractModel):
                             _col('assign', 'Avg assign', 'hrs'), _col('call', 'Avg first call', 'hrs')],
                 'rows': rows, 'totals': self._tot(rows, ['leads', 'adm', 'calls', 'secs']),
                 'chart': self._bar('name', [('leads', 'Leads'), ('calls', 'Calls')], 'line')}
+
+    # ═══════════════════ 11. COACHING ═════════════════════════════
+    def _rdom(self, f):
+        s, e = self._bounds(f)
+        dom = [('state', '=', 'done'), ('review_date', '>=', s), ('review_date', '<', e)] + \
+            self._lf(f, 'lead_id.', skip_owner=True)
+        if f.get('owner'):
+            dom.append(('agent_id', '=', self._user_of(f).id or 0))
+        return dom
+
+    def _r_coaching_officer(self, f):
+        pass_score = self.env['otm.lead.rule.params'].param('custom_leads_19.coaching_pass_score')
+        per = {}
+        for c in self._calls(f):
+            uid = c['user_id'][0] if c['user_id'] else 0
+            x = per.setdefault(uid, {'name': c['user_id'][1] if c['user_id'] else '(none)', 'calls': 0, 'ok': 0,
+                                     'secs': 0, 'reviews': 0, 'score': 0.0, 'weak': ''})
+            x['calls'] += 1
+            x['ok'] += 1 if c['ok'] else 0
+            x['secs'] += c['secs']
+        for r in self.env['lead.coaching.review']._read_group(self._rdom(f), ['agent_id'], ['__count', 'score:avg']):
+            uid = r[0].id if r[0] else 0
+            x = per.setdefault(uid, {'name': self._nm(r[0]), 'calls': 0, 'ok': 0, 'secs': 0, 'reviews': 0,
+                                     'score': 0.0, 'weak': ''})
+            x['reviews'], x['score'] = r[1], round(r[2] or 0, 1)
+        # weakest checklist item per officer
+        L = self.env['lead.coaching.review.line']
+        ldom = [('review_id', 'in', self.env['lead.coaching.review'].search(self._rdom(f)).ids), ('answer', 'in', ['yes', 'partial', 'no'])]
+        rate = defaultdict(lambda: defaultdict(lambda: [0.0, 0]))
+        for a, i, ans, n in L._read_group(ldom, ['agent_id', 'item_id', 'answer'], ['__count']):
+            cell = rate[a.id if a else 0][i.sudo().name]
+            cell[0] += {'yes': 1.0, 'partial': 0.5, 'no': 0.0}[ans] * n
+            cell[1] += n
+        for uid, items in rate.items():
+            if uid in per and items:
+                per[uid]['weak'] = min(items.items(), key=lambda kv: kv[1][0] / kv[1][1])[0]
+        rows = []
+        for x in per.values():
+            status = 'Not reviewed' if not x['reviews'] else ('Needs help' if x['score'] < pass_score else 'Good')
+            rows.append({'name': x['name'], 'calls': x['calls'], 'conn': self._pct(x['ok'], x['calls']),
+                         'secs': x['secs'], 'avg': x['secs'] / x['ok'] if x['ok'] else 0,
+                         'reviews': x['reviews'], 'score': x['score'], 'weak': x['weak'], 'status': status})
+        rows.sort(key=lambda r: (r['status'] != 'Needs help', r['score'] if r['reviews'] else 999))
+        return {'columns': [_col('name', 'Admission officer'), _col('calls', 'Calls', 'int'),
+                            _col('conn', 'Connected %', 'pct'), _col('secs', 'Talk time', 'secs'),
+                            _col('avg', 'Avg connected call', 'secs'), _col('reviews', 'Reviewed calls', 'int'),
+                            _col('score', 'Avg review score', 'pct'), _col('weak', 'Weakest item'),
+                            _col('status', 'Status')],
+                'rows': rows, 'totals': self._tot(rows, ['calls', 'secs', 'reviews']),
+                'chart': self._bar('name', [('score', 'Review score %')]),
+                'note': 'Needs help = average review score below %s%%. Set the pass score in Settings.' % pass_score}
+
+    def _r_coaching_items(self, f):
+        revs = self.env['lead.coaching.review'].search(self._rdom(f))
+        per = defaultdict(lambda: {'yes': 0, 'partial': 0, 'no': 0})
+        if revs:
+            L = self.env['lead.coaching.review.line']
+            for i, ans, n in L._read_group([('review_id', 'in', revs.ids), ('answer', 'in', ['yes', 'partial', 'no'])],
+                                           ['item_id', 'answer'], ['__count']):
+                per[i.sudo().name][ans] += n
+        rows = []
+        for name, v in per.items():
+            tot = sum(v.values())
+            rows.append({'name': name, 'yes': v['yes'], 'partial': v['partial'], 'no': v['no'],
+                         'rate': round((v['yes'] + 0.5 * v['partial']) * 100.0 / tot, 1) if tot else 0.0})
+        rows.sort(key=lambda r: r['rate'])
+        return {'columns': [_col('name', 'Checklist item'), _col('yes', 'Yes', 'int'), _col('partial', 'Partly', 'int'),
+                            _col('no', 'No', 'int'), _col('rate', 'Score %', 'pct')],
+                'rows': rows, 'totals': self._tot(rows, ['yes', 'partial', 'no']),
+                'chart': self._bar('name', [('rate', 'Score %')]),
+                'note': 'Lowest score first - these are the topics to coach.'}
+
+    def _r_coaching_pending(self, f):
+        dom = self._cdom(f) + [('has_recording', '=', True), ('coaching_review_ids', '=', False)]
+        recs = self.env['lead.call.log'].search(dom, order='call_time desc', limit=500)
+        rows = [{'when': r.call_time, 'agent': r.user_id.name or '', 'lead': r.lead_id.name or '',
+                 'secs': _parse_duration_seconds(r.duration), 'status': r.call_status or ''}
+                for r in recs if _is_connected(r.call_status, _parse_duration_seconds(r.duration))]
+        return {'columns': [_col('when', 'Call time', 'dt'), _col('agent', 'Agent'), _col('lead', 'Lead'),
+                            _col('secs', 'Duration', 'secs'), _col('status', 'Status')],
+                'rows': rows, 'note': 'Latest 500 recorded calls with no review. Review them from Coaching > Calls to review.'}

@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_lead_coaching_review_list" model="ir.ui.view">
+        <field name="name">lead.coaching.review.list</field>
+        <field name="model">lead.coaching.review</field>
+        <field name="arch" type="xml">
+            <list string="Call reviews" decoration-danger="result == 'help' and state == 'done'"
+                  decoration-success="result == 'good' and state == 'done'" decoration-muted="state == 'draft'">
+                <field name="review_date"/>
+                <field name="agent_id"/>
+                <field name="lead_id"/>
+                <field name="call_time"/>
+                <field name="call_duration"/>
+                <field name="score" widget="progressbar"/>
+                <field name="result" widget="badge" decoration-success="result == 'good'" decoration-danger="result == 'help'"/>
+                <field name="reviewer_id"/>
+                <field name="state" widget="badge"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_lead_coaching_review_form" model="ir.ui.view">
+        <field name="name">lead.coaching.review.form</field>
+        <field name="model">lead.coaching.review</field>
+        <field name="arch" type="xml">
+            <form string="Call review" create="false">
+                <header>
+                    <button name="action_done" type="object" string="Finish review" class="btn-primary"
+                            invisible="state != 'draft'" groups="custom_leads_19.group_lead_team_lead,custom_leads_19.group_lead_manager,custom_leads_19.group_super_admin"/>
+                    <button name="action_reopen" type="object" string="Reopen" invisible="state != 'done'"
+                            groups="custom_leads_19.group_lead_team_lead,custom_leads_19.group_lead_manager,custom_leads_19.group_super_admin"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="agent_id"/>
+                            <field name="lead_id"/>
+                            <field name="call_time"/>
+                            <field name="call_duration"/>
+                        </group>
+                        <group>
+                            <field name="score" widget="progressbar"/>
+                            <field name="result" widget="badge"/>
+                            <field name="reviewer_id"/>
+                            <field name="review_date"/>
+                        </group>
+                    </group>
+                    <field name="recording_player" nolabel="1"/>
+                    <field name="call_id" invisible="1"/>
+                    <field name="line_ids" nolabel="1" readonly="state == 'done'">
+                        <list editable="bottom" create="false" delete="false">
+                            <field name="item_id" readonly="1"/>
+                            <field name="hint" readonly="1"/>
+                            <field name="answer"/>
+                            <field name="note"/>
+                        </list>
+                    </field>
+                    <group string="Feedback for the officer">
+                        <field name="comments" nolabel="1" colspan="2"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_lead_coaching_review_search" model="ir.ui.view">
+        <field name="name">lead.coaching.review.search</field>
+        <field name="model">lead.coaching.review</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="agent_id"/>
+                <field name="lead_id"/>
+                <field name="reviewer_id"/>
+                <filter name="f_help" string="Needs help" domain="[('result', '=', 'help'), ('state', '=', 'done')]"/>
+                <filter name="f_draft" string="In progress" domain="[('state', '=', 'draft')]"/>
+                <group>
+                    <filter name="g_agent" string="Officer" context="{'group_by': 'agent_id'}"/>
+                    <filter name="g_rev" string="Reviewed by" context="{'group_by': 'reviewer_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_lead_coaching_item_list" model="ir.ui.view">
+        <field name="name">lead.coaching.item.list</field>
+        <field name="model">lead.coaching.item</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="description"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- call log: Review button -->
+    <record id="view_lead_call_log_list_coach" model="ir.ui.view">
+        <field name="name">lead.call.log.list.coach</field>
+        <field name="model">lead.call.log</field>
+        <field name="inherit_id" ref="view_lead_call_log_list"/>
+        <field name="arch" type="xml">
+            <xpath expr="//list" position="inside">
+                <field name="has_recording" column_invisible="1"/>
+                <button name="action_coach_review" type="object" string="Review call" icon="fa-check-square-o"
+                        invisible="not has_recording"
+                        groups="custom_leads_19.group_lead_team_lead,custom_leads_19.group_lead_manager,custom_leads_19.group_super_admin"/>
+            </xpath>
+        </field>
+    </record>
+    <record id="view_lead_call_log_form_coach" model="ir.ui.view">
+        <field name="name">lead.call.log.form.coach</field>
+        <field name="model">lead.call.log</field>
+        <field name="inherit_id" ref="view_lead_call_log_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="before">
+                <header>
+                    <field name="has_recording" invisible="1"/>
+                    <button name="action_coach_review" type="object" string="Review this call" class="btn-primary"
+                            invisible="not has_recording"
+                            groups="custom_leads_19.group_lead_team_lead,custom_leads_19.group_lead_manager,custom_leads_19.group_super_admin"/>
+                </header>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="action_coaching_to_review" model="ir.actions.act_window">
+        <field name="name">Calls to review</field>
+        <field name="res_model">lead.call.log</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('has_recording', '=', True), ('coaching_review_ids', '=', False)]</field>
+    </record>
+    <record id="action_coaching_reviews" model="ir.actions.act_window">
+        <field name="name">Call reviews</field>
+        <field name="res_model">lead.coaching.review</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_lead_coaching_review_search"/>
+    </record>
+    <record id="action_coaching_my_reviews" model="ir.actions.act_window">
+        <field name="name">My call reviews</field>
+        <field name="res_model">lead.coaching.review</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('agent_id', '=', uid), ('state', '=', 'done')]</field>
+    </record>
+    <record id="action_coaching_items" model="ir.actions.act_window">
+        <field name="name">Checklist</field>
+        <field name="res_model">lead.coaching.item</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <menuitem id="menu_leads_coaching" name="Coaching" parent="menu_leads_root" sequence="47"/>
+    <menuitem id="menu_coaching_to_review" name="Calls to review" parent="menu_leads_coaching"
+              action="action_coaching_to_review" sequence="1"
+              groups="custom_leads_19.group_lead_team_lead,custom_leads_19.group_lead_manager,custom_leads_19.group_super_admin"/>
+    <menuitem id="menu_coaching_reviews" name="Call reviews" parent="menu_leads_coaching"
+              action="action_coaching_reviews" sequence="2"
+              groups="custom_leads_19.group_lead_team_lead,custom_leads_19.group_lead_manager,custom_leads_19.group_super_admin"/>
+    <menuitem id="menu_coaching_my" name="My call reviews" parent="menu_leads_coaching"
+              action="action_coaching_my_reviews" sequence="3"
+              groups="custom_leads_19.group_lead_users,custom_leads_19.group_lead_tele_callers"/>
+    <menuitem id="menu_coaching_items" name="Checklist" parent="menu_leads_coaching"
+              action="action_coaching_items" sequence="9"
+              groups="custom_leads_19.group_lead_manager,custom_leads_19.group_super_admin"/>
+</odoo>

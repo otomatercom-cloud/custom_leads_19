@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo noupdate="1">
+    <record id="coaching_item_greeting" model="lead.coaching.item">
+        <field name="name">Greeting</field><field name="sequence">10</field>
+        <field name="description">Greets politely and introduces self and the institute</field>
+    </record>
+    <record id="coaching_item_need" model="lead.coaching.item">
+        <field name="name">Understood the student's need</field><field name="sequence">20</field>
+        <field name="description">Asks about qualification, interest and goal before pitching</field>
+    </record>
+    <record id="coaching_item_course" model="lead.coaching.item">
+        <field name="name">Course explained</field><field name="sequence">30</field>
+        <field name="description">Explains the right course, duration, fees and benefits clearly</field>
+    </record>
+    <record id="coaching_item_objection" model="lead.coaching.item">
+        <field name="name">Handled doubts</field><field name="sequence">40</field>
+        <field name="description">Answers questions and objections calmly and honestly</field>
+    </record>
+    <record id="coaching_item_next" model="lead.coaching.item">
+        <field name="name">Next step set</field><field name="sequence">50</field>
+        <field name="description">Fixes a follow-up, visit or admission step before ending the call</field>
+    </record>
+    <record id="coaching_item_tone" model="lead.coaching.item">
+        <field name="name">Tone and language</field><field name="sequence">60</field>
+        <field name="description">Polite, clear, confident; no pressure or interruptions</field>
+    </record>
+</odoo>

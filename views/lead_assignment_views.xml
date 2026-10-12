@@ -94,7 +94,6 @@
                         </group>
                         <group string="Quality and call rules">
                             <group>
-                                <field name="pool_rnr_min_calls"/>
                                 <field name="pool_reassign_on_quality"/>
                             </group>
                             <group>

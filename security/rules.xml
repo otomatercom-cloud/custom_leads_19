@@ -116,4 +116,32 @@
         <field name="domain_force">[(1,'=',1)]</field>
         <field name="groups" eval="[(4, ref('custom_leads_19.group_lead_manager')), (4, ref('custom_leads_19.group_super_admin'))]"/>
     </record>
+
+    <!-- Coaching: managers see everything; officers see only their own finished reviews -->
+    <record id="rule_coach_review_all" model="ir.rule">
+        <field name="name">Coaching review: managers and team leads</field>
+        <field name="model_id" ref="model_lead_coaching_review"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('group_super_admin')), (4, ref('group_lead_manager')), (4, ref('group_lead_team_lead'))]"/>
+    </record>
+    <record id="rule_coach_review_own" model="ir.rule">
+        <field name="name">Coaching review: officer sees own finished reviews</field>
+        <field name="model_id" ref="model_lead_coaching_review"/>
+        <field name="domain_force">[('agent_id', '=', user.id), ('state', '=', 'done')]</field>
+        <field name="groups" eval="[(4, ref('group_lead_users')), (4, ref('group_lead_tele_callers'))]"/>
+        <field name="perm_write" eval="False"/><field name="perm_create" eval="False"/><field name="perm_unlink" eval="False"/>
+    </record>
+    <record id="rule_coach_line_all" model="ir.rule">
+        <field name="name">Coaching line: managers and team leads</field>
+        <field name="model_id" ref="model_lead_coaching_review_line"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('group_super_admin')), (4, ref('group_lead_manager')), (4, ref('group_lead_team_lead'))]"/>
+    </record>
+    <record id="rule_coach_line_own" model="ir.rule">
+        <field name="name">Coaching line: officer sees own finished reviews</field>
+        <field name="model_id" ref="model_lead_coaching_review_line"/>
+        <field name="domain_force">[('review_id.agent_id', '=', user.id), ('review_id.state', '=', 'done')]</field>
+        <field name="groups" eval="[(4, ref('group_lead_users')), (4, ref('group_lead_tele_callers'))]"/>
+        <field name="perm_write" eval="False"/><field name="perm_create" eval="False"/><field name="perm_unlink" eval="False"/>
+    </record>
 </odoo>
