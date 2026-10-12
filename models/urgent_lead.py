@@ -199,6 +199,8 @@ class LeadUrgentAlert(models.Model):
     def _web_action(self, act):
         """Actions returned through a plain RPC call (not a button) need `views`, or the web client
         fails with "Cannot read properties of undefined (reading 'map')"."""
+        if isinstance(act, dict) and act.get('type') == 'ir.actions.client':
+            act = dict(act, params=dict(act.get('params') or {}, open_lead=True))   # popup call: show the lead after
         if isinstance(act, dict) and act.get('type') == 'ir.actions.act_window' and not act.get('views'):
             modes = (act.get('view_mode') or 'form').split(',')
             act = dict(act, views=[(act.get('view_id') and act['view_id'][0] or False, m.strip()) for m in modes])

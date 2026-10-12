@@ -4,6 +4,28 @@ import { registry } from "@web/core/registry";
 import { Component, useState, onMounted, onWillUnmount } from "@odoo/owl";
 import { useService } from "@web/core/utils/hooks";
 
+
+/**
+ * Return to the screen the call was started from (keeps the list pager, e.g. 5 / 80),
+ * instead of opening a brand new single-record form (1 / 1).
+ * Returns true when it managed to go back.
+ */
+async function goBackToCaller(env, skipName) {
+    try {
+        const crumbs = ((env.config && env.config.breadcrumbs) || []).filter(
+            (b) => b && typeof b.onSelected === "function" && b.name !== skipName
+        );
+        const last = crumbs[crumbs.length - 1];
+        if (last) {
+            await last.onSelected();
+            return true;
+        }
+    } catch (e) {
+        console.error("goBackToCaller failed", e);
+    }
+    return false;
+}
+
 class LeadCallTimer extends Component {
     static template = "custom_leads_19.LeadCallTimer";
     static props    = ["action", "actionStack?"];
@@ -22,6 +44,7 @@ class LeadCallTimer extends Component {
             scheme:         p.dial_scheme || "tel",
             leadId:         p.lead_id,
         });
+        this._openLead = !!p.open_lead;   // started from a popup: show the lead itself
 
         this.orm           = useService("orm");
         this.actionService = useService("action");
@@ -141,6 +164,9 @@ class LeadCallTimer extends Component {
     // ── Jump to call log on lead form ─────────────────────────────────────
     async viewCallLog() {
         this._closeOverlay();
+        if (!this._openLead && await goBackToCaller(this.env, "Call Timer")) {
+            return;
+        }
         try {
             await this.actionService.doAction({
                 type: 'ir.actions.act_window',
@@ -201,18 +227,24 @@ class LeadCallTimer extends Component {
         // 4. Close DOM overlay
         this._closeOverlay();
 
-        // 5. Navigate to lead form first — this exits the timer URL cleanly
-        try {
-            await this.actionService.doAction({
-                type: 'ir.actions.act_window',
-                res_model: 'leads.logic',
-                res_id: this.state.leadId,
-                view_mode: 'form',
-                views: [[false, 'form']],
-                target: 'main',
-            });
-        } catch (e) {
-            console.error("Error navigating to lead:", e);
+        // 5. Back to where the call was started (keeps the pager); popup calls open the lead
+        let back = false;
+        if (!this._openLead) {
+            back = await goBackToCaller(this.env, "Call Timer");
+        }
+        if (!back) {
+            try {
+                await this.actionService.doAction({
+                    type: 'ir.actions.act_window',
+                    res_model: 'leads.logic',
+                    res_id: this.state.leadId,
+                    view_mode: 'form',
+                    views: [[false, 'form']],
+                    target: 'main',
+                });
+            } catch (e) {
+                console.error("Error navigating to lead:", e);
+            }
         }
 
         // 6. Open response wizard on top of lead form
@@ -227,10 +259,13 @@ class LeadCallTimer extends Component {
         }
     }
 
-    cancel() {
+    async cancel() {
         clearInterval(this._timerInterval);
         this._stopRecorder();
         this._closeOverlay();
+        if (!this._openLead) {
+            await goBackToCaller(this.env, "Call Timer");
+        }
     }
 }
 
