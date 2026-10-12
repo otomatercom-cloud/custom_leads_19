@@ -70,6 +70,10 @@
                             class="btn-warning" invisible="state == 'qualified'"/>
                     <button name="action_call_lead" string="📞 Call" type="object" class="btn-success"
                             invisible="state == 'lost'"/>
+                    <button name="action_odoo17_admission" string="🎓 Admission (Odoo 17)" type="object"
+                            class="btn-primary" invisible="state == 'lost' or not show_odoo17_admission"
+                            confirm="Send this lead to Odoo 17 and open it there for the admission?"/>
+                    <field name="show_odoo17_admission" invisible="1"/>
                     <!--<button name="action_voxbay_call" string="📞 Voxbay Call" type="object"/>
                     <button name="action_bonvoice_call" string="📞 BV Call" type="object"/>
                     <button name="action_open_funnel_wizard" string="🔵 Funnel" type="object"/>-->
@@ -630,7 +634,17 @@
         <field name="name">Leads</field>
         <field name="res_model">leads.logic</field>
         <field name="view_mode">list,kanban,form</field>
-        <field name="domain">[('lead_stage_category', '!=', 'admission_done')]</field>
+        <field name="domain">[('lead_stage_category', 'not in', ['admission_done', 'junk'])]</field>
+        <field name="search_view_id" ref="view_leads_logic_search"/>
+        <field name="context">{'search_default_filter_my': 0}</field>
+    </record>
+
+    <!-- ─── Junk leads (Wrong number / Not enquiry) - kept out of the Leads menu ─── -->
+    <record id="action_leads_logic_junk" model="ir.actions.act_window">
+        <field name="name">Junk Leads</field>
+        <field name="res_model">leads.logic</field>
+        <field name="view_mode">list,kanban,form</field>
+        <field name="domain">[('lead_stage_category', '=', 'junk')]</field>
         <field name="search_view_id" ref="view_leads_logic_search"/>
         <field name="context">{'search_default_filter_my': 0}</field>
     </record>
@@ -639,6 +653,8 @@
     <menuitem id="menu_leads_root" name="Leads Management" sequence="10" web_icon="custom_leads_19,static/description/icon.png" groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager,custom_leads_19.group_lead_team_lead,custom_leads_19.group_lead_users,custom_leads_19.group_lead_tele_callers,custom_leads_19.group_lead_digital_team,custom_leads_19.group_lead_digital_head,custom_leads_19.group_lead_branch_head,custom_leads_19.group_crash_head,custom_leads_19.group_crash_user"/>
 
     <menuitem id="menu_leads_leads" name="Leads" parent="menu_leads_root" action="action_leads_logic" sequence="1" groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager,custom_leads_19.group_lead_team_lead,custom_leads_19.group_lead_users,custom_leads_19.group_lead_tele_callers,custom_leads_19.group_lead_digital_team,custom_leads_19.group_lead_digital_head,custom_leads_19.group_lead_branch_head,custom_leads_19.group_crash_head,custom_leads_19.group_crash_user"/>
+
+    <menuitem id="menu_leads_junk" name="Junk" parent="menu_leads_root" action="action_leads_logic_junk" sequence="5" groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager,custom_leads_19.group_lead_team_lead,custom_leads_19.group_lead_users,custom_leads_19.group_lead_tele_callers,custom_leads_19.group_lead_digital_team,custom_leads_19.group_lead_digital_head,custom_leads_19.group_lead_branch_head,custom_leads_19.group_crash_head,custom_leads_19.group_crash_user"/>
 
     <menuitem id="menu_leads_config" name="Configuration" parent="menu_leads_root" sequence="50" groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager"/>
 

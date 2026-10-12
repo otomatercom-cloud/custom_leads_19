@@ -155,6 +155,12 @@
                             </div>
                         </setting>
                     </block>
+                    <block title="Odoo 17 admission">
+                        <setting string="Admission (Odoo 17) button"
+                                 help="Shows the 🎓 Admission (Odoo 17) button on the lead form. It sends the lead to Odoo 17 and opens it there. Turn it off when admission moves to Odoo 19.">
+                            <field name="odoo17_admission_button"/>
+                        </setting>
+                    </block>
                     <block title="Call button">
                         <setting string="Call button uses" help="The 📞 Call button on a lead dials through this service and the call is recorded and logged by it.">
                             <field name="call_provider"/>

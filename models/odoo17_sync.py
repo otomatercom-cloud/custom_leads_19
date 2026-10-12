@@ -39,8 +39,8 @@ class OtmLeadsOdoo17SyncQueue(models.Model):
             self.env['ir.config_parameter'].sudo().get_param('otm_odoo17.sync_enabled') == '1'
 
     @api.model
-    def _enqueue(self, lead, fnames):
-        """Store a descriptor of the CURRENT values of fnames for the lead."""
+    def _payload_for(self, lead, fnames):
+        """Descriptor of the CURRENT values of fnames for the lead."""
         payload = {}
         for f in fnames:
             fld = lead._fields[f]
@@ -58,6 +58,12 @@ class OtmLeadsOdoo17SyncQueue(models.Model):
                               else fields.Datetime.to_string(v) if v else False}
             else:
                 payload[f] = {'t': 'v', 'v': v if v not in (None,) else False}
+        return payload
+
+    @api.model
+    def _enqueue(self, lead, fnames):
+        """Store a descriptor of the CURRENT values of fnames for the lead."""
+        payload = self._payload_for(lead, fnames)
         rec = self.sudo().search([('lead_id', '=', lead.id), ('state', '=', 'pending')], limit=1)
         if rec:  # coalesce with the pending item
             old = json.loads(rec.payload or '{}')
@@ -91,9 +97,9 @@ class OtmLeadsOdoo17SyncQueue(models.Model):
         cache[ck] = res
         return res
 
-    def _push(self, call, rfields, cache):
-        self.ensure_one()
-        payload = json.loads(self.payload or '{}')
+    @api.model
+    def _build_vals(self, call, rfields, payload, cache):
+        """Odoo 17 write()/create() values (and notes) for a payload descriptor."""
         vals = {}
         notes = []
         for f, d in payload.items():
@@ -116,6 +122,11 @@ class OtmLeadsOdoo17SyncQueue(models.Model):
                         notes.append('%s value "%s" not valid in Odoo 17 - skipped' % (f, v))
                         continue
                 vals[f] = v
+        return vals, notes
+
+    def _push(self, call, rfields, cache):
+        self.ensure_one()
+        vals, notes = self._build_vals(call, rfields, json.loads(self.payload or '{}'), cache)
         if vals:
             call('leads.logic', 'write', [self.odoo17_lead_id], vals,
                  context={'tracking_disable': True, 'otm_odoo19_sync': True})
