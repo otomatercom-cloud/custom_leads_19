@@ -41,6 +41,10 @@ class ConnectionForm(models.TransientModel):
                 self.expected_joining_date = False
 
     def act_connect(self):
+        if self.lead_quality and self.lead_quality != 'not_responding':
+            if not (self.description or '').strip():
+                raise ValidationError(_("Please write the call response in Description - it is saved as a Response."))
+            self.env['lead.response'].create({'lead_id': self.lead_id.id, 'comment': self.description})
         self.lead_id.write({
             'lead_quality': self.lead_quality,
             'expected_joining_date': self.expected_joining_date,
@@ -83,7 +87,7 @@ class ConvertLead(models.TransientModel):
     lead_owner_id = fields.Many2one('res.users', string="Lead Owner")
 
     def act_convert(self):
-        self.lead_id.write({
+        self.lead_id.with_context(skip_response_check=True).write({
             'closing_date': self.closing_date,
             'lead_quality': 'waiting_for_admission',
             'booking_amount': self.amount,

@@ -215,7 +215,7 @@ class LeadAdmissionWizard(models.TransientModel):
 
         # ── Simple mode (batch not required) ─────────────────────────────
         if not self.batch_required:
-            lead.write({
+            lead.with_context(skip_response_check=True).write({
                 'admission_status':   True,
                 'admission_date':     fields.Datetime.now(),
                 'lead_quality':       'admission',
@@ -258,7 +258,7 @@ class LeadAdmissionWizard(models.TransientModel):
                     'remarks': _('Admission fee from lead %s') % (lead.reference_no or lead.name),
                 })
 
-        lead.write({
+        lead.with_context(skip_response_check=True).write({
             'student_id': student.id,
             'adm_id': student.id,
             'student_profile_created': True,

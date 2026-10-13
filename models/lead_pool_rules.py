@@ -45,6 +45,27 @@ class LeadsLogicPoolRules(models.Model):
                      if r.assignment_type != 'attendance_pool' or not lead or r._pool_accepts(lead)), False)
         return rule if rule and rule.assignment_type == 'attendance_pool' else False
 
+    def _check_quality_response(self, vals):
+        """Changing the Lead Quality (other than to Ringing Not Responding) needs a Response: either written in
+        this save, or by this user within the last 30 minutes and after the lead's previous quality change."""
+        rec = self
+        if (vals.get('lead_quality') or False) == (rec.lead_quality or False):
+            return
+        for cmd in vals.get('response_ids') or []:
+            if isinstance(cmd, (list, tuple)) and cmd and cmd[0] == 0 and \
+                    ((cmd[2] or {}).get('comment') or '').strip():
+                return
+        since = fields.Datetime.now() - timedelta(minutes=30)
+        last = self.env['lead.quality.history'].sudo().search(
+            [('lead_id', '=', rec.id)], order='change_date desc', limit=1)
+        if last and last.change_date and last.change_date > since:
+            since = last.change_date
+        if self.env['lead.response'].sudo().search_count([
+                ('lead_id', '=', rec.id), ('user_id', '=', self.env.uid), ('create_date', '>=', since)]):
+            return
+        raise UserError(_("Please add a 💬 Response (what happened on the call) before changing the Lead Quality. "
+                          "Only Ringing Not Responding can be set without one."))
+
     def _rnr_gap_minutes(self):
         """Gap between RNR calls for this lead: depends on the time (IST) the lead came to the officer -
         before the midday hour the full gap, after midday a shorter one, in the evening the shortest."""
@@ -87,6 +108,10 @@ class LeadsLogicPoolRules(models.Model):
             new_q = vals.get('lead_quality')
             # one setting for everyone: Settings > Leads > Lead rules
             need = self.env['otm.lead.rule.params'].param('custom_leads_19.rnr_min_calls')
+            # every quality change except RNR needs a 💬 Response (what happened on the call)
+            if new_q and new_q != 'not_responding' and len(self) == 1 \
+                    and not self.env.context.get('otm_odoo17_import') and not self.env.context.get('skip_response_check'):
+                self._check_quality_response(vals)
             if need and new_q == 'not_responding':
                 for rec in self:
                     if rec.lead_quality == 'not_responding' or rec.is_abroad:

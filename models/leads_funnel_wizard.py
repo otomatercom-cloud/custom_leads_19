@@ -25,7 +25,7 @@ class LeadsFunnelWizard(models.TransientModel):
 
     def action_first_attempt(self):
         self.ensure_one()
-        self.lead_id.write({'first_call': True, 'first_call_dt': fields.Datetime.now(), 'lead_quality': 'first_attempt', 'state': 'in_progress'})
+        self.lead_id.with_context(skip_response_check=True).write({'first_call': True, 'first_call_dt': fields.Datetime.now(), 'lead_quality': 'first_attempt', 'state': 'in_progress'})
         self.lead_id.message_post(body=f"First Attempt clicked by {self.env.user.name}")
         return self._reload_wizard()
 

@@ -54,7 +54,7 @@ class KanbanResponseWizard(models.TransientModel):
 
         # Save quality if changed
         if self.new_quality and self.new_quality != lead.lead_quality:
-            lead.write({'lead_quality': self.new_quality})
+            lead.with_context(skip_response_check=True).write({'lead_quality': self.new_quality})   # response saved just below
 
         # Save to call_response field (summary)
         lead.write({'call_response': self.response_text})
@@ -124,7 +124,8 @@ class KanbanQualityWizard(models.TransientModel):
         ('not_enquiry', '🛑 Not Enquiry'),
         ('not_interested', 'Not Interested'),
     ], string='Change To', required=True)
-    reason = fields.Char(string='Reason (optional)')
+    reason = fields.Char(string='Response / Reason', required=True,
+                         help='Saved as a 💬 Response on the lead.')
 
     def action_update_quality(self):
         self.ensure_one()
@@ -132,7 +133,9 @@ class KanbanQualityWizard(models.TransientModel):
             self.lead_id.lead_quality, self.lead_id.lead_quality)
         new = dict(self._fields['new_quality'].selection).get(
             self.new_quality, self.new_quality)
-        self.lead_id.write({'lead_quality': self.new_quality})
+        self.lead_id.with_context(skip_response_check=True).write({'lead_quality': self.new_quality})
+        if self.new_quality != 'not_responding':
+            self.env['lead.response'].create({'lead_id': self.lead_id.id, 'comment': self.reason})
         msg = f"🏷️ <b>Lead Quality Changed</b>: {old} → {new}"
         if self.reason:
             msg += f"<br/>Reason: {self.reason}"
