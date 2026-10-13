@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="custom_leads_19.CallRecordingPlayer">
+        <t t-if="src">
+            <audio controls="controls" preload="none" t-att-src="src"
+                   style="height:32px;width:240px;max-width:100%;" t-on-click.stop="">
+            </audio>
+        </t>
+    </t>
+</templates>

@@ -319,7 +319,7 @@
                                     <field name="caller_number"/>
                                     <field name="call_status"/>
                                     <field name="duration"/>
-                                    <field name="recording_url" widget="url"/>
+                                    <field name="recording_url" widget="call_recording_player" string="Recording"/>
                                     <field name="remarks"/>
                                     <field name="ai_interest" optional="show"/>
                                     <field name="ai_score" optional="show"/>
