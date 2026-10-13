@@ -70,6 +70,30 @@ class LeadsLogicCrosscheck(models.Model):
 
     odoo17_checked_on = fields.Datetime(string='Odoo 17 Cross-checked On', copy=False, readonly=True)
 
+    def action_odoo17_sync_lead(self):
+        """Lead form button (Team Lead / Manager / Super Admin): cross-check THIS lead with Odoo 17 and add
+        whatever Odoo 19 is missing (responses, call logs, follow-ups, history, empty fields, chatter).
+        Nothing is removed or overwritten; quality only changes while the lead is still New and the officer
+        only when the lead has none."""
+        self.ensure_one()
+        user = self.env.user
+        if not (user.has_group('custom_leads_19.group_lead_team_lead') or user.has_group('custom_leads_19.group_lead_manager')
+                or user.has_group('custom_leads_19.group_super_admin')):
+            raise UserError(_('Only team leads can sync a lead with Odoo 17.'))
+        self.check_access('read')
+        self.check_access('write')            # the user must be allowed to work on this lead (record rules)
+        wiz = self.env['otm.leads.odoo17.crosscheck.wizard'].sudo().with_context(
+            crosscheck_lead_ids=self.ids).create({
+                'recheck': True, 'copy_children': True, 'copy_chatter': True, 'fill_fields': True,
+                'quality_mode': 'new', 'owner_mode': 'empty'})
+        wiz._run(dry=False)
+        lines = (wiz.result_text or '').splitlines()
+        msg = '\n'.join(l for l in lines if not l.startswith('DONE') and not l.startswith('Odoo 19 leads'))
+        self.sudo().message_post(body=_('Synced with Odoo 17 by %s.') % user.name)
+        return {'type': 'ir.actions.client', 'tag': 'display_notification',
+                'params': {'title': _('Odoo 17 sync'), 'message': msg or _('Done.'), 'type': 'info',
+                           'sticky': True, 'next': {'type': 'ir.actions.client', 'tag': 'reload'}}}
+
 
 class OtmLeadsOdoo17Crosscheck(models.TransientModel):
     _name = 'otm.leads.odoo17.crosscheck.wizard'
@@ -166,7 +190,7 @@ class OtmLeadsOdoo17Crosscheck(models.TransientModel):
         Lead = self.env['leads.logic'].with_context(
             otm_odoo17_import=True, tracking_disable=True, mail_create_nolog=True, mail_notrigger=True,
             skip_pool_rules=True, urgent_lead_skip=True, skip_assignment_history=True)
-        ids = Lead.sudo().search(self._local_domain(), order='id asc').ids
+        ids = self.env.context.get('crosscheck_lead_ids') or Lead.sudo().search(self._local_domain(), order='id asc').ids
         rfields = call('leads.logic', 'fields_get', attributes=['type', 'relation', 'store'])
         local_fields = Lead._fields
         read_fields = sorted(

@@ -74,6 +74,9 @@
                             class="btn-primary" invisible="state == 'lost' or not show_odoo17_admission"
                             confirm="Send this lead to Odoo 17 and open it there for the admission?"/>
                     <field name="show_odoo17_admission" invisible="1"/>
+                    <button name="action_odoo17_sync_lead" string="🔄 Sync from Odoo 17" type="object"
+                            groups="custom_leads_19.group_lead_team_lead,custom_leads_19.group_lead_manager,custom_leads_19.group_super_admin"
+                            confirm="Check this lead in Odoo 17 and add any missing details here? Nothing is removed or overwritten."/>
                     <!--<button name="action_voxbay_call" string="📞 Voxbay Call" type="object"/>
                     <button name="action_bonvoice_call" string="📞 BV Call" type="object"/>
                     <button name="action_open_funnel_wizard" string="🔵 Funnel" type="object"/>-->
