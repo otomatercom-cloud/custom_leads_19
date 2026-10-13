@@ -329,7 +329,9 @@
                                     <field name="ai_interest" optional="show"/>
                                     <field name="ai_score" optional="show"/>
                                     <field name="ai_flag" column_invisible="1"/>
+                                    <field name="ai_state" column_invisible="1"/>
                                     <field name="has_recording" column_invisible="1"/>
+                                    <button name="action_ai_analyse" type="object" string="&#129302; Analyse with AI" class="btn-sm btn-primary" invisible="not has_recording or ai_state == 'done'"/>
                                     <button name="action_upload_recording" type="object" string="&#128206; Upload Recording" class="btn-sm btn-secondary" invisible="has_recording"/>
                                     <button name="action_upload_recording" type="object" string="&#128260; Replace Recording" class="btn-sm btn-secondary" invisible="not has_recording"/>
                                 </list>
