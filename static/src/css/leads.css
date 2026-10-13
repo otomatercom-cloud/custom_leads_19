@@ -1007,3 +1007,19 @@ border: none !important;
     background: #fff;
     width: 100%;
 }
+
+/* Lead form: narrower chatter on the right, wider main form */
+@media (min-width: 1200px) {
+    .o_form_view.o_leads_phone_form .o-mail-Form-chatter,
+    .o_form_view.o_leads_phone_form .o-mail-Form-chatter.o-aside {
+        flex: 0 0 300px !important;
+        width: 300px !important;
+        min-width: 260px !important;
+        max-width: 300px !important;
+    }
+    .o_form_view.o_leads_phone_form .o_form_sheet_bg {
+        flex: 1 1 0 !important;
+        min-width: 0 !important;
+        max-width: none !important;
+    }
+}

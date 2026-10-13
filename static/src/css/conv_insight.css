@@ -1,6 +1,6 @@
 .o_conv { background: #fff; border: 1px solid #d8dadd; border-radius: 12px; padding: 14px 18px; margin-bottom: 14px; width: 100%; }
-.o_conv_main { display: flex; gap: 24px; align-items: center; flex-wrap: wrap; }
-.o_conv_gauge_box { display: flex; align-items: center; gap: 14px; width: 230px; flex-shrink: 0; }
+.o_conv_main { display: flex; gap: 24px; align-items: center; flex-wrap: nowrap; }
+.o_conv_gauge_box { display: flex; align-items: center; gap: 14px; width: 250px; flex-shrink: 0; }
 .o_conv_gauge { position: relative; width: 104px; height: 104px; }
 .o_conv_gauge_text { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 .o_conv_pct { font-weight: 700; font-size: 26px; line-height: 1; }
@@ -10,16 +10,16 @@
 .o_conv_arc.o_conv_high, .o_conv_high { stroke: #0e8f7e; color: #0e8f7e; }
 .o_conv_arc.o_conv_medium, .o_conv_medium { stroke: #d9922b; color: #b97813; }
 .o_conv_arc.o_conv_low, .o_conv_low { stroke: #d9503f; color: #d9503f; }
-.o_conv_col { flex: 1 1 170px; min-width: 170px; display: flex; flex-direction: column; gap: 8px; }
+.o_conv_col { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
 .o_conv_col_head { display: flex; justify-content: space-between; }
 .o_conv_good { color: #0e8f7e; } .o_conv_mid { color: #b97813; } .o_conv_bad { color: #d9503f; }
 .o_conv_row { display: flex; align-items: center; gap: 10px; font-size: 13px; }
-.o_conv_lbl { width: 100px; flex-shrink: 0; }
+.o_conv_lbl { width: 112px; flex-shrink: 0; white-space: nowrap; }
 .o_conv_track { flex-grow: 1; height: 8px; border-radius: 4px; background: #dce3ea; }
 .o_conv_fill { height: 8px; border-radius: 4px; }
 .o_conv_f_good { background: #0e8f7e; } .o_conv_f_mid { background: #d9922b; } .o_conv_f_bad { background: #d9503f; }
 .o_conv_note { width: 74px; flex-shrink: 0; font-size: 12px; color: #6c757d; text-align: right; }
-.o_conv_next { width: 230px; flex-shrink: 0; background: #1c3d6b; color: #fff; border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 5px; font-size: 13px; line-height: 1.4; }
+.o_conv_next { width: 250px; align-self: stretch; justify-content: center; flex-shrink: 0; background: #1c3d6b; color: #fff; border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 5px; font-size: 13px; line-height: 1.4; }
 .o_conv_strip { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; margin-top: 12px; padding-top: 10px; border-top: 1px solid #e9ecef; }
 .o_conv_strip_title { align-self: center; width: 100px; }
 .o_conv_tl { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 11px; color: #6c757d; }
@@ -31,3 +31,6 @@
 .o_conv_chip_warn { background: #fbebcf; color: #7a4a06; }
 .o_conv_chip_bad { background: #fadbd6; color: #8a2a1d; }
 
+
+.o_conv_col_head { margin-bottom: 2px; }
+.o_conv_gauge_label span { line-height: 1.35; }

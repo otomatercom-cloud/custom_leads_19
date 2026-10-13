@@ -123,14 +123,14 @@ class LeadsLogicConversion(models.Model):
             'call_quality': call_quality, 'approach': approach,
             'quality_rows': [
                 {'label': 'Talk time', 'value': talk, 'note': ('%s m %s s' % divmod(int(sum(c['secs'] for c in answered) / len(answered)), 60)) if answered else 'No talk yet'},
-                {'label': 'Calls answered', 'value': rate, 'note': '%s of %s' % (len(answered), total)},
+                {'label': 'Answered %s of %s' % (len(answered), total), 'value': rate, 'note': '%s of %s calls answered' % (len(answered), total)},
                 {'label': 'Pitch clarity', 'value': pitch if pitch is not None else 0,
                  'note': ('%s / 10' % round(sum(ai_scores) / len(ai_scores), 1)) if ai_scores else 'Not analysed'},
             ],
             'approach_rows': [
                 {'label': 'Interest', 'value': interest, 'note': (interests[-1] or '').replace('_', ' ').title() if interests else q.replace('_', ' ').title()},
                 {'label': 'Engagement', 'value': engage, 'note': '%s response(s)' % len(lead.response_ids)},
-                {'label': 'Follow-up set', 'value': agreed, 'note': 'Yes' if sched else 'No'},
+                {'label': 'Follow-up set', 'value': agreed, 'note': 'Yes' if sched else 'No', 'hidden': True},
                 {'label': 'Objections', 'value': objections, 'note': '%s raised' % len(issues) if issues else 'None'},
             ],
             'timeline': [{'label': lbl(c['time']), 'secs': c['secs'], 'ok': c['ok']} for c in calls[-8:]],

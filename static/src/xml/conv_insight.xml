@@ -18,17 +18,16 @@
                         </div>
                         <div class="o_conv_gauge_label">
                             <b>Chance of joining</b>
-                            <span class="text-muted">From call quality and customer approach</span>
+                            <span class="text-muted">From call quality and approach</span>
                         </div>
                     </div>
 
                     <div class="o_conv_col">
                         <div class="o_conv_col_head"><b>Call quality</b><b t-att-class="'o_conv_' + tone(d.call_quality)" t-esc="d.call_quality"/></div>
                         <t t-foreach="d.quality_rows" t-as="r" t-key="r_index">
-                            <div class="o_conv_row">
+                            <div t-if="!r.hidden" class="o_conv_row" t-att-title="r.note">
                                 <span class="o_conv_lbl" t-esc="r.label"/>
                                 <div class="o_conv_track"><div t-att-class="'o_conv_fill o_conv_f_' + tone(r.value)" t-att-style="'width:' + r.value + '%'"/></div>
-                                <span class="o_conv_note" t-esc="r.note"/>
                             </div>
                         </t>
                     </div>
@@ -36,10 +35,9 @@
                     <div class="o_conv_col">
                         <div class="o_conv_col_head"><b>Customer approach</b><b t-att-class="'o_conv_' + tone(d.approach)" t-esc="d.approach"/></div>
                         <t t-foreach="d.approach_rows" t-as="r" t-key="r_index">
-                            <div class="o_conv_row">
+                            <div t-if="!r.hidden" class="o_conv_row" t-att-title="r.note">
                                 <span class="o_conv_lbl" t-esc="r.label"/>
                                 <div class="o_conv_track"><div t-att-class="'o_conv_fill o_conv_f_' + tone(r.value)" t-att-style="'width:' + r.value + '%'"/></div>
-                                <span class="o_conv_note" t-esc="r.note"/>
                             </div>
                         </t>
                     </div>
