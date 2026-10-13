@@ -265,7 +265,7 @@
 
     <menuitem id="menu_lead_source_campaign" name="Source Campaigns" parent="custom_leads_19.menu_leads_config"
               action="action_lead_source_campaign" sequence="3"
-              groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager"/>
+              groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager,custom_leads_19.group_lead_team_lead"/>
     <menuitem id="menu_leads_odoo17_import" name="Import from Odoo 17" parent="custom_leads_19.menu_leads_config"
               sequence="90" groups="custom_leads_19.group_super_admin"/>
     <menuitem id="menu_leads_odoo17_import_wizard" name="Import Leads" parent="menu_leads_odoo17_import"

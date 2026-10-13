@@ -115,7 +115,8 @@ class LeadsLogicScore(models.Model):
         cr = self.env.cr
         cr.execute("SELECT DISTINCT lead_id FROM lead_followup WHERE status = 'scheduled' AND next_followup_date <= %s", (now,))
         due = {x[0] for x in cr.fetchall()}
-        dom = [('lead_owner', '!=', False), '|', ('create_date', '>=', since), ('call_score', '>', 0)]
+        dom = ['|', ('lead_owner', '!=', False), ('topup_pool_lead', '=', True),
+               '|', ('create_date', '>=', since), ('call_score', '>', 0)]
         ids = self.sudo().search(dom, order='id').ids
         done = 0
         for i in range(0, len(ids), batch):

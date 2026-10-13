@@ -760,7 +760,7 @@
     <menuitem id="menu_leads_assignment" name="Assignment" parent="menu_leads_root" sequence="45"
               groups="custom_leads_19.group_lead_manager,custom_leads_19.group_super_admin,custom_leads_19.group_lead_team_lead"/>
 
-    <menuitem id="menu_leads_source" name="Lead Sources" parent="menu_leads_config" action="action_leads_source" sequence="1" groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager"/>
+    <menuitem id="menu_leads_source" name="Lead Sources" parent="menu_leads_config" action="action_leads_source" sequence="1" groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager,custom_leads_19.group_lead_team_lead"/>
 
     <menuitem id="menu_course_interested" name="Courses" parent="menu_leads_config" action="action_course_interested" sequence="2" groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager"/>
 </odoo>

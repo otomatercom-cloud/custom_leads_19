@@ -192,7 +192,7 @@ class LeadsLogicTopup(models.Model):
                 continue
             if Lead._topup_remaining(emp, start_utc, now) > cfg['pending_max']:
                 continue
-            take = Lead.search(Lead._topup_pool_domain(), order='create_date desc, id desc',
+            take = Lead.search(Lead._topup_pool_domain(), order='call_score desc, create_date desc, id desc',
                                limit=min(cfg['batch'], cfg['cap'] - got))
             if not take:
                 empty = True
