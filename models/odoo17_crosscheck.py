@@ -75,7 +75,11 @@ class LeadsLogicCrosscheck(models.Model):
         whatever Odoo 19 is missing (responses, call logs, follow-ups, history, empty fields, chatter).
         Nothing is removed or overwritten; quality only changes while the lead is still New and the officer
         only when the lead has none."""
-        self.ensure_one()
+        BULK_MAX = 100
+        if not self:
+            return False
+        if len(self) > BULK_MAX:
+            raise UserError(_('Select at most %s leads at a time (you selected %s).') % (BULK_MAX, len(self)))
         user = self.env.user
         if not (user.has_group('custom_leads_19.group_lead_team_lead') or user.has_group('custom_leads_19.group_lead_manager')
                 or user.has_group('custom_leads_19.group_super_admin')):
@@ -84,12 +88,13 @@ class LeadsLogicCrosscheck(models.Model):
         self.check_access('write')            # the user must be allowed to work on this lead (record rules)
         wiz = self.env['otm.leads.odoo17.crosscheck.wizard'].sudo().with_context(
             crosscheck_lead_ids=self.ids).create({
-                'recheck': True, 'copy_children': True, 'copy_chatter': True, 'fill_fields': True,
+                'recheck': True, 'copy_children': True, 'copy_chatter': len(self) <= 10, 'fill_fields': True,
                 'quality_mode': 'new', 'owner_mode': 'empty'})
         wiz._run(dry=False)
         lines = (wiz.result_text or '').splitlines()
         msg = '\n'.join(l for l in lines if not l.startswith('DONE') and not l.startswith('Odoo 19 leads'))
-        self.sudo().message_post(body=_('Synced with Odoo 17 by %s.') % user.name)
+        for lead in self.sudo():
+            lead.message_post(body=_('Synced with Odoo 17 by %s.') % user.name)
         return {'type': 'ir.actions.client', 'tag': 'display_notification',
                 'params': {'title': _('Odoo 17 sync'), 'message': msg or _('Done.'), 'type': 'info',
                            'sticky': True, 'next': {'type': 'ir.actions.client', 'tag': 'reload'}}}

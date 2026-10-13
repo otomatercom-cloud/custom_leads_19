@@ -687,6 +687,15 @@
         <field name="state">code</field>
         <field name="code">action = records.action_remove_topup_pool()</field>
     </record>
+    <record id="action_server_lead_odoo17_sync" model="ir.actions.server">
+        <field name="name">🔄 Sync from Odoo 17 (selected leads)</field>
+        <field name="model_id" ref="custom_leads_19.model_leads_logic"/>
+        <field name="binding_model_id" ref="custom_leads_19.model_leads_logic"/>
+        <field name="binding_view_types">list</field>
+        <field name="group_ids" eval="[(4, ref('custom_leads_19.group_lead_team_lead')), (4, ref('custom_leads_19.group_lead_manager')), (4, ref('custom_leads_19.group_super_admin'))]"/>
+        <field name="state">code</field>
+        <field name="code">action = records.action_odoo17_sync_lead()</field>
+    </record>
     <record id="action_server_lead_add_topup_take_back" model="ir.actions.server">
         <field name="name">➕ Add to Top-up pool and take back from officer</field>
         <field name="model_id" ref="custom_leads_19.model_leads_logic"/>

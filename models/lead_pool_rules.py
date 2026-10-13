@@ -79,6 +79,14 @@ class LeadsLogicPoolRules(models.Model):
             return base
         local = pytz.utc.localize(since).astimezone(pytz.timezone('Asia/Kolkata'))
         hour = local.hour + local.minute / 60.0
+        day_end = P.param('custom_leads_19.rnr_day_end')
+        if day_end:
+            # fair gap: the time left in the working day shared between the RNR calls
+            start = P.param('custom_leads_19.rnr_day_start')
+            left = (day_end - max(hour, start)) * 60.0
+            calls = max(1, P.param('custom_leads_19.rnr_min_calls'))
+            lo = P.param('custom_leads_19.rnr_gap_eve_min')
+            return int(max(lo, min(base, left / calls)))
         if hour >= P.param('custom_leads_19.rnr_eve_hour'):
             return P.param('custom_leads_19.rnr_gap_eve_min')
         if hour >= P.param('custom_leads_19.rnr_noon_hour'):
@@ -92,12 +100,23 @@ class LeadsLogicPoolRules(models.Model):
         gap = self._rnr_gap_minutes()
         if not gap:
             return self.call_count
-        counted, last = 0, None
-        for t in sorted(c.call_time for c in self.sudo().call_log_ids
-                        if c.call_type != 'incoming' and c.call_time):
-            if last is None or (t - last).total_seconds() >= gap * 60:
+        tol = max(0, self.env['otm.lead.rule.params'].param('custom_leads_19.rnr_gap_tolerance_min') or 0)
+        need_secs = max(0, gap - tol) * 60
+        gen = self.env['otm.lead.rule.params'].param('custom_leads_19.rnr_genuine_gap_min')
+        gen_secs = max(0, min(gen, gap)) * 60 if gen else 0
+        calls = sorted(((c.call_time, bool(c.call_uuid)) for c in self.sudo().call_log_ids
+                        if c.call_type != 'incoming' and c.call_time), key=lambda x: x[0])
+        counted, last, last_genuine = 0, None, False
+        for t, genuine in calls:
+            if last is None:
+                ok = True
+            else:
+                secs = (t - last).total_seconds()
+                # a call from the phone system after a phone-system call only needs the short "genuine" gap
+                ok = secs >= need_secs or (gen_secs and genuine and last_genuine and secs >= gen_secs)
+            if ok:
                 counted += 1
-                last = t
+                last, last_genuine = t, genuine
         return counted
 
     def write(self, vals):

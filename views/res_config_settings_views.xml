@@ -112,6 +112,10 @@
                                 <div class="row mt8"><label class="col-lg-6" for="lead_rnr_gap_min"/><field name="lead_rnr_gap_min"/></div>
                                 <div class="row"><label class="col-lg-6" for="lead_rnr_gap_noon_min"/><field name="lead_rnr_gap_noon_min"/></div>
                                 <div class="row"><label class="col-lg-6" for="lead_rnr_gap_eve_min"/><field name="lead_rnr_gap_eve_min"/></div>
+                                <div class="row"><label class="col-lg-6" for="lead_rnr_day_start"/><field name="lead_rnr_day_start"/></div>
+                                <div class="row"><label class="col-lg-6" for="lead_rnr_day_end"/><field name="lead_rnr_day_end"/></div>
+                                <div class="row"><label class="col-lg-6" for="lead_rnr_genuine_gap"/><field name="lead_rnr_genuine_gap"/></div>
+                                <div class="row"><label class="col-lg-6" for="lead_rnr_gap_tolerance"/><field name="lead_rnr_gap_tolerance"/></div>
                                 <div class="row"><label class="col-lg-6" for="lead_rnr_noon_hour"/><field name="lead_rnr_noon_hour"/></div>
                                 <div class="row"><label class="col-lg-6" for="lead_rnr_eve_hour"/><field name="lead_rnr_eve_hour"/></div>
                             </div>
