@@ -34,3 +34,10 @@
 
 .o_conv_col_head { margin-bottom: 2px; }
 .o_conv_gauge_label span { line-height: 1.35; }
+
+/* full width of the form, like the cards below */
+.o_field_widget.o_field_conv_insight,
+.o_field_conv_insight { display: block !important; width: 100% !important; max-width: 100% !important; flex: 1 1 100% !important; }
+.o_conv { box-sizing: border-box; }
+.o_conv_track { min-width: 70px; }
+.o_conv_col { padding-right: 8px; }
