@@ -204,9 +204,10 @@
                                  help="Every few minutes connected calls that have a recording are transcribed and reviewed: summary, student interest, officer score and whether the lead quality matches the call. Needs the API keys below. The audio is sent to the AI providers; cost depends on call minutes.">
                             <field name="ai_call_enabled"/>
                         </setting>
-                        <setting string="Speech-to-text (OpenAI)" invisible="not ai_call_enabled">
+                        <setting string="Speech-to-text" invisible="not ai_call_enabled">
                             <div class="content-group">
-                                <div class="row mt8"><label class="col-lg-4" for="ai_stt_key"/><field name="ai_stt_key" password="True"/></div>
+                                <div class="row mt8"><label class="col-lg-4" for="ai_stt_provider"/><field name="ai_stt_provider"/></div>
+                                <div class="row"><label class="col-lg-4" for="ai_stt_key"/><field name="ai_stt_key" password="True"/></div>
                                 <div class="row"><label class="col-lg-4" for="ai_stt_model"/><field name="ai_stt_model"/></div>
                                 <div class="row"><label class="col-lg-4" for="ai_stt_language"/><field name="ai_stt_language"/></div>
                             </div>

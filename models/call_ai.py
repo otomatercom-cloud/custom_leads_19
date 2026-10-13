@@ -20,7 +20,9 @@ P = 'custom_leads_19.ai_'
 STT_URL = 'https://api.openai.com/v1/audio/transcriptions'
 OPENAI_CHAT_URL = 'https://api.openai.com/v1/chat/completions'
 ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages'
-DEFAULT_LLM = {'anthropic': 'claude-haiku-4-5-20251001', 'openai': 'gpt-4o-mini'}
+GROQ_STT_URL = 'https://api.groq.com/openai/v1/audio/transcriptions'
+GROQ_CHAT_URL = 'https://api.groq.com/openai/v1/chat/completions'
+DEFAULT_LLM = {'anthropic': 'claude-haiku-4-5-20251001', 'openai': 'gpt-4o-mini', 'groq': 'llama-3.3-70b-versatile'}
 MAX_AUDIO = 24 * 1024 * 1024            # transcription API limit is 25 MB
 INTERESTS = [('hot', 'Hot'), ('warm', 'Warm'), ('cold', 'Cold'),
              ('not_interested', 'Not interested'), ('unclear', 'Unclear')]
@@ -75,6 +77,8 @@ class LeadCallLogAI(models.Model):
 
     @api.model
     def _ai_keys_ok(self):
+        if self._ai_param('llm_provider') == 'groq' and self._ai_param('stt_provider') == 'groq':
+            return bool(self._ai_param('stt_key'))          # one Groq key serves both steps
         return bool(self._ai_param('stt_key') and self._ai_param('llm_key'))
 
     def _ai_audio(self):
@@ -103,11 +107,12 @@ class LeadCallLogAI(models.Model):
         data, name, mime = self._ai_audio()
         if len(data) > MAX_AUDIO:
             raise UserError(_('Recording is larger than 24 MB.'))
-        form = {'model': self._ai_param('stt_model', 'gpt-4o-transcribe')}
+        groq = self._ai_param('stt_provider', 'openai') == 'groq'
+        form = {'model': self._ai_param('stt_model', 'whisper-large-v3' if groq else 'gpt-4o-transcribe')}
         lang = self._ai_param('stt_language')
         if lang:
             form['language'] = lang
-        r = requests.post(STT_URL, headers={'Authorization': 'Bearer ' + self._ai_param('stt_key')},
+        r = requests.post(GROQ_STT_URL if groq else STT_URL, headers={'Authorization': 'Bearer ' + self._ai_param('stt_key')},
                           data=form, files={'file': (name, data, mime)}, timeout=240)
         if r.status_code != 200:
             raise UserError(_('Speech-to-text error %s: %s') % (r.status_code, r.text[:200]))
@@ -117,8 +122,10 @@ class LeadCallLogAI(models.Model):
         provider = self._ai_param('llm_provider', 'anthropic')
         model = self._ai_param('llm_model', DEFAULT_LLM.get(provider, DEFAULT_LLM['anthropic']))
         key = self._ai_param('llm_key')
-        if provider == 'openai':
-            r = requests.post(OPENAI_CHAT_URL, headers={'Authorization': 'Bearer ' + key}, timeout=120, json={
+        if provider == 'groq' and not key and self._ai_param('stt_provider') == 'groq':
+            key = self._ai_param('stt_key')
+        if provider in ('openai', 'groq'):
+            r = requests.post(GROQ_CHAT_URL if provider == 'groq' else OPENAI_CHAT_URL, headers={'Authorization': 'Bearer ' + key}, timeout=120, json={
                 'model': model, 'response_format': {'type': 'json_object'}, 'temperature': 0.2,
                 'messages': [{'role': 'system', 'content': SYSTEM_PROMPT},
                              {'role': 'user', 'content': user_text}]})

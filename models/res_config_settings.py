@@ -14,17 +14,21 @@ class ResConfigSettings(models.TransientModel):
     ai_call_enabled = fields.Boolean(
         string='AI call analysis', config_parameter='custom_leads_19.ai_enabled',
         help='Automatically transcribe call recordings and review them with AI.')
-    ai_stt_key = fields.Char(string='Speech-to-text API key (OpenAI)', config_parameter='custom_leads_19.ai_stt_key')
+    ai_stt_provider = fields.Selection(
+        [('openai', 'OpenAI'), ('groq', 'Groq (Whisper)')], string='Speech-to-text by',
+        config_parameter='custom_leads_19.ai_stt_provider', default='openai')
+    ai_stt_key = fields.Char(string='Speech-to-text API key', config_parameter='custom_leads_19.ai_stt_key')
     ai_stt_model = fields.Char(string='Speech-to-text model', config_parameter='custom_leads_19.ai_stt_model',
-                               default='gpt-4o-transcribe')
+                               help='Empty = gpt-4o-transcribe (OpenAI) or whisper-large-v3 (Groq).')
     ai_stt_language = fields.Char(string='Language code', config_parameter='custom_leads_19.ai_stt_language',
                                   help='Leave empty to detect automatically. ml = Malayalam, en = English.')
     ai_llm_provider = fields.Selection(
-        [('anthropic', 'Anthropic Claude'), ('openai', 'OpenAI')], string='AI for the review',
+        [('anthropic', 'Anthropic Claude'), ('openai', 'OpenAI'), ('groq', 'Groq (Llama)')], string='AI for the review',
         config_parameter='custom_leads_19.ai_llm_provider', default='anthropic')
-    ai_llm_key = fields.Char(string='AI API key', config_parameter='custom_leads_19.ai_llm_key')
+    ai_llm_key = fields.Char(string='AI API key', config_parameter='custom_leads_19.ai_llm_key',
+                             help='Groq: leave empty to reuse the speech-to-text key when both use Groq.')
     ai_llm_model = fields.Char(string='AI model (optional)', config_parameter='custom_leads_19.ai_llm_model',
-                               help='Empty = claude-haiku-4-5-20251001 for Anthropic, gpt-4o-mini for OpenAI.')
+                               help='Empty = claude-haiku-4-5-20251001 (Anthropic), gpt-4o-mini (OpenAI), llama-3.3-70b-versatile (Groq).')
     ai_min_seconds = fields.Integer(string='Only calls longer than (seconds)',
                                     config_parameter='custom_leads_19.ai_min_seconds', default=30)
     ai_daily_limit = fields.Integer(string='Maximum calls analysed per day',
