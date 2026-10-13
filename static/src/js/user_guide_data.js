@@ -51,7 +51,7 @@ export const GUIDE = [
         items: [
             {
                 t: "Telegram updates for managers", path: "Settings > Telegram updates for managers", who: ["Manager", "Director"],
-                what: "Three Telegram messages a day, at the hours you choose: morning, afternoon and evening. Each shows the leads created today so far and yesterday with Meta leads counted separately, and the admission officers' attendance (present, not signed in, on leave). The evening message also has the daily report: assigned, first call within 15, 30, 60 and 120 minutes, RNR, top performers and admissions.",
+                what: "Three Telegram messages a day, at the hours you choose: morning, afternoon and evening. Each shows the leads created today so far and yesterday with Meta leads counted separately, and the admission officers' attendance (who signed in on time with the time, who was late, who has not signed in, who is on leave; the late time is set in Settings). The evening message also has the daily report: assigned, first call within 15, 30, 60 and 120 minutes, RNR, top performers and admissions.",
                 steps: [
                     "Settings > Telegram Follow-Up Alerts: enter the Bot Token (see How to connect Telegram below).",
                     "Every manager who should get the updates opens the bot, presses Start and has a Chat ID on the user form (Call Settings tab).",

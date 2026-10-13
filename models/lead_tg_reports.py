@@ -25,7 +25,9 @@ class ResConfigSettingsTgReports(models.TransientModel):
     tgrep_morning = fields.Integer(string='Morning at (hour)', config_parameter=P + 'morning', default=10)
     tgrep_afternoon = fields.Integer(string='Afternoon at (hour)', config_parameter=P + 'afternoon', default=14)
     tgrep_evening = fields.Integer(string='Evening at (hour)', config_parameter=P + 'evening', default=19)
-    tgrep_team_leads = fields.Boolean(string='Also send to team leads', config_parameter=P + 'team_leads')
+    tgrep_team_leads = fields.Boolean(string='Also send to team leads', config_parameter=P + 'team_leads', default=True)
+    tgrep_late_after = fields.Char(string='Late after (HH:MM)', config_parameter=P + 'late_after', default='09:30',
+                                   help='Officers who sign in after this time are listed as late.')
 
     def action_tgrep_test(self):
         self.execute()
@@ -56,12 +58,22 @@ class LeadsLogicTgReports(models.Model):
     def _tgrep_attendance(self):
         members = self.env['lead.team.member'].sudo().search([('team_id.active', '=', True)])
         emps = members.mapped('employee_id').filtered(lambda e: e.user_id and e.user_id.active)
-        today = fields.Date.context_today(self.with_context(tz=self._rd_tzname()))
+        tzname = self._rd_tzname()
+        tz = pytz.timezone(tzname)
+        today = fields.Date.context_today(self.with_context(tz=tzname))
         s, e = self._rd_utc(today), self._rd_utc(today, end=True)
-        present, leave = set(), set()
+        late_txt = (self.env['ir.config_parameter'].sudo().get_param(P + 'late_after') or '09:30').strip()
+        try:
+            lh, lm = [int(x) for x in late_txt.split(':')[:2]]
+        except ValueError:
+            lh, lm = 9, 30
+        first = {}
         if 'hr.attendance' in self.env:
-            present = set(self.env['hr.attendance'].sudo().search([
-                ('employee_id', 'in', emps.ids), ('check_in', '>=', s), ('check_in', '<', e)]).mapped('employee_id').ids)
+            for att in self.env['hr.attendance'].sudo().search([
+                    ('employee_id', 'in', emps.ids), ('check_in', '>=', s), ('check_in', '<', e)],
+                    order='check_in asc'):
+                first.setdefault(att.employee_id.id, att.check_in)
+        leave = set()
         if 'hr.leave' in self.env:
             try:
                 leave = set(self.env['hr.leave'].sudo().search([
@@ -69,10 +81,15 @@ class LeadsLogicTgReports(models.Model):
                     ('date_from', '<', e), ('date_to', '>=', s)]).mapped('employee_id').ids)
             except Exception:  # noqa: BLE001
                 _logger.exception('Leave lookup failed')
-        absent = emps.filtered(lambda x: x.id not in present and x.id not in leave)
-        return {'total': len(emps), 'present': len(present & set(emps.ids)),
+        on_time, late = [], []
+        for emp in emps.filtered(lambda x: x.id in first).sorted(lambda x: first[x.id]):
+            t = pytz.utc.localize(first[emp.id]).astimezone(tz)
+            row = '%s %s' % (emp.name, t.strftime('%H:%M'))
+            (late if (t.hour, t.minute) > (lh, lm) else on_time).append(row)
+        absent = emps.filtered(lambda x: x.id not in first and x.id not in leave)
+        return {'total': len(emps), 'present': len(on_time) + len(late), 'on_time': on_time, 'late': late,
                 'absent': sorted(absent.mapped('name')),
-                'leave': sorted(emps.filtered(lambda x: x.id in leave and x.id not in present).mapped('name'))}
+                'leave': sorted(emps.filtered(lambda x: x.id in leave and x.id not in first).mapped('name'))}
 
     @api.model
     def _tgrep_html(self, slot):
@@ -86,6 +103,10 @@ class LeadsLogicTgReports(models.Model):
         if L['sources']:
             out.append('📌 ' + ', '.join('%s %s' % (escape(n), c) for n, c in L['sources']))
         out += ['', '👥 ' + _('Attendance') + ': ' + h('%s / %s' % (A['present'], A['total'])) + ' ' + _('present')]
+        if A['on_time']:
+            out.append('✅ ' + _('On time') + ': ' + escape(', '.join(A['on_time'])))
+        if A['late']:
+            out.append('⏰ ' + _('Late') + ': ' + escape(', '.join(A['late'])))
         if A['absent']:
             out.append('❌ ' + _('Not signed in') + ': ' + escape(', '.join(A['absent'])))
         if A['leave']:
@@ -109,11 +130,15 @@ class LeadsLogicTgReports(models.Model):
 
     @api.model
     def _tgrep_users(self):
+        """Managers and super admins; with the team-lead option also the Team Lead group and the team leads
+        named on the lead teams. Returns every candidate (the sender skips those without a Chat ID)."""
         env = self.env
         groups = [env.ref('custom_leads_19.group_lead_manager').id, env.ref('custom_leads_19.group_super_admin').id]
-        if env['ir.config_parameter'].sudo().get_param(P + 'team_leads') in ('True', '1', 'true'):
+        extra = env['res.users']
+        if env['ir.config_parameter'].sudo().get_param(P + 'team_leads', 'True') in ('True', '1', 'true'):
             groups.append(env.ref('custom_leads_19.group_lead_team_lead').id)
-        return env['res.users'].sudo().search([('group_ids', 'in', groups)]).filtered('telegram_chat_id')
+            extra = env['lead.team'].sudo().search([('active', '=', True)]).mapped('team_lead_ids.user_id')
+        return env['res.users'].sudo().search([('group_ids', 'in', groups)]) | extra.filtered('active')
 
     @api.model
     def send_tg_report(self, slot, only_user=None, force=False):
@@ -123,6 +148,9 @@ class LeadsLogicTgReports(models.Model):
             return 0
         text = self.sudo()._tgrep_html(slot)
         users = only_user or self._tgrep_users()
+        missing = users.filtered(lambda u: not u.telegram_chat_id)
+        if missing and not only_user:
+            _logger.warning('Telegram %s update: no Chat ID for %s', slot, ', '.join(missing.mapped('name')))
         sent = 0
         for u in users.filtered('telegram_chat_id'):
             res = tg_call(token, 'sendMessage', {'chat_id': u.telegram_chat_id, 'parse_mode': 'HTML',

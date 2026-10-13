@@ -66,12 +66,13 @@ class LeadsLogicWaReport(models.Model):
         rnr = len(self.env['lead.quality.history'].sudo()._read_group(
             [('lead_quality', '=', 'not_responding'), ('change_date', '>=', s), ('change_date', '<', e)],
             ['lead_id'], ['__count']))
+        att = self.sudo()._tgrep_attendance()
         sm = self.sudo()._summary_data()
         officers = [o for o in sm['officers'] if o['calls'] or o['adm']]
         officers.sort(key=lambda o: (-o['adm'], -o['connected'], -o['calls']))
         return {'date': today, 'created': created, 'assigned': assigned, 'called': called,
                 'not_called': created - called_any, 'rnr': rnr, 'officers': officers,
-                'calls': sm['calls'], 'connected': sm['connected'], 'admissions': sm['admissions']}
+                'calls': sm['calls'], 'connected': sm['connected'], 'admissions': sm['admissions'], 'att': att}
 
     @api.model
     def _wa_report_text(self, d, flat=False):
@@ -88,10 +89,14 @@ class LeadsLogicWaReport(models.Model):
             'Top performers ' + ('; '.join('%s - %s calls, %s connected, %s admission' % (
                 o['name'], o['calls'], o['connected'], o['adm']) for o in top) or 'none'),
             'Admissions today %s%s' % (d['admissions'], (' (%s)' % adm_by) if adm_by else ''),
+            'Attendance %s/%s present%s%s' % (
+                d['att']['present'], d['att']['total'],
+                (', late: ' + ', '.join(d['att']['late'])) if d['att']['late'] else '',
+                (', absent: ' + ', '.join(d['att']['absent'])) if d['att']['absent'] else ''),
         ]
         if flat:
             return ' | '.join(parts)[:900]
-        icons = ['🆕', '⏱', '🔁', '📞', '🏆', '🎓']
+        icons = ['🆕', '⏱', '🔁', '📞', '🏆', '🎓', '👥']
         return '📊 *Leads report - %s*\n' % d['date'] + '\n'.join('%s %s' % (i, p) for i, p in zip(icons, parts))
 
     @staticmethod

@@ -273,6 +273,7 @@
                                 <div class="row"><label class="col-lg-4" for="tgrep_afternoon"/><field name="tgrep_afternoon"/></div>
                                 <div class="row"><label class="col-lg-4" for="tgrep_evening"/><field name="tgrep_evening"/></div>
                                 <div class="row"><label class="col-lg-4" for="tgrep_team_leads"/><field name="tgrep_team_leads"/></div>
+                                <div class="row"><label class="col-lg-4" for="tgrep_late_after"/><field name="tgrep_late_after"/></div>
                                 <div class="mt-2">
                                     <button name="action_tgrep_test" type="object" class="btn btn-secondary"
                                             string="Save &amp; send the evening report to me"/>
