@@ -6,14 +6,14 @@
                  t-att-class="{'o_urgent_compact': !svc.isOpen(a)}" t-on-click="() => svc.expand(a)">
                 <div class="o_urgent_head">
                     <span class="o_urgent_siren">🚨</span>
-                    <span class="o_urgent_title" t-if="a.kind === 'rnr'">RNR call needed — call again</span>
+                    <span class="o_urgent_title" t-if="a.kind === 'rnr'">RNR call not done — please call</span>
                     <span class="o_urgent_title" t-else="">URGENT — new lead, call now</span>
                     <span class="o_urgent_count" t-if="state.alerts.length > 1" t-esc="state.alerts.length + ' waiting'"/>
                 </div>
                 <div class="o_urgent_body">
                     <div class="o_urgent_name" t-esc="a.name"/>
                     <a class="o_urgent_phone" t-att-href="'tel:' + a.phone" t-esc="a.phone"/>
-                    <div class="o_urgent_hint" t-if="a.kind === 'rnr'" t-esc="'Called ' + a.calls + ' time(s), no answer yet. Call again now.'"/>
+                    <div class="o_urgent_hint" t-if="a.kind === 'rnr'" t-esc="'Called ' + a.calls + ' time(s), no answer yet. The next RNR call is due - please call now.'"/>
                     <div class="o_urgent_hint" t-if="!svc.isOpen(a)">Click to see Call / Open buttons</div>
                     <dl class="o_urgent_facts">
                         <t t-if="a.source"><dt>Source</dt><dd t-esc="a.source + (a.campaign ? ' / ' + a.campaign : '')"/></t>

@@ -22,6 +22,7 @@ PARAM_URGENT_SRC = 'custom_leads_19.urgent_source_ids'   # comma separated lead 
 BUS_OPEN = 'urgent_lead'
 BUS_CLOSE = 'urgent_lead_close'
 MAX_AGE_HOURS = 24
+RNR_FROM_HOUR, RNR_TO_HOUR = 9, 20           # gap-rule popups only between 09:00 and 20:00 IST
 
 
 class LeadUrgentAlert(models.Model):
@@ -79,18 +80,28 @@ class LeadUrgentAlert(models.Model):
 
     @api.model
     def cron_rnr_alerts(self):
-        """After noon: a lead still New/First Attempt that was called but never answered, and was not
-        called again since noon, gets an 'RNR call needed' popup for its officer."""
+        """'RNR call not done' popup. With the gap rule (Settings > Lead rules, default 2 h 30 min): a lead that
+        was called but never answered, whose last call is at least `gap` old and that has fewer than the
+        required spaced calls, gets a popup for its officer (once per call, working hours only).
+        Without a gap (0) the old rule applies: after the set hour, once a day."""
         if not self._enabled():
             return
-        raw = self.env['ir.config_parameter'].sudo().get_param(PARAM_RNR_HOUR)
+        icp = self.env['ir.config_parameter'].sudo()
+        params = self.env['otm.lead.rule.params']
+        gap = params.param('custom_leads_19.rnr_call_gap_min')
+        need = params.param('custom_leads_19.rnr_min_calls')
+        raw = icp.get_param(PARAM_RNR_HOUR)
         hour = int(raw) if (raw or '').strip().isdigit() else 12
-        if not hour:
-            return
         today = self._today_start()
+        now = fields.Datetime.now()
+        if gap:
+            local = pytz.utc.localize(now).astimezone(pytz.timezone('Asia/Kolkata'))
+            if not (RNR_FROM_HOUR <= local.hour < RNR_TO_HOUR):
+                return
+        else:
+            if not hour or now < today + timedelta(hours=hour):
+                return
         noon = today + timedelta(hours=hour)
-        if fields.Datetime.now() < noon:
-            return
         from .call_report import _parse_duration_seconds
         Lead = self.env['leads.logic'].sudo()
         leads = Lead.search([
@@ -102,13 +113,20 @@ class LeadUrgentAlert(models.Model):
             user = lead.lead_owner.user_id
             if not user or not user.active or not self._source_ok(lead):
                 continue
-            calls = lead.call_log_ids.filtered(lambda c: c.call_type != 'incoming')
+            calls = lead.call_log_ids.filtered(lambda c: c.call_type != 'incoming' and c.call_time)
             if not calls or any(_parse_duration_seconds(c.duration) > 0 for c in lead.call_log_ids):
                 continue
-            if any(c.user_id == user and c.call_time and c.call_time >= noon for c in calls):
-                continue
+            if gap:
+                last = max(calls.mapped('call_time'))
+                if (now - last).total_seconds() < gap * 60 or (need and lead._rnr_spaced_calls() >= need):
+                    continue
+                since = last                      # one popup per call: not again until the officer calls
+            else:
+                if any(c.user_id == user and c.call_time >= noon for c in calls):
+                    continue
+                since = today
             if self.sudo().search_count([('lead_id', '=', lead.id), ('user_id', '=', user.id),
-                                         ('kind', '=', 'rnr'), ('create_date', '>=', today)]):
+                                         ('kind', '=', 'rnr'), ('create_date', '>=', since)]):
                 continue
             alert = self.sudo().create({'lead_id': lead.id, 'user_id': user.id, 'kind': 'rnr'})
             try:

@@ -43,6 +43,21 @@ class LeadsLogicPoolRules(models.Model):
                      if r.assignment_type != 'attendance_pool' or not lead or r._pool_accepts(lead)), False)
         return rule if rule and rule.assignment_type == 'attendance_pool' else False
 
+    def _rnr_spaced_calls(self):
+        """Calls that count towards Ringing Not Responding: outgoing calls at least `gap` minutes apart
+        (the first call counts, each next one only if it is that long after the last counted call)."""
+        self.ensure_one()
+        gap = self.env['otm.lead.rule.params'].param('custom_leads_19.rnr_call_gap_min')
+        if not gap:
+            return self.call_count
+        counted, last = 0, None
+        for t in sorted(c.call_time for c in self.sudo().call_log_ids
+                        if c.call_type != 'incoming' and c.call_time):
+            if last is None or (t - last).total_seconds() >= gap * 60:
+                counted += 1
+                last = t
+        return counted
+
     def write(self, vals):
         reassign = self.env['leads.logic']
         rule = False
@@ -53,10 +68,17 @@ class LeadsLogicPoolRules(models.Model):
             need = self.env['otm.lead.rule.params'].param('custom_leads_19.rnr_min_calls')
             if need and new_q == 'not_responding':
                 for rec in self:
-                    if rec.lead_quality != 'not_responding' and rec.call_count < need and not rec.is_abroad:
+                    if rec.lead_quality == 'not_responding' or rec.is_abroad:
+                        continue
+                    have = rec._rnr_spaced_calls()
+                    if have < need:
+                        gap = self.env['otm.lead.rule.params'].param('custom_leads_19.rnr_call_gap_min')
                         raise UserError(_(
-                            "'Ringing Not Responding' needs at least %(need)s calls and this lead has "
-                            "only %(have)s. Call the lead again first.") % {'need': need, 'have': rec.call_count})
+                            "'Ringing Not Responding' needs at least %(need)s calls%(gap)s and this lead has "
+                            "only %(have)s. Call the lead again first.") % {
+                            'need': need, 'have': have,
+                            'gap': (_(', each at least %(h)sh %(m)sm after the previous one') % {
+                                'h': gap // 60, 'm': gap % 60}) if gap else ''})
         if rule:
             new_q = vals.get('lead_quality')
             mode = rule.pool_reassign_on_quality
@@ -255,12 +277,13 @@ class LeadCallLogPoolRules(models.Model):
                 if not rule or not rule.pool_auto_rnr:
                     continue
                 calls = lead.call_log_ids.filtered(lambda c: c.call_type != 'incoming')
-                if len(calls) < need:
+                spaced = lead._rnr_spaced_calls()
+                if spaced < need:
                     continue
                 if any(_parse_duration_seconds(c.duration) > 0 for c in lead.call_log_ids):
                     continue
                 lead.with_context(skip_pool_rules=True).write({'lead_quality': 'not_responding'})
                 lead.message_post(body=_("Set to Ringing Not Responding automatically: %s calls, none answered.")
-                                  % len(calls))
+                                  % spaced)
         except Exception:  # noqa: BLE001 - never block call logging
             _logger.exception('Pool auto RNR failed')

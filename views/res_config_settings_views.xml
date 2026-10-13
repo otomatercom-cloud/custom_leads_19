@@ -106,6 +106,10 @@
                         <setting string="Calls needed before Ringing Not Responding" help="0 = no limit. Applies to every officer.">
                             <field name="lead_rnr_min_calls"/>
                         </setting>
+                        <setting string="Gap between RNR calls (minutes)"
+                                 help="150 = 2h 30m. Calls closer than this count as one. 0 = no gap rule.">
+                            <field name="lead_rnr_gap_min"/>
+                        </setting>
                         <setting string="Short call is under (seconds)" help="Used by the Short calls report.">
                             <field name="lead_short_call_secs"/>
                         </setting>

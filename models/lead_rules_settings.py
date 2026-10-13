@@ -6,7 +6,8 @@ P_FAST = 'custom_leads_19.called_fast_hrs'
 P_SHORT = 'custom_leads_19.short_call_secs'
 P_RNR = 'custom_leads_19.rnr_min_calls'
 P_PASS = 'custom_leads_19.coaching_pass_score'
-DEFAULTS = {P_FAST: 1.0, P_SHORT: 30, P_RNR: 3, P_PASS: 70}
+P_RNR_GAP = 'custom_leads_19.rnr_call_gap_min'
+DEFAULTS = {P_FAST: 1.0, P_SHORT: 30, P_RNR: 3, P_PASS: 70, P_RNR_GAP: 150}
 
 
 class ResConfigSettingsLeadRules(models.TransientModel):
@@ -22,6 +23,10 @@ class ResConfigSettingsLeadRules(models.TransientModel):
         string='Calls needed before Ringing Not Responding', config_parameter=P_RNR,
         default=DEFAULTS[P_RNR],
         help='A lead cannot be set to Ringing Not Responding until it has this many calls. 0 = no limit.')
+    lead_rnr_gap_min = fields.Integer(
+        string='Minimum gap between RNR calls (minutes)', config_parameter=P_RNR_GAP, default=DEFAULTS[P_RNR_GAP],
+        help='Only calls at least this far apart count towards Ringing Not Responding (150 = 2 h 30 min). '
+             'After this gap with no answer the officer gets an "RNR call not done" popup. 0 = no gap rule.')
     coaching_pass_score = fields.Integer(
         string='Coaching pass score (%)', config_parameter=P_PASS, default=DEFAULTS[P_PASS],
         help='Officers whose average call review score is below this show as "Needs help".')
