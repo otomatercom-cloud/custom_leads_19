@@ -27,7 +27,10 @@
                         </div>
                     </th>
                 </t>
-                <th/>
+                <th>
+                    <button t-if="colLayout.order.length" type="button" class="btn btn-link btn-sm p-0"
+                            title="Reset my column order" t-on-click="resetColOrder">&#8634;</button>
+                </th>
             </tr>
         </xpath>
     </t>

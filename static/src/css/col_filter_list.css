@@ -1,2 +1,6 @@
 .o_otm_filter_row th { padding: 4px 6px; background: var(--o-view-background-color, #fff); font-weight: 400; }
 .o_otm_filter_row .form-control-sm, .o_otm_filter_row .form-select-sm { min-width: 90px; font-size: 12px; }
+
+/* drag a column header to move the column (each user's own order) */
+.o_list_renderer thead th.o_otm_col_drag { cursor: grab; }
+.o_list_renderer thead th.o_otm_drag_over { box-shadow: inset 3px 0 0 #714b67; background: rgba(113, 75, 103, .08); }
