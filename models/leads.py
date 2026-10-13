@@ -1805,8 +1805,13 @@ class LeadFollowUp(models.Model):
             uid = self.env.uid
             domain += ['|', ('user_id', '=', uid), ('lead_id.lead_owner.user_id', '=', uid)]
         candidates = self.search(domain, order='next_followup_date asc', limit=200)
+        # A follow-up can outlive the lead's owner (lead re-assigned to another officer). Skip the ones whose
+        # lead this user can no longer read, otherwise the whole list raises an Access Error.
+        readable = set(self.env['leads.logic'].search([('id', 'in', candidates.lead_id.ids)]).ids)
         result = []
         for followup in candidates:
+            if followup.lead_id.id not in readable:
+                continue
             local_dt = fields.Datetime.context_timestamp(self, followup.next_followup_date)
             if local_dt.date() != today:
                 continue
