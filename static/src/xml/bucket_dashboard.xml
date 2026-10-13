@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+<t t-name="custom_leads_19.BucketDashboard">
+<div class="otm-bd">
+    <div class="otm-bd-head">
+        <div>
+            <h1>Officer Bucket Dashboard</h1>
+            <p>Leads in each admission officer's bucket, what arrived today and how yesterday went</p>
+        </div>
+        <div class="otm-bd-ctl">
+            <button class="otm-bd-btn" t-on-click="() => this.shiftDay(-1)">‹</button>
+            <input type="date" t-att-value="state.date" t-on-change="onDate"/>
+            <button class="otm-bd-btn" t-on-click="() => this.shiftDay(1)">›</button>
+            <input type="search" class="otm-bd-search" placeholder="Find officer" t-on-input="onSearch"/>
+            <button class="otm-bd-btn" t-on-click="load">Refresh</button>
+        </div>
+    </div>
+
+    <div t-if="state.error" class="otm-bd-err" t-esc="state.error"/>
+    <div t-elif="state.loading and !state.data" class="otm-bd-empty">Loading…</div>
+    <t t-elif="state.data">
+        <div class="otm-bd-tiles">
+            <div class="otm-bd-tile"><b t-esc="totals.bucket"/><span>Leads in buckets</span></div>
+            <div class="otm-bd-tile"><b t-esc="totals.today"/><span>Received today</span></div>
+            <div class="otm-bd-tile"><b t-esc="totals.y_new"/><span>Received yesterday</span></div>
+            <div class="otm-bd-tile warn"><b t-esc="totals.y_out"/><span>Re-assigned yesterday</span></div>
+            <div class="otm-bd-tile bad"><b t-esc="totals.y_lost"/><span>Lost yesterday</span></div>
+        </div>
+
+        <div class="otm-bd-card">
+            <table class="otm-bd-table">
+                <thead>
+                    <tr>
+                        <th rowspan="2" class="l">Admission officer</th>
+                        <th rowspan="2">Leads in bucket</th>
+                        <th colspan="3" class="grp">Today <span t-esc="state.data.date"/></th>
+                        <th colspan="5" class="grp">Yesterday <span t-esc="state.data.yesterday"/></th>
+                    </tr>
+                    <tr>
+                        <th>Received</th><th class="l">Quality of today's leads</th><th>Lost</th>
+                        <th>Received</th><th>Re-assigned away</th><th>Re-assigned in</th><th>Lost</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr t-if="!rows.length"><td colspan="9" class="otm-bd-empty">No officers to show.</td></tr>
+                    <tr t-foreach="rows" t-as="r" t-key="r.id">
+                        <td class="l name" t-esc="r.name"/>
+                        <td><a class="num" t-on-click="() => this.openBucket(r)" t-esc="r.bucket"/></td>
+                        <td><a class="num strong" t-on-click="() => this.openDay(r, 'today')" t-esc="r.today"/></td>
+                        <td class="l">
+                            <t t-foreach="qualityChips(r.today_q)" t-as="c" t-key="c.key">
+                                <a class="chip" t-att-style="'background:' + c.color" t-on-click="() => this.openDay(r, 'today', c.key)">
+                                    <t t-esc="c.label"/> <b t-esc="c.n"/>
+                                </a>
+                            </t>
+                            <span t-if="!r.today" class="muted">-</span>
+                        </td>
+                        <td><span t-attf-class="{{r.today_lost ? 'bad' : 'muted'}}" t-esc="r.today_lost"/></td>
+                        <td><a class="num" t-on-click="() => this.openDay(r, 'yesterday')" t-esc="r.y_new"/></td>
+                        <td><span t-attf-class="{{r.y_out ? 'warn' : 'muted'}}" t-esc="r.y_out"/></td>
+                        <td><span t-attf-class="{{r.y_in ? '' : 'muted'}}" t-esc="r.y_in"/></td>
+                        <td><span t-attf-class="{{r.y_lost ? 'bad' : 'muted'}}" t-esc="r.y_lost"/></td>
+                    </tr>
+                </tbody>
+                <tfoot t-if="rows.length">
+                    <tr>
+                        <td class="l">Total</td>
+                        <td t-esc="totals.bucket"/><td t-esc="totals.today"/>
+                        <td class="l">
+                            <t t-foreach="qualityChips(totals.q)" t-as="c" t-key="c.key">
+                                <span class="chip" t-att-style="'background:' + c.color"><t t-esc="c.label"/> <b t-esc="c.n"/></span>
+                            </t>
+                        </td>
+                        <td t-esc="totals.today_lost"/><td t-esc="totals.y_new"/><td t-esc="totals.y_out"/>
+                        <td t-esc="totals.y_in"/><td t-esc="totals.y_lost"/>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        <p class="otm-bd-note">
+            Received = leads assigned to the officer on that day (they still hold them). Re-assigned away = leads that
+            moved from the officer to someone else that day. Lost = leads the officer moved to Not Interested, Joined
+            Other Institute, Wrong Number, Not Enquiry or Crash Lead. Click a number to open the leads.
+        </p>
+    </t>
+</div>
+</t>
+</templates>

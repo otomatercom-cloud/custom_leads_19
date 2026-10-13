@@ -1,6 +1,6 @@
 {
     'name': 'Leads Management',
-    'version': '19.0.4.5.2',
+    'version': '19.0.4.6.0',
     'summary': 'Custom Leads Management Module',
     'description': """
         Standalone Leads Management module for Odoo 19.
@@ -80,6 +80,7 @@
         'views/call_ai_views.xml',
         'views/report_template_views.xml',
         'views/menu_reorganize.xml',
+        'views/bucket_dashboard_views.xml',
         'views/user_guide_views.xml',
         'data/odoo17_sync_cron.xml',
         'data/pool_cron.xml',
@@ -131,6 +132,9 @@
             'custom_leads_19/static/src/xml/user_guide.xml',
             'custom_leads_19/static/src/js/lead_reports.js',
             'custom_leads_19/static/src/xml/lead_reports.xml',
+            'custom_leads_19/static/src/css/bucket_dashboard.css',
+            'custom_leads_19/static/src/js/bucket_dashboard.js',
+            'custom_leads_19/static/src/xml/bucket_dashboard.xml',
             'custom_leads_19/static/src/js/response_dashboard.js',
             'custom_leads_19/static/src/xml/response_dashboard.xml',
             'custom_leads_19/static/src/css/col_filter_list.css',
