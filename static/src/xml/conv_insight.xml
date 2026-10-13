@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="custom_leads_19.ConvInsight">
+        <t t-if="d">
+            <div class="o_conv">
+                <div class="o_conv_main">
+                    <div class="o_conv_gauge_box">
+                        <div class="o_conv_gauge">
+                            <svg width="104" height="104" viewBox="0 0 104 104" role="img" t-att-aria-label="'Chance of joining ' + d.chance + ' percent'">
+                                <circle cx="52" cy="52" r="42" fill="none" stroke="#DCE3EA" stroke-width="12"/>
+                                <circle cx="52" cy="52" r="42" fill="none" t-att-class="'o_conv_arc o_conv_' + d.band" stroke-width="12"
+                                        stroke-linecap="round" t-att-stroke-dasharray="dash + ' ' + circ" transform="rotate(-90 52 52)"/>
+                            </svg>
+                            <div class="o_conv_gauge_text">
+                                <span class="o_conv_pct"><t t-esc="d.chance"/>%</span>
+                                <span t-att-class="'o_conv_band o_conv_' + d.band" t-esc="bandLabel"/>
+                            </div>
+                        </div>
+                        <div class="o_conv_gauge_label">
+                            <b>Chance of joining</b>
+                            <span class="text-muted">From call quality and customer approach</span>
+                        </div>
+                    </div>
+
+                    <div class="o_conv_col">
+                        <div class="o_conv_col_head"><b>Call quality</b><b t-att-class="'o_conv_' + tone(d.call_quality)" t-esc="d.call_quality"/></div>
+                        <t t-foreach="d.quality_rows" t-as="r" t-key="r_index">
+                            <div class="o_conv_row">
+                                <span class="o_conv_lbl" t-esc="r.label"/>
+                                <div class="o_conv_track"><div t-att-class="'o_conv_fill o_conv_f_' + tone(r.value)" t-att-style="'width:' + r.value + '%'"/></div>
+                                <span class="o_conv_note" t-esc="r.note"/>
+                            </div>
+                        </t>
+                    </div>
+
+                    <div class="o_conv_col">
+                        <div class="o_conv_col_head"><b>Customer approach</b><b t-att-class="'o_conv_' + tone(d.approach)" t-esc="d.approach"/></div>
+                        <t t-foreach="d.approach_rows" t-as="r" t-key="r_index">
+                            <div class="o_conv_row">
+                                <span class="o_conv_lbl" t-esc="r.label"/>
+                                <div class="o_conv_track"><div t-att-class="'o_conv_fill o_conv_f_' + tone(r.value)" t-att-style="'width:' + r.value + '%'"/></div>
+                                <span class="o_conv_note" t-esc="r.note"/>
+                            </div>
+                        </t>
+                    </div>
+
+                    <div class="o_conv_next">
+                        <b>Do this next</b>
+                        <t t-foreach="d.steps" t-as="s" t-key="s_index"><span t-esc="s"/></t>
+                    </div>
+                </div>
+
+                <div class="o_conv_strip">
+                    <b class="o_conv_strip_title">Call timeline</b>
+                    <t t-if="d.timeline.length">
+                        <t t-foreach="d.timeline" t-as="t" t-key="t_index">
+                            <div class="o_conv_tl">
+                                <div t-att-class="'o_conv_bar ' + (t.ok ? 'o_conv_ok' : 'o_conv_no')" t-att-style="'height:' + barH(t) + 'px'"/>
+                                <span t-esc="t.label"/>
+                            </div>
+                        </t>
+                    </t>
+                    <span t-else="" class="text-muted">No calls yet</span>
+                    <div class="o_conv_legend">
+                        <span><i class="o_conv_dot o_conv_ok"/>Answered</span>
+                        <span><i class="o_conv_dot o_conv_no"/>No answer</span>
+                        <t t-foreach="d.watch" t-as="w" t-key="w_index">
+                            <span t-att-class="'o_conv_chip o_conv_chip_' + w.level" t-esc="w.text"/>
+                        </t>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </t>
+</templates>
