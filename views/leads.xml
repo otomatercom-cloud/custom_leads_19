@@ -172,6 +172,7 @@
                                 <field name="attendance_percentage" string="Attendance %"/>
                                 <field name="lead_stage_category" readonly="1"/>
                                 <field name="is_abroad"/>
+                                <field name="in_topup_pool"/>
                                 <field name="admission_status"/>
                                 <field name="admission_date" invisible="not admission_status"/>
                             </group>
@@ -611,6 +612,7 @@
                 <field name="lead_creator_id"/>
                 <field name="tele_caller_id"/>
                 <filter string="Abroad" name="filter_abroad" domain="[('is_abroad', '=', True)]"/>
+                <filter string="Top-up pool" name="filter_topup" domain="[('topup_pool_lead', '=', True)]"/>
                 <filter string="My Created Leads" name="filter_my_created_leads"
                         domain="[('lead_creator_id', '=', uid)]"/>
                 <!-- ── Daily Queue Filters ──────────────────────────────── -->
@@ -666,6 +668,31 @@
         <field name="context">{'search_default_filter_my': 0}</field>
     </record>
 
+    <record id="action_server_lead_add_topup" model="ir.actions.server">
+        <field name="name">➕ Add to Top-up pool</field>
+        <field name="model_id" ref="custom_leads_19.model_leads_logic"/>
+        <field name="binding_model_id" ref="custom_leads_19.model_leads_logic"/>
+        <field name="binding_view_types">list,form</field>
+        <field name="state">code</field>
+        <field name="code">action = records.action_add_topup_pool()</field>
+    </record>
+    <record id="action_server_lead_remove_topup" model="ir.actions.server">
+        <field name="name">➖ Remove from Top-up pool</field>
+        <field name="model_id" ref="custom_leads_19.model_leads_logic"/>
+        <field name="binding_model_id" ref="custom_leads_19.model_leads_logic"/>
+        <field name="binding_view_types">list,form</field>
+        <field name="state">code</field>
+        <field name="code">action = records.action_remove_topup_pool()</field>
+    </record>
+    <record id="action_leads_logic_topup" model="ir.actions.act_window">
+        <field name="name">Top-up Pool</field>
+        <field name="res_model">leads.logic</field>
+        <field name="view_mode">list,kanban,form</field>
+        <field name="domain">[('topup_pool_lead', '=', True), ('lead_owner', '=', False)]</field>
+        <field name="search_view_id" ref="view_leads_logic_search"/>
+        <field name="context">{'search_default_filter_my': 0}</field>
+    </record>
+
     <record id="action_server_lead_mark_abroad" model="ir.actions.server">
         <field name="name">🌍 Mark as Abroad</field>
         <field name="model_id" ref="custom_leads_19.model_leads_logic"/>
@@ -713,6 +740,8 @@
     <menuitem id="menu_leads_junk" name="Junk" parent="menu_leads_root" action="action_leads_logic_junk" sequence="5" groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager,custom_leads_19.group_lead_team_lead,custom_leads_19.group_lead_users,custom_leads_19.group_lead_tele_callers,custom_leads_19.group_lead_digital_team,custom_leads_19.group_lead_digital_head,custom_leads_19.group_lead_branch_head,custom_leads_19.group_crash_head,custom_leads_19.group_crash_user"/>
 
     <menuitem id="menu_leads_all" name="All Leads" parent="menu_leads_root" action="action_leads_logic_all" sequence="6" groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager,custom_leads_19.group_lead_team_lead,custom_leads_19.group_lead_users,custom_leads_19.group_lead_tele_callers,custom_leads_19.group_lead_digital_team,custom_leads_19.group_lead_digital_head,custom_leads_19.group_lead_branch_head,custom_leads_19.group_crash_head,custom_leads_19.group_crash_user"/>
+
+    <menuitem id="menu_leads_topup" name="Top-up Pool" parent="menu_leads_root" action="action_leads_logic_topup" sequence="9" groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager,custom_leads_19.group_lead_team_lead"/>
 
     <menuitem id="menu_leads_config" name="Configuration" parent="menu_leads_root" sequence="50" groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager"/>
 

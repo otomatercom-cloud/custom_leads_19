@@ -155,6 +155,44 @@
                             </div>
                         </setting>
                     </block>
+                    <block title="Top-up pool">
+                        <setting string="Give new leads to officers who finish their calls"
+                                 help="Leads in the top-up pool (ticked Top-up pool, or from a source marked Feeds the top-up pool) are not given out by the normal assignment. When an officer has called everything for today, more leads are added to their list automatically.">
+                            <field name="topup_enabled"/>
+                            <div class="content-group" invisible="not topup_enabled">
+                                <div class="row mt8"><label class="col-lg-5" for="topup_pending_max"/><field name="topup_pending_max"/></div>
+                                <div class="row"><label class="col-lg-5" for="topup_batch"/><field name="topup_batch"/></div>
+                                <div class="row"><label class="col-lg-5" for="topup_daily_cap"/><field name="topup_daily_cap"/></div>
+                                <div class="row"><label class="col-lg-5" for="topup_min_calls"/><field name="topup_min_calls"/></div>
+                                <div class="row"><label class="col-lg-5" for="topup_cooldown"/><field name="topup_cooldown"/></div>
+                                <div class="row"><label class="col-lg-5" for="topup_attendance"/><field name="topup_attendance"/></div>
+                                <div class="row"><label class="col-lg-5" for="topup_from_hour"/><field name="topup_from_hour"/></div>
+                                <div class="row"><label class="col-lg-5" for="topup_to_hour"/><field name="topup_to_hour"/></div>
+                                <div class="mt-2">
+                                    <button name="action_topup_run_now" type="object" class="btn btn-secondary"
+                                            string="Save &amp; run now"/>
+                                </div>
+                            </div>
+                        </setting>
+                    </block>
+                    <block title="Daily report on WhatsApp">
+                        <setting string="Send the daily leads report on WhatsApp"
+                                 help="New leads, assigned, first call within 15 / 30 / 60 / 120 minutes, RNR, top performers and admissions. Sent once every evening to the numbers below with the WhatsApp Cloud API.">
+                            <field name="wa_report_enabled"/>
+                            <div class="content-group" invisible="not wa_report_enabled">
+                                <div class="row mt8"><label class="col-lg-4" for="wa_report_phone_id"/><field name="wa_report_phone_id"/></div>
+                                <div class="row"><label class="col-lg-4" for="wa_report_token"/><field name="wa_report_token" password="True"/></div>
+                                <div class="row"><label class="col-lg-4" for="wa_report_to"/><field name="wa_report_to"/></div>
+                                <div class="row"><label class="col-lg-4" for="wa_report_template"/><field name="wa_report_template"/></div>
+                                <div class="row"><label class="col-lg-4" for="wa_report_lang"/><field name="wa_report_lang"/></div>
+                                <div class="row"><label class="col-lg-4" for="wa_report_hour"/><field name="wa_report_hour"/></div>
+                                <div class="mt-2">
+                                    <button name="action_wa_report_test" type="object" class="btn btn-secondary"
+                                            string="Save &amp; send report now"/>
+                                </div>
+                            </div>
+                        </setting>
+                    </block>
                     <block title="Odoo 17 admission">
                         <setting string="Admission (Odoo 17) button"
                                  help="Shows the 🎓 Admission (Odoo 17) button on the lead form. It sends the lead to Odoo 17 and opens it there. Turn it off when admission moves to Odoo 19.">
@@ -223,6 +261,22 @@
                             <div class="mt-2">
                                 <button name="action_telegram_test_me" type="object" class="btn btn-secondary"
                                         string="Save &amp; send test to me"/>
+                            </div>
+                        </setting>
+                    </block>
+                    <block title="Telegram updates for managers">
+                        <setting string="Morning, afternoon and evening updates"
+                                 help="Number of leads created (with Meta leads shown separately), officer attendance and, in the evening, the full daily report. Sent by Telegram to managers and super admins who have a Chat ID. Uses the Bot Token above.">
+                            <field name="tgrep_enabled"/>
+                            <div class="content-group" invisible="not tgrep_enabled">
+                                <div class="row mt8"><label class="col-lg-4" for="tgrep_morning"/><field name="tgrep_morning"/></div>
+                                <div class="row"><label class="col-lg-4" for="tgrep_afternoon"/><field name="tgrep_afternoon"/></div>
+                                <div class="row"><label class="col-lg-4" for="tgrep_evening"/><field name="tgrep_evening"/></div>
+                                <div class="row"><label class="col-lg-4" for="tgrep_team_leads"/><field name="tgrep_team_leads"/></div>
+                                <div class="mt-2">
+                                    <button name="action_tgrep_test" type="object" class="btn btn-secondary"
+                                            string="Save &amp; send the evening report to me"/>
+                                </div>
                             </div>
                         </setting>
                     </block>

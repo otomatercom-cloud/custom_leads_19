@@ -8,6 +8,7 @@
                 <field name="name"/>
                 <field name="source"/>
                 <field name="digital_lead"/>
+                <field name="topup_pool"/>
             </list>
         </field>
     </record>
@@ -22,6 +23,7 @@
                         <field name="name"/>
                         <field name="source"/>
                         <field name="digital_lead"/>
+                        <field name="topup_pool"/>
                     </group>
                 </sheet>
                 <chatter/>

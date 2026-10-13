@@ -35,6 +35,9 @@ from . import odoo17_sync
 from . import odoo17_crosscheck
 from . import odoo17_admission
 from . import call_ai
+from . import lead_wa_report
+from . import lead_topup
+from . import lead_tg_reports
 from . import demo_data
 from . import telegram_notify
 

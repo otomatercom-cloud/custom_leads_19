@@ -325,7 +325,7 @@ class LeadAssignmentRule(models.Model):
 
     def _pool_pending_leads(self, limit=None):
         self.ensure_one()
-        domain = [('lead_owner', '=', False), ('state', '!=', 'lost')]
+        domain = [('lead_owner', '=', False), ('state', '!=', 'lost'), ('topup_pool_lead', '=', False)]
         if self.pool_source_ids:
             domain.append(('leads_source', 'in', self.pool_source_ids.ids))
         if self.backlog_days:
@@ -398,6 +398,7 @@ class LeadAssignmentRule(models.Model):
         unassigned_leads = self.env['leads.logic'].search([
             ('lead_owner', '=', False),
             ('state', '!=', 'lost'),
+            ('topup_pool_lead', '=', False),
         ], order='create_date asc')
 
         if not unassigned_leads:

@@ -50,6 +50,47 @@ export const GUIDE = [
         intro: "The latest changes to Leads Management, newest first. Each item says where to find it.",
         items: [
             {
+                t: "Telegram updates for managers", path: "Settings > Telegram updates for managers", who: ["Manager", "Director"],
+                what: "Three Telegram messages a day, at the hours you choose: morning, afternoon and evening. Each shows the leads created today so far and yesterday with Meta leads counted separately, and the admission officers' attendance (present, not signed in, on leave). The evening message also has the daily report: assigned, first call within 15, 30, 60 and 120 minutes, RNR, top performers and admissions.",
+                steps: [
+                    "Settings > Telegram Follow-Up Alerts: enter the Bot Token (see How to connect Telegram below).",
+                    "Every manager who should get the updates opens the bot, presses Start and has a Chat ID on the user form (Call Settings tab).",
+                    "Settings > Telegram updates for managers: switch on, set the three hours, tick Also send to team leads if needed.",
+                    "Press Save & send the evening report to me to test.",
+                ],
+                tips: ["Meta leads are the leads whose source name contains Meta.", "Attendance comes from the Attendance app. Officers on approved leave are listed as On leave.", "The older 7 pm summary can be switched off under Evening summary for managers if you only want the new evening report."],
+            },
+            {
+                t: "Top-up pool: more leads when an officer finishes", path: "Leads Management > Top-up Pool, Settings > Top-up pool", who: ["Manager", "Team Lead", "Admission Officer"],
+                what: "When an admission officer has called everything for today, more leads are added to their list automatically. No team lead is needed. Switch it on or off in Settings.",
+                steps: [
+                    "Put leads in the pool: tick Top-up pool on a lead, select leads in the list and use Action > Add to Top-up pool, or mark a Lead Source with Feeds the top-up pool (Configuration > Lead Sources).",
+                    "Pool leads that have no owner are not given out by the normal assignment. See them in Leads Management > Top-up Pool.",
+                    "Settings > Top-up pool: switch on and set the numbers. Every 5 minutes the system checks the officers.",
+                    "An officer who finished gets a popup and the new leads appear in their list.",
+                ],
+                opts: [
+                    ["Finished means", "Today's queue is all called. With no queue, no new lead is left uncalled. Follow-ups due today also count."],
+                    ["Calls made today before the first top-up", "Stops an officer from getting leads without calling. Default 20."],
+                    ["Leads given each time / per day", "Default 20 each time, 60 a day for one officer."],
+                    ["Minutes between two top-ups", "Default 15."],
+                    ["Only officers who signed in today", "Needs attendance. Default on."],
+                ],
+                tips: ["If many officers finish together, the officer with the fewest top-ups goes first.", "Abroad and Junk leads never go into a top-up.", "When the pool is empty the managers get a popup once a day."],
+            },
+            {
+                t: "Daily report on WhatsApp", path: "Settings > Daily report on WhatsApp", who: ["Manager", "Director"],
+                what: "One short report every evening on WhatsApp: leads created, assigned, first call within 15, 30, 60 and 120 minutes, RNR, top performers and admissions. Switch it on in Settings.",
+                steps: [
+                    "Settings > Lead Management > Daily report on WhatsApp: tick the switch.",
+                    "Enter the Phone number ID and Access token of the WhatsApp Business number (Meta WhatsApp Cloud API).",
+                    "Enter the director and team lead numbers with country code, separated by commas.",
+                    "Enter the name of an approved Utility template with two variables. Example text: Daily lead report for {{1}}: {{2}}",
+                    "Press Save & send report now to test. The report then goes every evening at the chosen hour.",
+                ],
+                tips: ["WhatsApp lets a business start a chat only with an approved template, so a template name is needed. Without one the report reaches only numbers that wrote to your number in the last 24 hours.", "First call time is counted from the moment the lead was created."],
+            },
+            {
                 t: "AI call analysis", path: "Settings > AI call analysis, Leads Management > AI Call Analysis", who: ["Manager", "Team Lead"],
                 what: "Call recordings are transcribed and reviewed by AI. Each analysed call gets a summary, the student's real interest (Hot, Warm, Cold ...), an officer score from 1 to 10, the problems found and whether the lead quality matches the conversation. Switch it on or off in Settings.",
                 steps: [
