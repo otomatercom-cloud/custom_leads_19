@@ -88,7 +88,8 @@ class LeadUrgentAlert(models.Model):
             return
         icp = self.env['ir.config_parameter'].sudo()
         params = self.env['otm.lead.rule.params']
-        gap = params.param('custom_leads_19.rnr_call_gap_min')
+        gap_on = params.param('custom_leads_19.rnr_call_gap_min')
+        gap = gap_on
         need = params.param('custom_leads_19.rnr_min_calls')
         raw = icp.get_param(PARAM_RNR_HOUR)
         hour = int(raw) if (raw or '').strip().isdigit() else 12
@@ -116,7 +117,8 @@ class LeadUrgentAlert(models.Model):
             calls = lead.call_log_ids.filtered(lambda c: c.call_type != 'incoming' and c.call_time)
             if not calls or any(_parse_duration_seconds(c.duration) > 0 for c in lead.call_log_ids):
                 continue
-            if gap:
+            if gap_on:
+                gap = lead._rnr_gap_minutes()          # 2h30 / 1h30 / 30 min by the time the lead came
                 last = max(calls.mapped('call_time'))
                 if (now - last).total_seconds() < gap * 60 or (need and lead._rnr_spaced_calls() >= need):
                     continue

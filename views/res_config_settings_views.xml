@@ -106,9 +106,15 @@
                         <setting string="Calls needed before Ringing Not Responding" help="0 = no limit. Applies to every officer.">
                             <field name="lead_rnr_min_calls"/>
                         </setting>
-                        <setting string="Gap between RNR calls (minutes)"
-                                 help="150 = 2h 30m. Calls closer than this count as one. 0 = no gap rule.">
-                            <field name="lead_rnr_gap_min"/>
+                        <setting string="Gap between RNR calls"
+                                 help="Calls closer than the gap count as one call. The gap depends on when the lead came in. Morning gap 0 = no gap rule.">
+                            <div class="content-group">
+                                <div class="row mt8"><label class="col-lg-6" for="lead_rnr_gap_min"/><field name="lead_rnr_gap_min"/></div>
+                                <div class="row"><label class="col-lg-6" for="lead_rnr_gap_noon_min"/><field name="lead_rnr_gap_noon_min"/></div>
+                                <div class="row"><label class="col-lg-6" for="lead_rnr_gap_eve_min"/><field name="lead_rnr_gap_eve_min"/></div>
+                                <div class="row"><label class="col-lg-6" for="lead_rnr_noon_hour"/><field name="lead_rnr_noon_hour"/></div>
+                                <div class="row"><label class="col-lg-6" for="lead_rnr_eve_hour"/><field name="lead_rnr_eve_hour"/></div>
+                            </div>
                         </setting>
                         <setting string="Short call is under (seconds)" help="Used by the Short calls report.">
                             <field name="lead_short_call_secs"/>

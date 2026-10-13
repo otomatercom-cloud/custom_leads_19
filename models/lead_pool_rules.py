@@ -6,6 +6,8 @@
 from datetime import timedelta
 import logging
 
+import pytz
+
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 
@@ -43,11 +45,30 @@ class LeadsLogicPoolRules(models.Model):
                      if r.assignment_type != 'attendance_pool' or not lead or r._pool_accepts(lead)), False)
         return rule if rule and rule.assignment_type == 'attendance_pool' else False
 
+    def _rnr_gap_minutes(self):
+        """Gap between RNR calls for this lead: depends on the time (IST) the lead came to the officer -
+        before the midday hour the full gap, after midday a shorter one, in the evening the shortest."""
+        self.ensure_one()
+        P = self.env['otm.lead.rule.params']
+        base = P.param('custom_leads_19.rnr_call_gap_min')
+        if not base:
+            return 0
+        since = self.sudo().assigned_date or self.create_date
+        if not since:
+            return base
+        local = pytz.utc.localize(since).astimezone(pytz.timezone('Asia/Kolkata'))
+        hour = local.hour + local.minute / 60.0
+        if hour >= P.param('custom_leads_19.rnr_eve_hour'):
+            return P.param('custom_leads_19.rnr_gap_eve_min')
+        if hour >= P.param('custom_leads_19.rnr_noon_hour'):
+            return P.param('custom_leads_19.rnr_gap_noon_min')
+        return base
+
     def _rnr_spaced_calls(self):
-        """Calls that count towards Ringing Not Responding: outgoing calls at least `gap` minutes apart
+        """Calls that count towards Ringing Not Responding: outgoing calls at least the lead's gap apart
         (the first call counts, each next one only if it is that long after the last counted call)."""
         self.ensure_one()
-        gap = self.env['otm.lead.rule.params'].param('custom_leads_19.rnr_call_gap_min')
+        gap = self._rnr_gap_minutes()
         if not gap:
             return self.call_count
         counted, last = 0, None
@@ -72,7 +93,7 @@ class LeadsLogicPoolRules(models.Model):
                         continue
                     have = rec._rnr_spaced_calls()
                     if have < need:
-                        gap = self.env['otm.lead.rule.params'].param('custom_leads_19.rnr_call_gap_min')
+                        gap = rec._rnr_gap_minutes()
                         raise UserError(_(
                             "'Ringing Not Responding' needs at least %(need)s calls%(gap)s and this lead has "
                             "only %(have)s. Call the lead again first.") % {
