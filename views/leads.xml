@@ -162,6 +162,7 @@
                                 <field name="phone_number_second"/>
                                 <field name="parent_number"/>
                                 <field name="email_address"/>
+                                <field name="course_inter" widget="many2many_tags" colspan="2"/>
                             </group>
                         </div>
                         <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
@@ -185,24 +186,8 @@
                         </div>
                     </div>
 
-                    <!-- ROW 2: Course Interest, then Responses (each full width) -->
+                    <!-- ROW 2: Responses (full width) -->
                     <div style="display:grid;grid-template-columns:1fr;gap:16px;margin-bottom:16px;">
-                        <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
-                            <div style="font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">
-                                <span style="background:#fef3c7;color:#92400e;border-radius:6px;padding:2px 8px;">&#127891; Course Interest</span>
-                            </div>
-                            <group col="2">
-                                <field name="course_inter" widget="many2many_tags" nolabel="1" colspan="2"/>
-                                <field name="academic_year_of_course_attend"/>
-                                <field name="academic_year"/>
-                                <field name="batch_preference"/>
-                                <field name="district"/>
-                                <field name="country"/>
-                                <field name="place"/>
-                                <field name="college_name"/>
-                                <field name="stream"/>
-                            </group>
-                        </div>
                         <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
                             <div style="font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;">
                                 <span style="background:#f3e8ff;color:#7c3aed;border-radius:6px;padding:2px 8px;">&#128172; Responses</span>
@@ -312,6 +297,23 @@
                                 </div>
                             </div>
                         </page>-->
+
+                        <page string="Student Details">
+                            <group>
+                                <group string="Course">
+                                    <field name="academic_year_of_course_attend"/>
+                                    <field name="academic_year"/>
+                                    <field name="batch_preference"/>
+                                </group>
+                                <group string="Location and Education">
+                                    <field name="district"/>
+                                    <field name="country"/>
+                                    <field name="place"/>
+                                    <field name="college_name"/>
+                                    <field name="stream"/>
+                                </group>
+                            </group>
+                        </page>
 
                         <page string="Call History">
                             <field name="call_log_ids">
