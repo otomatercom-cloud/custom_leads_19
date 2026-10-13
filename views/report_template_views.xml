@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_lead_report_template_list" model="ir.ui.view">
+        <field name="name">lead.report.template.list</field>
+        <field name="model">lead.report.template</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="channel"/>
+                <field name="send_time" widget="float_time"/>
+                <field name="recipient_type"/>
+                <field name="last_sent"/>
+                <field name="last_result"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_lead_report_template_form" model="ir.ui.view">
+        <field name="name">lead.report.template.form</field>
+        <field name="model">lead.report.template</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_send_test" type="object" string="Send test to me"/>
+                    <button name="action_send_now" type="object" string="Send now to all" class="btn-primary"
+                            confirm="Send this report now to all recipients?"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group string="When">
+                            <field name="name"/>
+                            <field name="active"/>
+                            <field name="send_time" widget="float_time"/>
+                            <label for="mon" string="Days"/>
+                            <div class="d-flex flex-wrap gap-3">
+                                <span><field name="mon"/> Mon</span><span><field name="tue"/> Tue</span>
+                                <span><field name="wed"/> Wed</span><span><field name="thu"/> Thu</span>
+                                <span><field name="fri"/> Fri</span><span><field name="sat"/> Sat</span>
+                                <span><field name="sun"/> Sun</span>
+                            </div>
+                        </group>
+                        <group string="Who receives">
+                            <field name="channel"/>
+                            <field name="recipient_type"/>
+                            <field name="user_ids" widget="many2many_tags" invisible="recipient_type != 'selected'"/>
+                            <field name="extra_numbers" invisible="channel == 'telegram'"/>
+                            <field name="last_sent"/>
+                            <field name="last_result"/>
+                        </group>
+                    </group>
+                    <group string="Message">
+                        <field name="body" nolabel="1" colspan="2" placeholder="Write the message and use the {placeholders} listed below"/>
+                        <field name="placeholder_help" colspan="2" readonly="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_lead_report_template" model="ir.actions.act_window">
+        <field name="name">Management Report Templates</field>
+        <field name="res_model">lead.report.template</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_lead_report_template" name="Report Templates" parent="menu_leads_config"
+              action="action_lead_report_template" sequence="20"
+              groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager"/>
+
+    <record id="cron_report_templates" model="ir.cron">
+        <field name="name">Leads: send management report templates</field>
+        <field name="model_id" ref="model_lead_report_template"/>
+        <field name="state">code</field>
+        <field name="code">model.cron_send_templates()</field>
+        <field name="interval_number">15</field>
+        <field name="interval_type">minutes</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <record id="tpl_morning" model="lead.report.template">
+        <field name="name">Morning update</field>
+        <field name="send_time">10.0</field>
+        <field name="active" eval="False"/>
+        <field name="body">🌅 Morning update - {date}
+Leads yesterday: {yesterday} (Meta {yesterday_meta})
+Leads today so far: {created} (Meta {created_meta})
+Attendance: {present}/{total} present
+On time: {on_time}
+Late: {late}
+Not signed in: {absent}
+On leave: {leave}</field>
+    </record>
+    <record id="tpl_evening" model="lead.report.template">
+        <field name="name">Evening director report</field>
+        <field name="send_time">19.0</field>
+        <field name="active" eval="False"/>
+        <field name="body">📊 Leads report - {date}
+Created: {created} (Meta {created_meta}) | Assigned: {assigned}
+First call within 15 min: {called_15}, 30 min: {called_30}, 1 hr: {called_1hr}, 2 hr: {called_2hr}
+Not called yet: {not_called} | RNR: {rnr}
+Calls: {calls}, connected {connected}
+Admissions: {admissions}
+Top officers:
+{top3}
+Attendance: {present}/{total} | Late: {late} | Not signed in: {absent}</field>
+    </record>
+</odoo>
