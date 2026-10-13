@@ -46,12 +46,7 @@
 
                     <div class="o_conv_next">
                         <b>Do this next</b>
-                        <textarea class="o_conv_note_input" rows="2" placeholder="Write your plan for this lead"
-                                  t-att-value="note" t-on-change="onNote"/>
-                        <span class="o_conv_sugg_title">Suggested, click to use</span>
-                        <t t-foreach="d.steps" t-as="s" t-key="s_index">
-                            <button type="button" class="o_conv_sugg" t-on-click="() => this.useStep(s)" t-esc="s"/>
-                        </t>
+                        <t t-foreach="d.steps" t-as="s" t-key="s_index"><span t-esc="s"/></t>
                     </div>
                 </div>
 

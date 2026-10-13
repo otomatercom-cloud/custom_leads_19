@@ -22,8 +22,6 @@ def _pct(v):
 class LeadsLogicConversion(models.Model):
     _inherit = 'leads.logic'
 
-    conv_next_note = fields.Char(string='My next action', copy=False,
-                                 help='The officer\'s own plan for this lead. Shown in the Do this next box.')
     conv_insight = fields.Json(string='Conversion insight', compute='_compute_conv_insight')
 
     @api.depends('call_log_ids', 'call_log_ids.call_status', 'call_log_ids.duration', 'call_log_ids.ai_score',

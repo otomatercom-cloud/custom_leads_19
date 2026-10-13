@@ -31,8 +31,3 @@
 .o_conv_chip_warn { background: #fbebcf; color: #7a4a06; }
 .o_conv_chip_bad { background: #fadbd6; color: #8a2a1d; }
 
-.o_conv_note_input { width: 100%; border: 1px solid rgba(255,255,255,.4); border-radius: 6px; background: rgba(255,255,255,.12); color: #fff; padding: 6px 8px; font-size: 13px; resize: none; }
-.o_conv_note_input::placeholder { color: rgba(255,255,255,.65); }
-.o_conv_sugg_title { font-size: 11px; opacity: .75; margin-top: 2px; }
-.o_conv_sugg { text-align: left; background: transparent; border: 0; border-left: 2px solid rgba(255,255,255,.4); color: #fff; padding: 0 0 0 8px; font-size: 12px; line-height: 1.35; cursor: pointer; }
-.o_conv_sugg:hover { border-left-color: #fff; text-decoration: underline; }
