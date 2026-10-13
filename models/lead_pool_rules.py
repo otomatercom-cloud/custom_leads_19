@@ -237,13 +237,17 @@ class LeadAssignmentRulePoolRules(models.Model):
             leads = Lead.search([
                 ('lead_owner', '!=', False), ('state', '!=', 'lost'),
                 ('lead_quality', 'in', [False, 'new']),
-                ('reassign_date', '>=', now - timedelta(days=1)), ('reassign_date', '<=', limit),
                 ('auto_reassign_count', '<', rule.pool_max_reassigns),
+                '|',
+                '&', ('reassign_date', '>=', now - timedelta(days=1)), ('reassign_date', '<=', limit),
+                '&', ('reassign_date', '=', False),
+                '&', ('create_date', '>=', now - timedelta(days=1)), ('create_date', '<=', limit),
             ] + ([('leads_source', 'in', rule.pool_source_ids.ids)] if rule.pool_source_ids else []),
-                order='reassign_date asc', limit=100)
+                order='id asc', limit=100)
             moved = 0
             for lead in leads:
-                if lead.call_log_ids.filtered(lambda c: (c.call_time or c.create_date) >= lead.reassign_date):
+                since = lead.reassign_date or lead.create_date
+                if lead.call_log_ids.filtered(lambda c: (c.call_time or c.create_date) >= since):
                     continue
                 if not (rule._pool_eligible() - lead.lead_owner):
                     break
