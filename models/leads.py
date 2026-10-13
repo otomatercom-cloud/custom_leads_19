@@ -1410,13 +1410,16 @@ class LeadsForm(models.Model):
                     ('active','=',True),
                 ])
 
+            # Non-HR users cannot read hr.employee (custom otm_* fields are not on the public profile):
+            # team / employee names are read with sudo, the lead counts below still use the user's own rules.
+            teams = teams.sudo()
             # Officers (team members)
             all_member_emp_ids = list(set(teams.mapped('member_ids.employee_id.id')))
             # Team Leads — include their leads in counts too
             tl_emp_ids = list(set(teams.mapped('team_lead_ids.id')))
             all_emp_ids_for_counts = list(set(all_member_emp_ids + tl_emp_ids))
             all_user_ids = list(set(
-                self.env['hr.employee'].browse(all_emp_ids_for_counts).mapped('user_id.id')
+                self.env['hr.employee'].sudo().browse(all_emp_ids_for_counts).mapped('user_id.id')
             ))
             all_user_ids = [u for u in all_user_ids if u]
 
@@ -1447,7 +1450,7 @@ class LeadsForm(models.Model):
             proc_week  = _processed_counts(all_member_emp_ids, all_user_ids, week_start, today)
             proc_month = _processed_counts(all_member_emp_ids, all_user_ids, month_start, today)
 
-            emp_records = self.env['hr.employee'].browse(all_member_emp_ids)
+            emp_records = self.env['hr.employee'].sudo().browse(all_member_emp_ids)
             emp_name    = {e.id: e.name for e in emp_records}
             emp_user    = {e.id: e.user_id.id for e in emp_records}
 
