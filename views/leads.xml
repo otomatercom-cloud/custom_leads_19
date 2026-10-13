@@ -182,8 +182,8 @@
                         </div>
                     </div>
 
-                    <!-- ROW 2: Course Interest + Latest Response -->
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+                    <!-- ROW 2: Course Interest, then Responses (each full width) -->
+                    <div style="display:grid;grid-template-columns:1fr;gap:16px;margin-bottom:16px;">
                         <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
                             <div style="font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">
                                 <span style="background:#fef3c7;color:#92400e;border-radius:6px;padding:2px 8px;">&#127891; Course Interest</span>
