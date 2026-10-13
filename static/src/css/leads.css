@@ -983,3 +983,27 @@ border: none !important;
     border-bottom: 3px solid #1d4ed8;
     color: #1d4ed8;
 }
+
+/* Lead form: visible borders on editable fields (also the empty Course Interest tags box) */
+.o_form_view.o_leads_phone_form .o_field_widget:not(.o_readonly_modifier):not(.o_field_boolean):not(.o_field_badge):not(.o_field_statusbar) .o_input,
+.o_form_view.o_leads_phone_form .o_field_widget:not(.o_readonly_modifier) textarea,
+.o_form_view.o_leads_phone_form .o_field_widget:not(.o_readonly_modifier) select,
+.o_form_view.o_leads_phone_form .o_field_many2many_tags:not(.o_readonly_modifier) .o_tags_input {
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 6px;
+    background: #fff;
+    padding-left: 8px;
+    min-height: 34px;
+}
+.o_form_view.o_leads_phone_form .o_field_widget:not(.o_readonly_modifier) .o_input:focus,
+.o_form_view.o_leads_phone_form .o_field_widget:not(.o_readonly_modifier) textarea:focus {
+    border-color: #714b67 !important;
+    box-shadow: 0 0 0 2px rgba(113, 75, 103, .15);
+}
+.o_form_view.o_leads_phone_form .o_field_many2many_tags:not(.o_readonly_modifier) {
+    min-height: 38px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #fff;
+    width: 100%;
+}
