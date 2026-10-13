@@ -24,6 +24,15 @@ export class ConvInsight extends Component {
     tone(v) {
         return v >= 70 ? "good" : v >= 50 ? "mid" : "bad";
     }
+    get note() {
+        return this.props.record.data.conv_next_note || "";
+    }
+    onNote(ev) {
+        this.props.record.update({ conv_next_note: ev.target.value.trim() });
+    }
+    useStep(step) {
+        this.props.record.update({ conv_next_note: step });
+    }
     barH(t) {
         if (!t.ok) {
             return 12;

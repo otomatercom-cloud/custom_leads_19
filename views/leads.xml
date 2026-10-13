@@ -146,6 +146,7 @@
                     </div>
 
                     <!-- Conversion insight: chance of joining from call quality and customer approach -->
+                    <field name="conv_next_note" invisible="1"/>
                     <field name="conv_insight" widget="conv_insight" nolabel="1" readonly="1" invisible="not id"/>
 
                     <!-- ROW 1: Contact + Assignment -->
