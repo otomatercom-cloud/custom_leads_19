@@ -687,11 +687,19 @@
         <field name="state">code</field>
         <field name="code">action = records.action_remove_topup_pool()</field>
     </record>
+    <record id="action_server_lead_add_topup_take_back" model="ir.actions.server">
+        <field name="name">➕ Add to Top-up pool and take back from officer</field>
+        <field name="model_id" ref="custom_leads_19.model_leads_logic"/>
+        <field name="binding_model_id" ref="custom_leads_19.model_leads_logic"/>
+        <field name="binding_view_types">list,form</field>
+        <field name="state">code</field>
+        <field name="code">action = records.action_add_topup_pool_take_back()</field>
+    </record>
     <record id="action_leads_logic_topup" model="ir.actions.act_window">
         <field name="name">Top-up Pool</field>
         <field name="res_model">leads.logic</field>
         <field name="view_mode">list,kanban,form</field>
-        <field name="domain">[('topup_pool_lead', '=', True), ('lead_owner', '=', False)]</field>
+        <field name="domain">[('topup_pool_lead', '=', True)]</field>
         <field name="search_view_id" ref="view_leads_logic_search"/>
         <field name="context">{'search_default_filter_my': 0}</field>
     </record>

@@ -69,7 +69,24 @@ class LeadsLogicTopup(models.Model):
 
     def action_add_topup_pool(self):
         self.write({'in_topup_pool': True})
-        return self._topup_notify_ui(_('%s lead(s) added to the top-up pool.') % len(self))
+        owned = len(self.filtered('lead_owner'))
+        msg = _('%s lead(s) added to the top-up pool.') % len(self)
+        if owned:
+            msg += ' ' + _('%s of them still belong to an officer and are given out only when that officer is removed '
+                           '- use "Add to Top-up pool and take back" to unassign them.') % owned
+        return self._topup_notify_ui(msg)
+
+    def action_add_topup_pool_take_back(self):
+        """Manager / Super Admin: put the leads in the pool AND remove their current officer so they can be given out."""
+        user = self.env.user
+        if not (user.has_group('custom_leads_19.group_lead_manager') or user.has_group('custom_leads_19.group_super_admin')):
+            raise UserError(_('Only a manager can take leads back from officers.'))
+        taken = self.filtered('lead_owner')
+        self.with_context(skip_pool_rules=True, urgent_lead_skip=True).write({'in_topup_pool': True, 'lead_owner': False})
+        for lead in taken:
+            lead.message_post(body=_('Taken back into the top-up pool by %s.') % user.name)
+        return self._topup_notify_ui(_('%s lead(s) in the top-up pool, %s taken back from officers.') % (
+            len(self), len(taken)))
 
     def action_remove_topup_pool(self):
         self.write({'in_topup_pool': False})
