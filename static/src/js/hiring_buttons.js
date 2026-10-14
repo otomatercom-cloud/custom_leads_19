@@ -5,6 +5,7 @@ import { patch } from "@web/core/utils/patch";
 import { FormController } from "@web/views/form/form_controller";
 import { useEffect } from "@odoo/owl";
 
+const HIDE_ALWAYS = ["hide sales guide", "show sales guide"];
 const HIDE_FOR_HIRING = ["welcome message", "schedule whatsapp", "send to bizwhatz", "send to bizwhatsapp"];
 
 patch(FormController.prototype, {
@@ -17,10 +18,10 @@ patch(FormController.prototype, {
             const root = this.model && this.model.root;
             const el = (this.rootRef && this.rootRef.el) || document;
             const hiring = !!(root && root.data && root.data.is_hiring);
-            for (const btn of el.querySelectorAll(".o_form_statusbar button, .o_statusbar_buttons button")) {
+            for (const btn of el.querySelectorAll(".o_form_statusbar button, .o_statusbar_buttons button, .oe_button_box button")) {
                 const label = (btn.textContent || "").trim().toLowerCase();
-                const match = HIDE_FOR_HIRING.some((t) => label.includes(t));
-                if (match && hiring) {
+                const match = HIDE_ALWAYS.some((t) => label.includes(t)) || (hiring && HIDE_FOR_HIRING.some((t) => label.includes(t)));
+                if (match) {
                     btn.dataset.otmHid = "1";
                     btn.style.display = "none";
                 } else if (btn.dataset.otmHid) {

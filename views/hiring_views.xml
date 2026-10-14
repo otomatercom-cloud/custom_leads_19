@@ -10,9 +10,13 @@
     </record>
 
     <menuitem id="menu_hiring_root" name="Hiring" sequence="11" web_icon="custom_leads_19,static/description/icon.png"
-              groups="custom_leads_19.group_lead_hr_assistant,custom_leads_19.group_lead_manager,custom_leads_19.group_super_admin"/>
+              groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager,custom_leads_19.group_lead_team_lead,custom_leads_19.group_lead_users,custom_leads_19.group_lead_tele_callers,custom_leads_19.group_lead_digital_team,custom_leads_19.group_lead_digital_head,custom_leads_19.group_lead_branch_head,custom_leads_19.group_crash_head,custom_leads_19.group_crash_user,custom_leads_19.group_lead_hr_assistant"/>
     <menuitem id="menu_hiring_leads" name="Hiring Leads" parent="menu_hiring_root" action="action_leads_hiring" sequence="1"
-              groups="custom_leads_19.group_lead_hr_assistant,custom_leads_19.group_lead_manager,custom_leads_19.group_super_admin"/>
+              groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager,custom_leads_19.group_lead_team_lead,custom_leads_19.group_lead_users,custom_leads_19.group_lead_tele_callers,custom_leads_19.group_lead_digital_team,custom_leads_19.group_lead_digital_head,custom_leads_19.group_lead_branch_head,custom_leads_19.group_crash_head,custom_leads_19.group_crash_user,custom_leads_19.group_lead_hr_assistant"/>
+
+    <!-- same screen inside Leads Management, so the HR Assistant also finds it there -->
+    <menuitem id="menu_leads_hiring_in_root" name="Hiring Leads" parent="menu_leads_root" action="action_leads_hiring" sequence="2"
+              groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager,custom_leads_19.group_lead_team_lead,custom_leads_19.group_lead_users,custom_leads_19.group_lead_tele_callers,custom_leads_19.group_lead_digital_team,custom_leads_19.group_lead_digital_head,custom_leads_19.group_lead_branch_head,custom_leads_19.group_crash_head,custom_leads_19.group_crash_user,custom_leads_19.group_lead_hr_assistant"/>
 
     <record id="action_server_hiring_assign" model="ir.actions.server">
         <field name="name">Assign to HR Assistant</field>
