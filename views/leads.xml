@@ -63,11 +63,11 @@
                 <!-- Status Bar -->
                 <header class="o_lead_form_header">
                     <button name="act_attempt_to_connect" string="🎯 First Attempt" type="object"
-                            class="btn-primary" invisible="state != 'new'"/>
+                            class="btn-primary" invisible="is_hiring or state != 'new'"/>
                     <button name="act_connected" string="✅ Connected" type="object"
-                            class="btn-success" invisible="state == 'qualified'"/>
+                            class="btn-success" invisible="is_hiring or state == 'qualified'"/>
                     <button name="act_not_connected" string="📵 Not Connected" type="object"
-                            class="btn-warning" invisible="state == 'qualified'"/>
+                            class="btn-warning" invisible="is_hiring or state == 'qualified'"/>
                     <button name="action_call_lead" string="📞 Call" type="object" class="btn-success"
                             invisible="state == 'lost'"/>
                     <button name="action_odoo17_admission" string="🎓 Admission (Odoo 17)" type="object"
@@ -80,9 +80,9 @@
                     <!--<button name="action_voxbay_call" string="📞 Voxbay Call" type="object"/>
                     <button name="action_bonvoice_call" string="📞 BV Call" type="object"/>
                     <button name="action_open_funnel_wizard" string="🔵 Funnel" type="object"/>-->
-                    <button name="action_open_confirm_wizard" string="👁 Open Lead" type="object"/>
+                    <button name="action_open_confirm_wizard" string="👁 Open Lead" type="object" invisible="is_hiring"/>
                     <button name="action_add_followup" string="⏰ Follow Up" type="object"/>
-                    <button name="action_add_call_log" string="📋 Log Call" type="object"/>
+                    <button name="action_add_call_log" string="📋 Log Call" type="object" invisible="is_hiring"/>
                     <button name="act_lost_lead" string="❌ Lost" type="object"
                             class="btn-danger" invisible="state == 'lost'"/>
                     <button name="action_open_convert_wizard" string="Convert" type="object"
@@ -124,10 +124,10 @@
                         <button name="action_open_webinar_wizard" type="object" class="oe_stat_button" icon="fa-video-camera" invisible="is_hiring">
                             <span>Webinar</span>
                         </button>
-                        <button name="action_toggle_phone" type="object" class="oe_stat_button" icon="fa-eye">
+                        <button name="action_toggle_phone" type="object" class="oe_stat_button" icon="fa-eye" invisible="is_hiring">
                             <span>Show Phone</span>
                         </button>
-                        <button name="action_toggle_marketing_info" type="object" class="oe_stat_button" icon="fa-bar-chart">
+                        <button name="action_toggle_marketing_info" type="object" class="oe_stat_button" icon="fa-bar-chart" invisible="is_hiring">
                             <field name="marketing_button_label"/>
                         </button>
                     </div>
