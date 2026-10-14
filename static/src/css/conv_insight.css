@@ -9,15 +9,17 @@
 .o_conv_gauge_label b { font-size: 14px; }
 .o_conv_arc.o_conv_high, .o_conv_high { stroke: #0e8f7e; color: #0e8f7e; }
 .o_conv_arc.o_conv_medium, .o_conv_medium { stroke: #d9922b; color: #b97813; }
-.o_conv_arc.o_conv_low, .o_conv_low { stroke: #d9503f; color: #d9503f; }
+.o_conv_arc.o_conv_low, .o_conv_low { stroke: #4a78b5; color: #3f6aa3; }
+.o_conv_newtxt { color: #3f6aa3; }
+.o_conv_nodata { font-size: 11px; color: #94a3b8; width: 42px; flex-shrink: 0; }
 .o_conv_col { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
 .o_conv_col_head { display: flex; justify-content: space-between; }
-.o_conv_good { color: #0e8f7e; } .o_conv_mid { color: #b97813; } .o_conv_bad { color: #d9503f; }
+.o_conv_good { color: #0e8f7e; } .o_conv_mid { color: #b97813; } .o_conv_bad { color: #d9741f; } .o_conv_none { color: #94a3b8; }
 .o_conv_row { display: flex; align-items: center; gap: 10px; font-size: 13px; }
 .o_conv_lbl { width: 112px; flex-shrink: 0; white-space: nowrap; }
 .o_conv_track { flex-grow: 1; height: 8px; border-radius: 4px; background: #dce3ea; }
 .o_conv_fill { height: 8px; border-radius: 4px; }
-.o_conv_f_good { background: #0e8f7e; } .o_conv_f_mid { background: #d9922b; } .o_conv_f_bad { background: #d9503f; }
+.o_conv_f_good { background: #0e8f7e; } .o_conv_f_mid { background: #d9922b; } .o_conv_f_bad { background: #e08a3c; }
 .o_conv_note { width: 74px; flex-shrink: 0; font-size: 12px; color: #6c757d; text-align: right; }
 .o_conv_next { width: 250px; align-self: stretch; justify-content: center; flex-shrink: 0; background: #1c3d6b; color: #fff; border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 5px; font-size: 13px; line-height: 1.4; }
 .o_conv_strip { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; margin-top: 12px; padding-top: 10px; border-top: 1px solid #e9ecef; }
@@ -29,7 +31,8 @@
 .o_conv_dot { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; }
 .o_conv_chip { padding: 3px 10px; border-radius: 12px; font-weight: 600; }
 .o_conv_chip_warn { background: #fbebcf; color: #7a4a06; }
-.o_conv_chip_bad { background: #fadbd6; color: #8a2a1d; }
+.o_conv_chip_bad { background: #fbebcf; color: #7a4a06; }
+.o_conv_chip_info { background: #dbe8f8; color: #234a7d; }
 
 
 .o_conv_col_head { margin-bottom: 2px; }

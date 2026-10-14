@@ -8,6 +8,7 @@ import base64
 import json
 import logging
 import re
+import time
 
 import requests
 
@@ -112,10 +113,15 @@ class LeadCallLogAI(models.Model):
         lang = self._ai_param('stt_language')
         if lang:
             form['language'] = lang
-        r = requests.post(GROQ_STT_URL if groq else STT_URL, headers={'Authorization': 'Bearer ' + self._ai_param('stt_key')},
-                          data=form, files={'file': (name, data, mime)}, timeout=240)
+        r = None
+        for _try in range(3):                     # Cloudflare 502/503/504 or 429 are usually momentary
+            r = requests.post(GROQ_STT_URL if groq else STT_URL, headers={'Authorization': 'Bearer ' + self._ai_param('stt_key')},
+                              data=form, files={'file': (name, data, mime)}, timeout=240)
+            if r.status_code not in (429, 502, 503, 504):
+                break
+            time.sleep(3 * (_try + 1))
         if r.status_code != 200:
-            raise UserError(_('Speech-to-text error %s: %s') % (r.status_code, r.text[:200]))
+            raise UserError(_('Speech-to-text error %s (the AI service is busy or down, try again in a minute): %s') % (r.status_code, re.sub(r'<[^>]+>', ' ', r.text)[:150]) if r.status_code in (429, 502, 503, 504) else _('Speech-to-text error %s: %s') % (r.status_code, r.text[:200]))
         return (r.json().get('text') or '').strip()
 
     def _ai_ask(self, user_text):

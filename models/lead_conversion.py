@@ -84,21 +84,27 @@ class LeadsLogicConversion(models.Model):
         if q in ('admission', 'logic_students') or lead.admission_status:
             chance = 100
         band = 'high' if chance >= 70 else 'medium' if chance >= 40 else 'low'
+        # who is looking: officers see the lead (interest, objections, next step); call-quality bars are for leaders
+        user = self.env.user
+        is_mgr = any(user.has_group(g) for g in (
+            'custom_leads_19.group_super_admin', 'custom_leads_19.group_lead_manager',
+            'custom_leads_19.group_lead_team_lead', 'custom_leads_19.group_lead_branch_head', 'base.group_system'))
+        phase = 'new' if not total else 'early' if total < 3 else 'ok'     # too little data -> no verdict
 
         # watch-outs
         watch = []
         if issues:
-            watch.append({'level': 'bad', 'text': issues[-1][:90]})
+            watch.append({'level': 'warn', 'text': 'Customer concern: ' + issues[-1][:80]})
         if total and not answered:
             watch.append({'level': 'warn', 'text': '%s call(s), none answered yet' % total})
         last_call = calls[-1]['time'] if calls else None
         if last_call and (now - last_call) > timedelta(hours=24) and lead.state != 'lost':
-            watch.append({'level': 'warn', 'text': 'No call for %s hours' % int((now - last_call).total_seconds() / 3600)})
+            watch.append({'level': 'warn', 'text': 'Last call %s h ago' % int((now - last_call).total_seconds() / 3600)})
         overdue = sched.filtered(lambda f: f.next_followup_date and f.next_followup_date < now)
         if overdue:
-            watch.append({'level': 'bad', 'text': 'A follow-up is overdue'})
+            watch.append({'level': 'warn', 'text': 'Follow-up is due'})
         if not total:
-            watch.append({'level': 'warn', 'text': 'Not called yet'})
+            watch.append({'level': 'info', 'text': 'First call pending'})
 
         # next step
         steps = []
@@ -106,21 +112,21 @@ class LeadsLogicConversion(models.Model):
         if ai_next:
             steps.append(ai_next[:90])
         if not total:
-            steps.append('Call this lead now')
+            steps.append('Make the first call: introduce yourself and ask about the course')
         elif sched:
             nxt = min(sched.mapped('next_followup_date') or [False])
             if nxt:
                 steps.append('Follow up on %s' % fields.Datetime.context_timestamp(self, nxt).strftime('%d %b, %I:%M %p'))
         if total and not answered:
-            steps.append('Try a different time of day')
+            steps.append('Try another time of day, evenings often work')
         if not steps:
             steps.append('Share the fee plan and ask for a joining date')
 
         def lbl(dt):
             return fields.Datetime.context_timestamp(self, dt).strftime('%d %b')
         return {
-            'chance': chance, 'band': band,
-            'call_quality': call_quality, 'approach': approach,
+            'chance': chance, 'band': band, 'phase': phase, 'is_mgr': is_mgr,
+            'call_quality': call_quality, 'approach': None if phase == 'new' else approach,
             'quality_rows': [
                 {'label': 'Talk time', 'value': talk, 'note': ('%s m %s s' % divmod(int(sum(c['secs'] for c in answered) / len(answered)), 60)) if answered else 'No talk yet'},
                 {'label': 'Answered %s of %s' % (len(answered), total), 'value': rate, 'note': '%s of %s calls answered' % (len(answered), total)},
@@ -128,10 +134,10 @@ class LeadsLogicConversion(models.Model):
                  'note': ('%s / 10' % round(sum(ai_scores) / len(ai_scores), 1)) if ai_scores else 'Not analysed'},
             ],
             'approach_rows': [
-                {'label': 'Interest', 'value': interest, 'note': (interests[-1] or '').replace('_', ' ').title() if interests else q.replace('_', ' ').title()},
-                {'label': 'Engagement', 'value': engage, 'note': '%s response(s)' % len(lead.response_ids)},
+                {'label': 'Interest', 'value': None if phase == 'new' else interest, 'note': (interests[-1] or '').replace('_', ' ').title() if interests else q.replace('_', ' ').title()},
+                {'label': 'Engagement', 'value': None if phase == 'new' else engage, 'note': '%s response(s)' % len(lead.response_ids)},
                 {'label': 'Follow-up set', 'value': agreed, 'note': 'Yes' if sched else 'No', 'hidden': True},
-                {'label': 'Objections', 'value': objections, 'note': '%s raised' % len(issues) if issues else 'None'},
+                {'label': 'Objections', 'value': None if (phase == 'new' or not ai_scores) else objections, 'note': '%s raised' % len(issues) if issues else 'None'},
             ],
             'timeline': [{'label': lbl(c['time']), 'secs': c['secs'], 'ok': c['ok']} for c in calls[-8:]],
             'watch': watch[:3], 'steps': steps[:3],

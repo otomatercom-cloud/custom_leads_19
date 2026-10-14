@@ -19,10 +19,10 @@ export class ConvInsight extends Component {
     }
     get bandLabel() {
         const b = this.d && this.d.band;
-        return b === "high" ? "High" : b === "medium" ? "Medium" : "Low";
+        return b === "high" ? "High" : b === "medium" ? "Medium" : "Warming up";
     }
     tone(v) {
-        return v >= 70 ? "good" : v >= 50 ? "mid" : "bad";
+        return v === null || v === undefined ? "none" : v >= 70 ? "good" : v >= 50 ? "mid" : "bad";
     }
     barH(t) {
         if (!t.ok) {

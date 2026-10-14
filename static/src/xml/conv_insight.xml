@@ -8,21 +8,27 @@
                         <div class="o_conv_gauge">
                             <svg width="104" height="104" viewBox="0 0 104 104" role="img" t-att-aria-label="'Chance of joining ' + d.chance + ' percent'">
                                 <circle cx="52" cy="52" r="42" fill="none" stroke="#DCE3EA" stroke-width="12"/>
-                                <circle cx="52" cy="52" r="42" fill="none" t-att-class="'o_conv_arc o_conv_' + d.band" stroke-width="12"
+                                <circle t-if="d.phase !== 'new'" cx="52" cy="52" r="42" fill="none" t-att-class="'o_conv_arc o_conv_' + d.band" stroke-width="12"
                                         stroke-linecap="round" t-att-stroke-dasharray="dash + ' ' + circ" transform="rotate(-90 52 52)"/>
                             </svg>
                             <div class="o_conv_gauge_text">
-                                <span class="o_conv_pct"><t t-esc="d.chance"/>%</span>
-                                <span t-att-class="'o_conv_band o_conv_' + d.band" t-esc="bandLabel"/>
+                                <t t-if="d.phase === 'new'">
+                                    <span class="o_conv_pct o_conv_newtxt">New</span>
+                                    <span class="o_conv_band o_conv_newtxt">Start here</span>
+                                </t>
+                                <t t-else="">
+                                    <span class="o_conv_pct"><t t-esc="d.chance"/>%</span>
+                                    <span t-att-class="'o_conv_band o_conv_' + d.band" t-esc="bandLabel"/>
+                                </t>
                             </div>
                         </div>
                         <div class="o_conv_gauge_label">
                             <b>Chance of joining</b>
-                            <span class="text-muted">From call quality and approach</span>
+                            <span class="text-muted" t-esc="d.phase === 'new' ? 'Shown after the first call' : d.phase === 'early' ? 'Early read, few calls so far' : 'From call quality and approach'"/>
                         </div>
                     </div>
 
-                    <div class="o_conv_col">
+                    <div class="o_conv_col" t-if="d.is_mgr and d.phase !== 'new'">
                         <div class="o_conv_col_head"><b>Call quality</b><b t-att-class="'o_conv_' + tone(d.call_quality)" t-esc="d.call_quality"/></div>
                         <t t-foreach="d.quality_rows" t-as="r" t-key="r_index">
                             <div t-if="!r.hidden" class="o_conv_row" t-att-title="r.note">
@@ -33,11 +39,12 @@
                     </div>
 
                     <div class="o_conv_col">
-                        <div class="o_conv_col_head"><b>Customer approach</b><b t-att-class="'o_conv_' + tone(d.approach)" t-esc="d.approach"/></div>
+                        <div class="o_conv_col_head"><b>Customer approach</b><b t-att-class="'o_conv_' + tone(d.approach)" t-esc="d.approach === null ? '' : d.approach"/></div>
                         <t t-foreach="d.approach_rows" t-as="r" t-key="r_index">
-                            <div t-if="!r.hidden" class="o_conv_row" t-att-title="r.note">
+                            <div t-if="!r.hidden" class="o_conv_row" t-att-title="r.value === null ? 'No data yet' : r.note">
                                 <span class="o_conv_lbl" t-esc="r.label"/>
-                                <div class="o_conv_track"><div t-att-class="'o_conv_fill o_conv_f_' + tone(r.value)" t-att-style="'width:' + r.value + '%'"/></div>
+                                <div class="o_conv_track"><div t-if="r.value !== null" t-att-class="'o_conv_fill o_conv_f_' + tone(r.value)" t-att-style="'width:' + r.value + '%'"/></div>
+                                <span t-if="r.value === null" class="o_conv_nodata">no data</span>
                             </div>
                         </t>
                     </div>
