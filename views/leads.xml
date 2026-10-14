@@ -679,7 +679,7 @@
                 <filter string="Uncalled First" name="uncalled_first"
                         domain="[('daily_call_done', '=', False), ('daily_queue_date', '=', context_today())]"/>
                 <filter string="Called Today" name="filter_called_today"
-                        domain="[('daily_call_done', '=', True), ('daily_queue_date', '=', context_today())]"/>
+                        domain="[('call_log_ids.call_time', '&gt;=', (datetime.datetime.combine(context_today(), datetime.time(0, 0, 0)) - datetime.timedelta(hours=5, minutes=30)).strftime('%Y-%m-%d %H:%M:%S'))]"/>
                 <filter string="My Queue Today" name="filter_my_queue_today"
                         domain="[('daily_queue_date', '=', context_today())]"/>
                 <separator/>
