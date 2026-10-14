@@ -2,6 +2,7 @@ id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 
 access_leads_main_tl,access_leads_main_tl,model_leads_logic,custom_leads_19.group_lead_team_lead,1,1,1,0
 access_leads_main_admo,access_leads_main_admo,model_leads_logic,custom_leads_19.group_lead_users,1,1,1,0
+access_leads_main_hr_assistant,access_leads_main_hr_assistant,model_leads_logic,custom_leads_19.group_lead_hr_assistant,1,1,1,0
 access_leads_main_tele_caller,access_leads_main_tele_caller,model_leads_logic,custom_leads_19.group_lead_tele_callers,1,1,1,0
 access_leads_main_manager,access_leads_main_manager,model_leads_logic,custom_leads_19.group_lead_manager,1,1,1,1
 access_leads_main_digital_team,access_leads_main_digital_team,model_leads_logic,custom_leads_19.group_lead_digital_team,1,1,1,0

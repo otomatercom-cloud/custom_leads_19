@@ -9,6 +9,7 @@
                 <field name="sequence" widget="handle"/>
                 <field name="name"/>
                 <field name="lead_source_id"/>
+                <field name="is_hiring"/>
                 <field name="active" column_invisible="1"/>
             </list>
         </field>
@@ -21,6 +22,7 @@
             <search>
                 <field name="name"/>
                 <field name="lead_source_id"/>
+                <filter string="Hiring campaigns" name="hiring" domain="[('is_hiring', '=', True)]"/>
                 <filter string="Archived" name="inactive" domain="[('active', '=', False)]"/>
                 <group>
                     <filter string="Lead Source" name="group_source" context="{'group_by': 'lead_source_id'}"/>

@@ -223,6 +223,7 @@ class LeadAssignmentRulePoolRules(models.Model):
         today_start, _end = rule._pool_today_bounds_utc()
         Lead = self.env['leads.logic'].sudo()
         leads = Lead.search([
+            ('is_hiring', '=', False),
             ('lead_owner', '!=', False), ('state', '!=', 'lost'),
             ('lead_quality', 'in', list(UNWORKED)),
             ('reassign_date', '>=', today_start - timedelta(days=1)), ('reassign_date', '<', today_start),
@@ -254,6 +255,7 @@ class LeadAssignmentRulePoolRules(models.Model):
             now = fields.Datetime.now()
             limit = now - timedelta(minutes=rule.pool_first_call_minutes)
             leads = Lead.search([
+                ('is_hiring', '=', False),
                 ('lead_owner', '!=', False), ('state', '!=', 'lost'),
                 ('lead_quality', 'in', [False, 'new']),
                 ('auto_reassign_count', '<', rule.pool_max_reassigns),

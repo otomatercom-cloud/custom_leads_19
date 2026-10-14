@@ -53,6 +53,25 @@
         <field name="perm_unlink" eval="False"/>
     </record>
 
+    <!-- ── HR Assistant: only hiring (job applicant) leads ───────────────── -->
+    <record id="rule_leads_hr_assistant" model="ir.rule">
+        <field name="name">Leads: HR Assistant — Hiring Leads Only</field>
+        <field name="model_id" ref="model_leads_logic"/>
+        <field name="domain_force">[('is_hiring', '=', True)]</field>
+        <field name="groups" eval="[(4, ref('custom_leads_19.group_lead_hr_assistant'))]"/>
+        <field name="perm_read"   eval="True"/>
+        <field name="perm_write"  eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <record id="rule_followup_hr_assistant" model="ir.rule">
+        <field name="name">Follow-ups: HR Assistant — hiring leads only</field>
+        <field name="model_id" ref="model_lead_followup"/>
+        <field name="domain_force">[('lead_id.is_hiring', '=', True)]</field>
+        <field name="groups" eval="[(4, ref('custom_leads_19.group_lead_hr_assistant'))]"/>
+    </record>
+
     <!-- ── Tele Caller: only sees leads assigned to them ────────────────── -->
     <record id="rule_leads_tele_caller" model="ir.rule">
         <field name="name">Leads: Tele Caller Own Leads Only</field>

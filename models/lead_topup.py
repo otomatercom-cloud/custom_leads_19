@@ -122,7 +122,7 @@ class LeadsLogicTopup(models.Model):
 
     @api.model
     def _topup_pool_domain(self):
-        return [('lead_owner', '=', False), ('topup_pool_lead', '=', True), ('state', '!=', 'lost'),
+        return [('lead_owner', '=', False), ('topup_pool_lead', '=', True), ('state', '!=', 'lost'), ('is_hiring', '=', False),
                 ('is_abroad', '=', False), ('admission_status', '=', False),
                 ('lead_stage_category', 'not in', ['admission_done', 'junk'])]
 
