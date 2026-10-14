@@ -27,9 +27,20 @@
                         </div>
                     </th>
                 </t>
-                <th>
-                    <button t-if="colLayout.order.length" type="button" class="btn btn-link btn-sm p-0"
-                            title="Reset my column order" t-on-click="resetColOrder">&#8634;</button>
+                <th class="text-nowrap">
+                    <button type="button" class="btn btn-link btn-sm p-0 o_otm_colbtn" title="Show / hide columns (saved for you)"
+                            t-on-click="colToggleMenu">&#9776; Columns</button>
+                    <button t-if="colLayout.order.length || colLayout.hidden.length" type="button" class="btn btn-link btn-sm p-0 ms-2"
+                            title="Reset my columns" t-on-click="resetColOrder">&#8634;</button>
+                    <div t-if="colMenu.open" class="o_otm_colmenu" t-att-style="'top:' + colMenu.top + 'px;right:' + colMenu.right + 'px'">
+                        <div class="o_otm_colmenu_head">Show these columns</div>
+                        <t t-foreach="colAll" t-as="c" t-key="c.name">
+                            <label class="o_otm_colmenu_item">
+                                <input type="checkbox" t-att-checked="c.on" t-on-change="() => this.colToggleColumn(c.name)"/>
+                                <span t-esc="c.label"/>
+                            </label>
+                        </t>
+                    </div>
                 </th>
             </tr>
         </xpath>

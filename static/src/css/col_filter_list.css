@@ -4,3 +4,8 @@
 /* drag a column header to move the column (each user's own order) */
 .o_list_renderer thead th.o_otm_col_drag { cursor: grab; }
 .o_list_renderer thead th.o_otm_drag_over { box-shadow: inset 3px 0 0 #714b67; background: rgba(113, 75, 103, .08); }
+
+.o_otm_colmenu { position: fixed; z-index: 1080; background: #fff; border: 1px solid #d8dadd; border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.15); padding: 8px 6px; min-width: 210px; max-height: 60vh; overflow-y: auto; text-align: left; font-weight: 400; }
+.o_otm_colmenu_head { font-size: 12px; font-weight: 700; color: #6c757d; padding: 2px 8px 6px; }
+.o_otm_colmenu_item { display: flex; align-items: center; gap: 8px; padding: 4px 8px; font-size: 13px; cursor: pointer; border-radius: 6px; margin: 0; }
+.o_otm_colmenu_item:hover { background: #f1f4f8; }

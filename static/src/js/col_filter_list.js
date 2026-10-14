@@ -18,15 +18,17 @@ export class ColFilterListRenderer extends ListRenderer {
         super.setup();
         this.colFilter = useState({});
         this._colFilterTimer = null;
-        this.colLayout = useState({ order: [] });      // this user's own column order (saved on the server)
+        this.colLayout = useState({ order: [], hidden: [] });
+        this.colMenu = useState({ open: false, top: 0, right: 0 });      // this user's own column order (saved on the server)
         this._colOrm = useService("orm");
         this._colRoot = useRef("root");
         this._colDrag = null;
         onWillStart(async () => {
             try {
-                const order = await this._colOrm.call("otm.user.list.layout", "get_layout", [this._colLayoutKey()]);
-                this.colLayout.order = Array.isArray(order) ? order : [];
-                if (this.colLayout.order.length && this.state && typeof this.getActiveColumns === "function") {
+                const prefs = await this._colOrm.call("otm.user.list.layout", "get_prefs", [this._colLayoutKey()]);
+                this.colLayout.order = Array.isArray(prefs && prefs.order) ? prefs.order : [];
+                this.colLayout.hidden = Array.isArray(prefs && prefs.hidden) ? prefs.hidden : [];
+                if ((this.colLayout.order.length || this.colLayout.hidden.length) && this.state && typeof this.getActiveColumns === "function") {
                     this.state.columns = this.getActiveColumns(this.props.list);
                 }
             } catch (e) {
@@ -59,7 +61,72 @@ export class ColFilterListRenderer extends ListRenderer {
     }
 
     getActiveColumns(...args) {
-        return this._colSort(super.getActiveColumns(...args));
+        const cols = this._colSort(super.getActiveColumns(...args));
+        const hidden = (this.colLayout && this.colLayout.hidden) || [];
+        if (!hidden.length || !Array.isArray(cols)) {
+            return cols;
+        }
+        const left = cols.filter((c) => !hidden.includes(c.name || c.id));
+        return left.length ? left : cols;          // never hide every column
+    }
+
+    /** Every column of this list (visible or hidden by the user), for the "Columns" menu. */
+    get colAll() {
+        const hidden = this.colLayout.hidden;
+        let all = [];
+        try {
+            all = this._colSort(super.getActiveColumns(this.props.list)) || [];
+        } catch (e) {
+            all = this.filterColumns;
+        }
+        return all
+            .filter((c) => c.type === "field")
+            .map((c) => {
+                const f = (this.props.list.fields && this.props.list.fields[c.name]) || {};
+                return { name: c.name, label: c.label || c.string || f.string || c.name, on: !hidden.includes(c.name) };
+            });
+    }
+
+    colToggleMenu(ev) {
+        if (!this.colMenu.open) {
+            const r = ev.currentTarget.getBoundingClientRect();
+            this.colMenu.top = Math.round(r.bottom + 4);
+            this.colMenu.right = Math.max(8, Math.round(window.innerWidth - r.right));
+            this._colOutside = (e) => {
+                if (!e.target.closest || !e.target.closest(".o_otm_colmenu, .o_otm_colbtn")) {
+                    this.colMenu.open = false;
+                    document.removeEventListener("mousedown", this._colOutside, true);
+                }
+            };
+            document.addEventListener("mousedown", this._colOutside, true);
+        }
+        this.colMenu.open = !this.colMenu.open;
+    }
+
+    async colToggleColumn(name) {
+        const hidden = this.colLayout.hidden.slice();
+        const i = hidden.indexOf(name);
+        if (i >= 0) {
+            hidden.splice(i, 1);
+        } else {
+            if (this.colAll.filter((c) => c.on).length <= 1) {
+                return;                                  // keep at least one column
+            }
+            hidden.push(name);
+        }
+        this.colLayout.hidden = hidden;
+        this.state.columns = this.getActiveColumns(this.props.list);
+        await this._colSave();
+    }
+
+    async _colSave() {
+        try {
+            await this._colOrm.call("otm.user.list.layout", "set_prefs", [
+                this._colLayoutKey(), this.colLayout.order, this.colLayout.hidden,
+            ]);
+        } catch (e) {
+            console.warn("column layout not saved", e);
+        }
     }
 
     _colHeaders() {
@@ -127,20 +194,13 @@ export class ColFilterListRenderer extends ListRenderer {
         names.splice(ti, 0, names.splice(fi, 1)[0]);
         this.colLayout.order = names;
         this.state.columns = this._colSort(this.state.columns);
-        try {
-            await this._colOrm.call("otm.user.list.layout", "set_layout", [this._colLayoutKey(), names]);
-        } catch (e) {
-            console.warn("column layout not saved", e);
-        }
+        await this._colSave();
     }
 
     async resetColOrder() {
         this.colLayout.order = [];
-        try {
-            await this._colOrm.call("otm.user.list.layout", "set_layout", [this._colLayoutKey(), []]);
-        } catch (e) {
-            console.warn("column layout not reset", e);
-        }
+        this.colLayout.hidden = [];
+        await this._colSave();
         window.location.reload();
     }
 
