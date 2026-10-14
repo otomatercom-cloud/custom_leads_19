@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+<t t-name="custom_leads_19.MetaAdsDashboard">
+<div class="otm-ma">
+    <div class="otm-ma-head">
+        <div>
+            <h1>Meta Ads Dashboard</h1>
+            <p>Leads, spend and cost per lead for each Meta campaign</p>
+        </div>
+        <div class="otm-ma-ctl">
+            <t t-foreach="[['0','Today'],['1','Yesterday'],['7','7 days'],['30','30 days'],['month','This month']]" t-as="p" t-key="p[0]">
+                <button t-attf-class="otm-ma-btn {{state.preset === p[0] ? 'on' : ''}}" t-on-click="() => this.setPreset(p[0])" t-esc="p[1]"/>
+            </t>
+            <input type="date" t-att-value="state.from" t-on-change="(ev) => this.onDate('from', ev)"/>
+            <input type="date" t-att-value="state.to" t-on-change="(ev) => this.onDate('to', ev)"/>
+            <button class="otm-ma-btn" t-on-click="load">Refresh</button>
+            <button t-if="state.data and state.data.can_sync and state.data.configured" class="otm-ma-btn pri"
+                    t-att-disabled="state.syncing" t-on-click="sync"><t t-esc="state.syncing ? 'Syncing…' : 'Sync spend from Meta'"/></button>
+        </div>
+    </div>
+
+    <div t-if="state.error" class="otm-ma-err" t-esc="state.error"/>
+    <div t-elif="state.loading and !state.data" class="otm-ma-empty">Loading…</div>
+    <t t-elif="state.data">
+        <div t-if="!state.data.configured" class="otm-ma-note warn">
+            Spend and CPL need the Meta ad account ID and an access token with ads_read. Add them in Settings, Leads, Meta Ads, then press "Sync spend from Meta".
+        </div>
+        <div t-elif="state.data.last_sync" class="otm-ma-note">Spend last synced <t t-esc="state.data.last_sync"/> (UTC). Spend is matched to leads by campaign name.</div>
+
+        <div class="otm-ma-tiles">
+            <div class="otm-ma-tile"><b t-esc="money(state.data.totals.spend)"/><span>Spend</span></div>
+            <div class="otm-ma-tile"><b t-esc="num(state.data.totals.leads)"/><span>Leads</span></div>
+            <div class="otm-ma-tile key"><b t-esc="money2(state.data.totals.cpl)"/><span>Cost per lead</span></div>
+            <div class="otm-ma-tile"><b t-esc="num(state.data.totals.good)"/><span>Hot + Warm leads</span></div>
+            <div class="otm-ma-tile"><b t-esc="num(state.data.totals.adm)"/><span>Admissions</span></div>
+            <div class="otm-ma-tile"><b t-esc="money(state.data.totals.cpa)"/><span>Cost per admission</span></div>
+            <div class="otm-ma-tile"><b t-esc="num(state.data.totals.clicks)"/><span>Clicks (CTR <t t-esc="pct(state.data.totals.ctr)"/>)</span></div>
+        </div>
+
+        <div class="otm-ma-card">
+            <h3>Leads per day</h3>
+            <div class="otm-ma-chart">
+                <t t-foreach="state.data.days" t-as="day" t-key="day">
+                    <div class="otm-ma-col" t-att-title="dayLabel(day) + ': ' + state.data.daily_leads[day_index] + ' leads, spend ' + money(state.data.daily_spend[day_index]) + ', CPL ' + money2(dayCpl(day_index))">
+                        <span class="otm-ma-val" t-esc="state.data.daily_leads[day_index]"/>
+                        <div class="otm-ma-bar" t-att-style="'height:' + barH(state.data.daily_leads[day_index]) + 'px'"/>
+                        <span class="otm-ma-day" t-esc="dayLabel(day)"/>
+                        <t t-if="showDayNotes">
+                            <span class="otm-ma-sub" t-esc="money(state.data.daily_spend[day_index])"/>
+                            <span class="otm-ma-sub cpl" t-esc="dayCpl(day_index) === null ? '' : money(dayCpl(day_index))"/>
+                        </t>
+                    </div>
+                </t>
+            </div>
+            <p t-if="showDayNotes" class="otm-ma-foot">Under each day: spend, then cost per lead.</p>
+        </div>
+
+        <div class="otm-ma-card">
+            <div class="otm-ma-cardhead">
+                <h3>Campaigns</h3>
+                <input type="search" class="otm-ma-search" placeholder="Find campaign" t-on-input="onSearch"/>
+            </div>
+            <div class="otm-ma-scroll">
+            <table class="otm-ma-table">
+                <thead>
+                    <tr>
+                        <th class="l" t-on-click="() => this.setSort('name')">Campaign</th>
+                        <th t-on-click="() => this.setSort('leads')">Leads</th>
+                        <th t-on-click="() => this.setSort('good')">Hot + Warm</th>
+                        <th t-on-click="() => this.setSort('adm')">Admissions</th>
+                        <th t-on-click="() => this.setSort('spend')">Spend</th>
+                        <th t-on-click="() => this.setSort('cpl')">CPL</th>
+                        <th t-on-click="() => this.setSort('cpa')">Cost / admission</th>
+                        <th t-on-click="() => this.setSort('impressions')">Impressions</th>
+                        <th t-on-click="() => this.setSort('clicks')">Clicks</th>
+                        <th t-on-click="() => this.setSort('ctr')">CTR</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <t t-foreach="rows" t-as="r" t-key="r.name">
+                        <tr>
+                            <td class="l"><a t-on-click="() => this.openLeads(r)" t-esc="r.name"/><span t-if="r.hiring" class="otm-ma-tag">Hiring</span></td>
+                            <td><b t-esc="num(r.leads)"/></td>
+                            <td t-esc="num(r.good)"/>
+                            <td t-esc="num(r.adm)"/>
+                            <td t-esc="money(r.spend or null)"/>
+                            <td class="key" t-esc="money2(r.cpl)"/>
+                            <td t-esc="money(r.cpa)"/>
+                            <td t-esc="num(r.impressions or null)"/>
+                            <td t-esc="num(r.clicks or null)"/>
+                            <td t-esc="pct(r.ctr)"/>
+                        </tr>
+                    </t>
+                    <tr t-if="!rows.length"><td colspan="10" class="otm-ma-empty">No Meta leads or spend in this period.</td></tr>
+                </tbody>
+                <tfoot t-if="rows.length">
+                    <tr>
+                        <td class="l">Total</td>
+                        <td t-esc="num(state.data.totals.leads)"/><td t-esc="num(state.data.totals.good)"/><td t-esc="num(state.data.totals.adm)"/>
+                        <td t-esc="money(state.data.totals.spend)"/><td t-esc="money2(state.data.totals.cpl)"/><td t-esc="money(state.data.totals.cpa)"/>
+                        <td t-esc="num(state.data.totals.impressions)"/><td t-esc="num(state.data.totals.clicks)"/><td t-esc="pct(state.data.totals.ctr)"/>
+                    </tr>
+                </tfoot>
+            </table>
+            </div>
+        </div>
+
+        <div class="otm-ma-card">
+            <h3>Daily leads for each campaign</h3>
+            <div class="otm-ma-scroll">
+            <table class="otm-ma-table matrix">
+                <thead>
+                    <tr>
+                        <th class="l sticky">Campaign</th>
+                        <t t-foreach="state.data.days" t-as="day" t-key="day"><th t-esc="dayLabel(day)"/></t>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <t t-foreach="rows" t-as="r" t-key="r.name">
+                        <tr>
+                            <td class="l sticky"><a t-on-click="() => this.openLeads(r)" t-esc="r.name"/></td>
+                            <t t-foreach="r.daily" t-as="n" t-key="n_index">
+                                <td t-att-style="cellStyle(n, rowMax(r))"><a t-if="n" t-on-click="() => this.openLeads(r, n_index)" t-esc="n"/><span t-else="" class="muted">·</span></td>
+                            </t>
+                            <td><b t-esc="r.leads"/></td>
+                        </tr>
+                    </t>
+                </tbody>
+                <tfoot t-if="rows.length">
+                    <tr>
+                        <td class="l sticky">All campaigns</td>
+                        <t t-foreach="state.data.daily_leads" t-as="n" t-key="n_index"><td t-esc="n"/></t>
+                        <td t-esc="state.data.totals.leads"/>
+                    </tr>
+                </tfoot>
+            </table>
+            </div>
+        </div>
+    </t>
+</div>
+</t>
+</templates>

@@ -242,6 +242,20 @@
                             </div>
                         </setting>
                     </block>
+                    <block title="Meta Ads (spend and CPL)">
+                        <setting string="Meta Marketing API"
+                                 help="Pulls the daily spend of each campaign so the Meta Ads dashboard can show spend and cost per lead. Needs a System User access token with ads_read and the ad account ID.">
+                            <div class="content-group">
+                                <div class="row mt8"><label class="col-lg-4" for="meta_ads_accounts"/><field name="meta_ads_accounts"/></div>
+                                <div class="row"><label class="col-lg-4" for="meta_ads_token"/><field name="meta_ads_token" password="True"/></div>
+                                <div class="row"><label class="col-lg-4" for="meta_ads_version"/><field name="meta_ads_version"/></div>
+                                <div class="row"><label class="col-lg-4" for="meta_ads_days"/><field name="meta_ads_days"/></div>
+                            </div>
+                        </setting>
+                        <setting string="Sync automatically" help="Refreshes the last 3 days of spend every hour.">
+                            <field name="meta_ads_enabled"/>
+                        </setting>
+                    </block>
                     <block title="Call button">
                         <setting string="Call button uses" help="The 📞 Call button on a lead dials through this service and the call is recorded and logged by it.">
                             <field name="call_provider"/>

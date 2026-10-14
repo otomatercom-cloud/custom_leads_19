@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="action_meta_ads_dashboard" model="ir.actions.client">
+        <field name="name">Meta Ads Dashboard</field>
+        <field name="tag">custom_leads_19.meta_ads_dashboard</field>
+    </record>
+    <menuitem id="menu_meta_ads_dashboard" name="Meta Ads Dashboard" parent="menu_lead_rep_reports"
+              action="action_meta_ads_dashboard" sequence="5"
+              groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager,custom_leads_19.group_lead_digital_head,custom_leads_19.group_lead_digital_team"/>
+
+    <record id="view_otm_meta_spend_list" model="ir.ui.view">
+        <field name="name">otm.meta.spend.list</field>
+        <field name="model">otm.meta.spend</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="date"/>
+                <field name="campaign_name"/>
+                <field name="account_id"/>
+                <field name="spend" sum="Total"/>
+                <field name="impressions" sum="Total"/>
+                <field name="clicks" sum="Total"/>
+                <field name="meta_leads" sum="Total"/>
+            </list>
+        </field>
+    </record>
+    <record id="view_otm_meta_spend_search" model="ir.ui.view">
+        <field name="name">otm.meta.spend.search</field>
+        <field name="model">otm.meta.spend</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="campaign_name"/>
+                <filter string="Last 7 days" name="d7" domain="[('date', '&gt;=', (context_today() - relativedelta(days=7)).strftime('%Y-%m-%d'))]"/>
+                <filter string="Campaign" name="g_camp" context="{'group_by': 'campaign_name'}"/>
+                <filter string="Day" name="g_day" context="{'group_by': 'date:day'}"/>
+            </search>
+        </field>
+    </record>
+    <record id="action_otm_meta_spend" model="ir.actions.act_window">
+        <field name="name">Meta Spend Records</field>
+        <field name="res_model">otm.meta.spend</field>
+        <field name="view_mode">list</field>
+    </record>
+    <menuitem id="menu_meta_spend_records" name="Meta Spend Records" parent="menu_lead_rep_reports"
+              action="action_otm_meta_spend" sequence="6"
+              groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager,custom_leads_19.group_lead_digital_head"/>
+</odoo>
