@@ -206,7 +206,15 @@ export class ColFilterListRenderer extends ListRenderer {
 
     /** Visible columns - the property name differs between Odoo versions, so try each. */
     get filterColumns() {
-        const cols = (this.state && this.state.columns) || this.columns || [];
+        let cols = [];
+        try {
+            cols = this.getActiveColumns(this.props.list);       // same source the header uses (respects hidden / order)
+        } catch (e) {
+            cols = [];
+        }
+        if (!Array.isArray(cols) || !cols.length) {
+            cols = (this.state && this.state.columns) || this.columns || [];
+        }
         return Array.isArray(cols) ? cols : [];
     }
 
