@@ -45,6 +45,13 @@ class LeadsLogicHiringProcess(models.Model):
         for lead in self:
             lead.hiring_form_url = '%s/hiring/apply/%s' % (base, lead.hiring_form_token) if lead.hiring_form_token else False
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        leads = super().create(vals_list)
+        for lead in leads.filtered(lambda l: l.is_hiring and not l.hiring_form_token):
+            lead.sudo().hiring_form_token = secrets.token_urlsafe(16)      # the form link is ready from the start
+        return leads
+
     # ── helpers ────────────────────────────────────────────────────────
     def _hiring_wa_url(self, text):
         self.ensure_one()
