@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_leads_hiring_interview_wizard" model="ir.ui.view">
+        <field name="name">leads.hiring.interview.wizard.form</field>
+        <field name="model">leads.hiring.interview.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Schedule interview">
+                <group>
+                    <field name="lead_id" invisible="1"/>
+                    <field name="interview_dt"/>
+                    <field name="interview_mode"/>
+                    <field name="interview_with"/>
+                    <field name="interview_note"/>
+                </group>
+                <footer>
+                    <button name="action_confirm" string="Schedule" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

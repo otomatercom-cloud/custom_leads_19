@@ -71,10 +71,10 @@
                     <button name="action_call_lead" string="📞 Call" type="object" class="btn-success"
                             invisible="state == 'lost'"/>
                     <button name="action_odoo17_admission" string="🎓 Admission (Odoo 17)" type="object"
-                            class="btn-primary" invisible="state == 'lost' or not show_odoo17_admission"
+                            class="btn-primary" invisible="is_hiring or state == 'lost' or not show_odoo17_admission"
                             confirm="Send this lead to Odoo 17 and open it there for the admission?"/>
                     <field name="show_odoo17_admission" invisible="1"/>
-                    <button name="action_odoo17_sync_lead" string="🔄 Sync from Odoo 17" type="object"
+                    <button name="action_odoo17_sync_lead" string="🔄 Sync from Odoo 17" type="object" invisible="is_hiring"
                             groups="custom_leads_19.group_lead_team_lead,custom_leads_19.group_lead_manager,custom_leads_19.group_super_admin"
                             confirm="Check this lead in Odoo 17 and add any missing details here? Nothing is removed or overwritten."/>
                     <!--<button name="action_voxbay_call" string="📞 Voxbay Call" type="object"/>
@@ -87,11 +87,27 @@
                             class="btn-danger" invisible="state == 'lost'"/>
                     <button name="action_open_convert_wizard" string="Convert" type="object"
                             class="btn-primary"
-                            invisible="lead_quality in ['admission','waiting_for_admission'] or student_profile_created"/>
+                            invisible="is_hiring or lead_quality in ['admission','waiting_for_admission'] or student_profile_created"/>
                     <button name="action_open_admission_wizard" string="Admission" type="object"
                             class="btn-success"
-                            invisible="student_profile_created or lead_quality not in ['waiting_for_admission','hot','warm']"/>
-                    <field name="state" widget="statusbar"
+                            invisible="is_hiring or student_profile_created or lead_quality not in ['waiting_for_admission','hot','warm']"/>
+                    <!-- hiring process -->
+                    <field name="is_hiring" invisible="1"/>
+                    <button name="action_hiring_request_resume" string="📄 Request Resume" type="object" class="btn-primary"
+                            invisible="not is_hiring or hiring_stage in ['selected','rejected']"/>
+                    <button name="action_hiring_schedule_interview" string="📅 Schedule Interview" type="object" class="btn-primary"
+                            invisible="not is_hiring or hiring_stage in ['selected','rejected']"/>
+                    <button name="action_hiring_send_interview_details" string="💬 Send Interview Details" type="object"
+                            invisible="not is_hiring or hiring_stage != 'interview_scheduled'"/>
+                    <button name="action_hiring_interviewed" string="✔ Interviewed" type="object" class="btn-success"
+                            invisible="not is_hiring or hiring_stage != 'interview_scheduled'"/>
+                    <button name="action_hiring_select" string="🎉 Select" type="object" class="btn-success"
+                            invisible="not is_hiring or hiring_stage in ['selected','rejected']"/>
+                    <button name="action_hiring_reject" string="🚫 Reject" type="object" class="btn-danger"
+                            invisible="not is_hiring or hiring_stage in ['selected','rejected']"/>
+                    <field name="hiring_stage" widget="statusbar" invisible="not is_hiring"
+                           statusbar_visible="new,resume_requested,resume_received,interview_scheduled,interviewed,selected"/>
+                    <field name="state" widget="statusbar" invisible="is_hiring"
                            statusbar_visible="new,in_progress,qualified,lost"/>
                 </header>
 
@@ -105,7 +121,7 @@
                         <button name="whatsapp_click_button" type="object" class="oe_stat_button" icon="fa-whatsapp">
                             <span>WhatsApp</span>
                         </button>
-                        <button name="action_open_webinar_wizard" type="object" class="oe_stat_button" icon="fa-video-camera">
+                        <button name="action_open_webinar_wizard" type="object" class="oe_stat_button" icon="fa-video-camera" invisible="is_hiring">
                             <span>Webinar</span>
                         </button>
                         <button name="action_toggle_phone" type="object" class="oe_stat_button" icon="fa-eye">
@@ -146,7 +162,7 @@
                     </div>
 
                     <!-- Conversion insight: chance of joining from call quality and customer approach -->
-                    <field name="conv_insight" widget="conv_insight" nolabel="1" readonly="1" invisible="not id"/>
+                    <field name="conv_insight" widget="conv_insight" nolabel="1" readonly="1" invisible="not id or is_hiring"/>
 
                     <!-- ROW 1: Contact + Assignment -->
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
@@ -298,7 +314,39 @@
                             </div>
                         </page>-->
 
-                        <page string="Student Details">
+                        <page string="Hiring" invisible="not is_hiring">
+                            <group>
+                                <group string="Application">
+                                    <field name="hiring_position"/>
+                                    <field name="hiring_qualification"/>
+                                    <field name="hiring_experience"/>
+                                    <field name="hiring_current_company"/>
+                                    <field name="hiring_current_salary"/>
+                                    <field name="hiring_expected_salary"/>
+                                    <field name="hiring_notice_period"/>
+                                    <field name="hiring_email" widget="email"/>
+                                    <field name="hiring_skills"/>
+                                </group>
+                                <group string="Resume and form">
+                                    <field name="hiring_resume" filename="hiring_resume_filename"/>
+                                    <field name="hiring_resume_filename" invisible="1"/>
+                                    <field name="hiring_form_submitted_on"/>
+                                    <field name="hiring_form_url" widget="CopyClipboardChar"/>
+                                </group>
+                            </group>
+                            <group string="Interview">
+                                <group>
+                                    <field name="interview_dt"/>
+                                    <field name="interview_mode"/>
+                                    <field name="interview_with"/>
+                                </group>
+                                <group>
+                                    <field name="interview_note"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="Student Details" invisible="is_hiring">
                             <group>
                                 <group string="Course">
                                     <field name="academic_year_of_course_attend"/>
@@ -392,7 +440,7 @@
                             </field>
                         </page>
 
-                        <page string="Counselling">
+                        <page string="Counselling" invisible="is_hiring">
                             <field name="counselling_ids">
                                 <list editable="bottom" default_order="appointment_date desc">
                                     <field name="appointment_date"/>

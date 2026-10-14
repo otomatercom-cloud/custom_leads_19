@@ -5,3 +5,4 @@ from . import bonvoice_webhook
 from . import lead_source_export
 from . import meta_webhook
 from . import wp_callback
+from . import hiring_form

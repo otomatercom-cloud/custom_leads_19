@@ -66,3 +66,4 @@ from . import lead_conversion
 from . import lead_bucket_dashboard
 from . import lead_hiring
 from . import meta_ads
+from . import hiring_process
