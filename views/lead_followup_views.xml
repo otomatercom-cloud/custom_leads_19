@@ -6,14 +6,14 @@
         <field name="name">lead.followup.list</field>
         <field name="model">lead.followup</field>
         <field name="arch" type="xml">
-            <list string="Follow-Ups" default_order="next_followup_date asc"
+            <list string="Follow-Ups" default_order="next_followup_date desc, id desc"
                   decoration-muted="status == 'done'"
                   decoration-info="status == 'scheduled'">
                 <field name="next_followup_date"/>
                 <field name="lead_id"/>
                 <field name="lead_reference" optional="show"/>
                 <field name="phone_number" optional="show"/>
-                <field name="lead_owner_id" optional="hide"/>
+                <field name="lead_owner_id" string="Admission Officer" optional="show"/>
                 <field name="user_id"/>
                 <field name="remarks"/>
                 <field name="status" widget="badge"
@@ -74,7 +74,15 @@
                 <field name="lead_reference"/>
                 <field name="phone_number"/>
                 <field name="user_id"/>
+                <field name="lead_owner_id" string="Admission Officer"/>
                 <field name="remarks"/>
+                <filter string="Today" name="f_today"
+                        domain="[('next_followup_date', '&gt;=', (datetime.datetime.combine(context_today(), datetime.time(0, 0, 0)) - datetime.timedelta(hours=5, minutes=30)).strftime('%Y-%m-%d %H:%M:%S')), ('next_followup_date', '&lt;', (datetime.datetime.combine(context_today(), datetime.time(0, 0, 0)) + datetime.timedelta(hours=18, minutes=30)).strftime('%Y-%m-%d %H:%M:%S'))]"/>
+                <filter string="Overdue" name="f_overdue"
+                        domain="[('status', '=', 'scheduled'), ('next_followup_date', '&lt;', (datetime.datetime.combine(context_today(), datetime.time(0, 0, 0)) - datetime.timedelta(hours=5, minutes=30)).strftime('%Y-%m-%d %H:%M:%S'))]"/>
+                <filter string="Upcoming" name="f_upcoming"
+                        domain="[('status', '=', 'scheduled'), ('next_followup_date', '&gt;=', (datetime.datetime.combine(context_today(), datetime.time(0, 0, 0)) + datetime.timedelta(hours=18, minutes=30)).strftime('%Y-%m-%d %H:%M:%S'))]"/>
+                <separator/>
                 <filter string="Scheduled" name="scheduled"
                         domain="[('status', '=', 'scheduled')]"/>
                 <filter string="Done" name="done"
@@ -89,6 +97,8 @@
                             context="{'group_by': 'lead_id'}"/>
                     <filter string="Status" name="group_status"
                             context="{'group_by': 'status'}"/>
+                    <filter string="Admission Officer" name="group_owner"
+                            context="{'group_by': 'lead_owner_id'}"/>
                     <filter string="Follow-Up By" name="group_user"
                             context="{'group_by': 'user_id'}"/>
                     <filter string="Date" name="group_date"
