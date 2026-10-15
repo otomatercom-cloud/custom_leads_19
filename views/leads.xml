@@ -187,7 +187,8 @@
                             </div>
                             <group col="2">
                                 <field name="lead_creator_id" readonly="1"/>
-                                <field name="lead_owner"/>
+                                <field name="can_reassign" invisible="1"/>
+                                <field name="lead_owner" readonly="not can_reassign"/>
                                 <field name="team_id" readonly="1" string="Team"/>
                                 <field name="tele_caller_id"/>
                                 <field name="company_id" groups="base.group_multi_company"/>

@@ -3,6 +3,7 @@
 admission leads - they never go to Admission Officers (no auto-assignment, pool, top-up or reassignment); they go to
 the HR Assistant group and appear only in the Hiring menu."""
 from odoo import api, fields, models, _
+from odoo.exceptions import UserError
 
 
 class LeadSourceCampaignHiring(models.Model):
@@ -72,3 +73,30 @@ class LeadsLogicHiring(models.Model):
             _('Nothing assigned: select hiring leads, and make sure someone is in the HR Assistant group.')
         return {'type': 'ir.actions.client', 'tag': 'display_notification',
                 'params': {'title': _('Hiring'), 'message': msg, 'type': 'success' if done else 'warning'}}
+
+
+class LeadsLogicReassignGuard(models.Model):
+    """Changing the Lead Owner by hand (form / list edit) is for Team Leads, Managers and Super Admins only.
+    Only the screen save (web_save) is checked, so auto-assignment, the pool, top-up, imports and the bulk
+    assign wizards are not affected."""
+    _inherit = 'leads.logic'
+
+    can_reassign = fields.Boolean(compute='_compute_can_reassign')
+
+    def _user_can_reassign(self):
+        u = self.env.user
+        return (u._is_superuser() or u.has_group('custom_leads_19.group_lead_team_lead')
+                or u.has_group('custom_leads_19.group_lead_manager')
+                or u.has_group('custom_leads_19.group_super_admin'))
+
+    def _compute_can_reassign(self):
+        ok = self._user_can_reassign()
+        for rec in self:
+            rec.can_reassign = ok
+
+    def web_save(self, vals, *args, **kwargs):
+        if self and 'lead_owner' in vals and not self._user_can_reassign():
+            new = vals.get('lead_owner') or False
+            if any((rec.lead_owner.id or False) != new for rec in self):
+                raise UserError(_('Only a Team Lead or Manager can reassign a lead to another officer.'))
+        return super().web_save(vals, *args, **kwargs)
