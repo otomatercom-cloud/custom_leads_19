@@ -67,3 +67,4 @@ from . import lead_bucket_dashboard
 from . import lead_hiring
 from . import meta_ads
 from . import hiring_process
+from . import mobile_key

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_mobile_key_wizard_form" model="ir.ui.view">
+        <field name="name">otm.mobile.key.wizard.form</field>
+        <field name="model">otm.mobile.key.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Phone app key">
+                <sheet>
+                    <p>Install the <b>Otomater Calls</b> app on your company phone, then enter the Odoo address and
+                       your key in the app. Your calls with lead numbers (and their recordings) are added to the leads.</p>
+                    <group>
+                        <field name="server"/>
+                        <field name="key" widget="CopyClipboardChar" invisible="not key"/>
+                    </group>
+                    <p invisible="not key" class="text-warning">
+                        Copy the key now - it is shown only once. Making a new key stops the old one.</p>
+                </sheet>
+                <footer>
+                    <button name="action_generate" type="object" class="btn-primary"
+                            string="Make my key" invisible="key"/>
+                    <button string="Close" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_mobile_key_wizard" model="ir.actions.act_window">
+        <field name="name">Phone App Key</field>
+        <field name="res_model">otm.mobile.key.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <record id="view_mobile_key_list" model="ir.ui.view">
+        <field name="name">otm.mobile.key.list</field>
+        <field name="model">otm.mobile.key</field>
+        <field name="arch" type="xml">
+            <list string="Phone app keys" create="0" edit="0">
+                <field name="user_id"/>
+                <field name="hint"/>
+                <field name="create_date" string="Made on"/>
+                <field name="last_seen"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_mobile_keys" model="ir.actions.act_window">
+        <field name="name">Phone app keys</field>
+        <field name="res_model">otm.mobile.key</field>
+        <field name="view_mode">list</field>
+        <field name="context">{'active_test': False}</field>
+    </record>
+
+    <menuitem id="menu_mobile_key" name="Phone App Key" parent="menu_leads_root" action="action_mobile_key_wizard" sequence="90"
+              groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager,custom_leads_19.group_lead_team_lead,custom_leads_19.group_lead_users,custom_leads_19.group_lead_tele_callers,custom_leads_19.group_lead_digital_team,custom_leads_19.group_lead_digital_head,custom_leads_19.group_lead_branch_head,custom_leads_19.group_crash_head,custom_leads_19.group_crash_user,custom_leads_19.group_lead_hr_assistant"/>
+    <menuitem id="menu_mobile_keys_admin" name="Phone app keys" parent="menu_leads_config" action="action_mobile_keys" sequence="90"
+              groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager"/>
+</odoo>

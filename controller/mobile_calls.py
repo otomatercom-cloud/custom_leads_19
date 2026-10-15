@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Otomater Calls (Android app): company-phone calls and their recordings -> the lead's Call History.
 
-The app signs in with the officer's own Odoo API key (Preferences > Account Security > New API Key) sent as
+The app signs in with the officer's own phone app key (Odoo: Leads Management > Phone App Key; an Odoo API key also works) sent as
     Authorization: Bearer <key>
 Nothing is stored for numbers that are not a lead - those calls are ignored (personal calls stay private).
 
@@ -34,6 +34,9 @@ class MobileCalls(http.Controller):
         key = auth[7:].strip() if auth.lower().startswith('bearer ') else ''
         if not key:
             return False
+        uid = request.env['otm.mobile.key'].user_for_key(key)      # key made in Odoo: Leads > Phone App Key
+        if uid:
+            return uid
         try:
             uid = request.env['res.users.apikeys'].sudo()._check_credentials(scope='rpc', key=key)
         except Exception as e:  # wrong key / API changed
