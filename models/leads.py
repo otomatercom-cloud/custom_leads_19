@@ -1807,7 +1807,17 @@ class LeadFollowUp(models.Model):
         if mine_only:
             uid = self.env.uid
             domain += ['|', ('user_id', '=', uid), ('lead_id.lead_owner.user_id', '=', uid)]
-        candidates = self.search(domain, order='next_followup_date asc', limit=200)
+        # only today's window (user timezone, as UTC): otherwise the 200 oldest overdue follow-ups fill the limit
+        # and today's ones are never reached
+        import pytz
+        tzname = {'Asia/Calcutta': 'Asia/Kolkata'}.get(self.env.user.tz or '', self.env.user.tz or 'Asia/Kolkata')
+        try:
+            tz = pytz.timezone(tzname)
+        except Exception:
+            tz = pytz.timezone('Asia/Kolkata')
+        start = tz.localize(datetime.combine(today, datetime.min.time())).astimezone(pytz.utc).replace(tzinfo=None)
+        domain += [('next_followup_date', '>=', start), ('next_followup_date', '<', start + timedelta(days=1))]
+        candidates = self.search(domain, order='next_followup_date asc', limit=500)
         # A follow-up can outlive the lead's owner (lead re-assigned to another officer). Skip the ones whose
         # lead this user can no longer read, otherwise the whole list raises an Access Error.
         readable = set(self.env['leads.logic'].search([('id', 'in', candidates.lead_id.ids)]).ids)
