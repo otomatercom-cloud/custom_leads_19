@@ -13,6 +13,9 @@ import base64
 import json
 import logging
 import mimetypes
+import shutil
+import subprocess
+import tempfile
 from datetime import datetime, timedelta
 
 from odoo import http
@@ -24,6 +27,28 @@ MAX_REC = 40 * 1024 * 1024
 
 def _last10(v):
     return ''.join(c for c in str(v or '') if c.isdigit())[-10:]
+
+
+def to_mp3(data):
+    """Phone recorders save AMR / 3GP / M4A / WAV that browsers often cannot play. Make a small mono MP3.
+    Returns bytes, None when ffmpeg is missing, False when the file is not readable audio (e.g. still being written)."""
+    exe = shutil.which('ffmpeg')
+    if not exe:
+        return None
+    with tempfile.TemporaryDirectory() as d:
+        src, dst = d + '/in.bin', d + '/out.mp3'
+        with open(src, 'wb') as fh:
+            fh.write(data)
+        try:
+            r = subprocess.run([exe, '-y', '-loglevel', 'error', '-i', src, '-vn', '-ac', '1', '-b:a', '64k', dst],
+                               capture_output=True, timeout=180)
+        except Exception:
+            return False
+        if r.returncode != 0:
+            return False
+        with open(dst, 'rb') as fh:
+            out = fh.read()
+    return out if len(out) > 1000 else False
 
 
 class MobileCalls(http.Controller):
@@ -130,7 +155,16 @@ class MobileCalls(http.Controller):
         data = f.read(MAX_REC + 1)
         if len(data) > MAX_REC:
             return self._json({'ok': False, 'error': 'File too large'}, 413)
+        if len(data) < 2000:       # the phone's recorder is still writing the file: the app tries again later
+            return self._json({'ok': False, 'error': 'Recording not ready'}, 422)
         name = f.filename or 'call.m4a'
-        log.write({'recording': base64.b64encode(data), 'recording_filename': name,
-                   'recording_mimetype': f.mimetype or mimetypes.guess_type(name)[0] or 'audio/mp4'})
+        mp3 = to_mp3(data)
+        if mp3 is False:
+            return self._json({'ok': False, 'error': 'Recording not readable yet'}, 422)
+        if mp3:
+            log.write({'recording': base64.b64encode(mp3), 'recording_filename': 'call_%s.mp3' % cid,
+                       'recording_mimetype': 'audio/mpeg'})
+        else:                      # no ffmpeg on the server: keep the original file
+            log.write({'recording': base64.b64encode(data), 'recording_filename': name,
+                       'recording_mimetype': mimetypes.guess_type(name)[0] or 'audio/mp4'})
         return self._json({'ok': True})
