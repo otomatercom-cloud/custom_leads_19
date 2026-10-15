@@ -3,7 +3,7 @@
  1. 'Ringing Not Responding' only after N calls.
  2. A New lead whose quality is changed by its officer moves to the next officer.
  3. A lead not called enough on the day it was assigned moves to another officer next day."""
-from datetime import timedelta
+from datetime import datetime, timedelta
 import logging
 
 import pytz
@@ -74,7 +74,17 @@ class LeadsLogicPoolRules(models.Model):
         base = P.param('custom_leads_19.rnr_call_gap_min')
         if not base:
             return 0
-        since = self.sudo().assigned_date or self.create_date
+        lead = self.sudo()
+        # assigned_date is a plain Date (no time of day): use the exact assignment time when we have it
+        since = lead.reassign_date or False
+        if not since:
+            hist = self.env['lead.assignment.history'].sudo().search(
+                [('lead_id', '=', self.id)], order='id desc', limit=1)
+            since = hist.assigned_date if hist else False
+        if not since:
+            since = lead.create_date
+        if since and not isinstance(since, datetime):       # still a date: treat as the start of that day (UTC)
+            since = datetime.combine(since, datetime.min.time())
         if not since:
             return base
         local = pytz.utc.localize(since).astimezone(pytz.timezone('Asia/Kolkata'))
