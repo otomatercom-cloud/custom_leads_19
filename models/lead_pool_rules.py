@@ -283,9 +283,32 @@ class LeadAssignmentRulePoolRules(models.Model):
             ] + ([('leads_source', 'in', rule.pool_source_ids.ids)] if rule.pool_source_ids else []),
                 order='id asc', limit=100)
             moved = 0
+            # the clock only runs while the officer is free and has not yet looked at the lead:
+            #  - after the end of the officer's latest call (a long call on another lead pauses it)
+            #  - after the officer opened the lead
+            #  - company-phone (app) users get extra minutes: their calls reach Odoo after a sync delay
+            from .call_report import _parse_duration_seconds
+            owners = leads.mapped('lead_owner.user_id')
+            app_users = set(self.env['otm.mobile.key'].sudo().search(
+                [('user_id', 'in', owners.ids), ('active', '=', True)]).mapped('user_id').ids)
+            busy_until = {}
+            for c in self.env['lead.call.log'].sudo().search(
+                    [('user_id', 'in', owners.ids), ('call_time', '>=', now - timedelta(hours=4))]):
+                end = c.call_time + timedelta(seconds=_parse_duration_seconds(c.duration))
+                if end > busy_until.get(c.user_id.id, datetime.min):
+                    busy_until[c.user_id.id] = end
             for lead in leads:
                 since = lead.reassign_date or lead.create_date
                 if lead.call_log_ids.filtered(lambda c: (c.call_time or c.create_date) >= since):
+                    continue
+                owner_user = lead.lead_owner.user_id
+                wait_from = since
+                if busy_until.get(owner_user.id) and busy_until[owner_user.id] > wait_from:
+                    wait_from = busy_until[owner_user.id]
+                if lead.last_opened_on and lead.last_opened_by == owner_user and lead.last_opened_on > wait_from:
+                    wait_from = lead.last_opened_on
+                grace = (rule.pool_app_grace_min or 0) if owner_user.id in app_users else 0
+                if now < wait_from + timedelta(minutes=rule.pool_first_call_minutes + grace):
                     continue
                 if not (rule._pool_eligible() - lead.lead_owner):
                     break

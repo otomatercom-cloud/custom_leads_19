@@ -103,6 +103,20 @@
                                 <field name="pool_auto_rnr"/>
                                 <field name="pool_first_call_reassign"/>
                                 <field name="pool_first_call_minutes" invisible="not pool_first_call_reassign"/>
+                                <field name="pool_app_grace_min" invisible="not pool_first_call_reassign"/>
+                            </group>
+                        </group>
+                        <group string="Slot mode (night / morning leads)">
+                            <group>
+                                <field name="pool_drip"/>
+                                <field name="pool_drip_size" invisible="not pool_drip"/>
+                            </group>
+                            <group invisible="not pool_drip">
+                                <div class="text-muted">
+                                    Leads that come outside working hours wait in the pool. When the pool opens each
+                                    officer gets only this many leads. When the officer calls one, the next waiting
+                                    lead is given automatically.
+                                </div>
                             </group>
                         </group>
                         <group string="Status">

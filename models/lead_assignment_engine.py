@@ -302,6 +302,11 @@ class LeadAssignmentRule(models.Model):
         self.invalidate_recordset(['pool_last_employee_id'])
         return self.env['hr.employee'].browse(nxt)
 
+    def _pool_has_capacity(self):
+        """True while somebody can still receive a lead (slot mode overrides this)."""
+        self.ensure_one()
+        return bool(self._pool_eligible())
+
     def _pool_accepts(self, lead):
         """True when this pool rule takes the lead's source (no source selected = every source)."""
         self.ensure_one()
@@ -343,7 +348,7 @@ class LeadAssignmentRule(models.Model):
         done = 0
         Lead = self.env['leads.logic'].with_context(pool_force=True)
         for lead in self._pool_pending_leads(limit=300):
-            if not self._pool_eligible():
+            if not self._pool_has_capacity():
                 break
             try:
                 with self.env.cr.savepoint():

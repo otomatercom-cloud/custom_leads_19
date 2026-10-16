@@ -50,6 +50,7 @@ from . import urgent_lead
 from . import lead_response_time
 from . import response_dashboard
 from . import lead_pool_rules
+from . import lead_pool_drip
 from . import lead_reports
 from . import lead_rules_settings
 from . import lead_coaching
