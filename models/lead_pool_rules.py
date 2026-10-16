@@ -157,6 +157,13 @@ class LeadsLogicPoolRules(models.Model):
         if rule:
             new_q = vals.get('lead_quality')
             mode = rule.pool_reassign_on_quality
+            # company-phone (mobile app) calls reach Odoo a little after the call, so an officer using the
+            # app may change quality before the call is synced: do not treat that as "no call" (the
+            # time-based "not called within X minutes" rule still covers real no-call leads)
+            has_app = bool(self.env['otm.mobile.key'].sudo().search_count(
+                [('user_id', '=', self.env.uid), ('active', '=', True)]))
+            if mode == 'no_call' and has_app:
+                mode = False
             if mode in ('no_call', 'always') and new_q and new_q != 'new':
                 for rec in self:
                     if (not rec.is_abroad and rec.lead_quality in (False, 'new') and rec.lead_owner
