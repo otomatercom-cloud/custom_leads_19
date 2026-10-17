@@ -1,5 +1,4 @@
 from odoo import models, fields, api, _
-from .lead_quality_config import QUALITY_SELECTION, STAGE_SELECTION
 from odoo.exceptions import UserError
 
 
@@ -16,7 +15,7 @@ class KanbanResponseWizard(models.TransientModel):
 
     # ── Lead Quality change ───────────────────────────────────────────────────
     new_quality = fields.Selection(
-        selection=QUALITY_SELECTION, string='Lead Quality', required=True)
+        selection=lambda self: self.env['lead.quality.config'].get_selection(), string='Lead Quality', required=True)
 
     # ── Response ──────────────────────────────────────────────────────────────
     response_text = fields.Text(
@@ -86,7 +85,7 @@ class KanbanQualityWizard(models.TransientModel):
     current_quality = fields.Selection(related='lead_id.lead_quality',
                                         string='Current Quality', readonly=True)
     new_quality = fields.Selection(
-        selection=QUALITY_SELECTION, string='Change To', required=True)
+        selection=lambda self: self.env['lead.quality.config'].get_selection(), string='Change To', required=True)
     reason = fields.Char(string='Response / Reason', required=True,
                          help='Saved as a 💬 Response on the lead.')
 
