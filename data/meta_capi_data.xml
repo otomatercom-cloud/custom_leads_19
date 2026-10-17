@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- Default Meta CRM events. Edit in Configuration > Meta CRM Events. -->
+    <record id="capi_map_new" model="otm.meta.capi.map">
+        <field name="quality_id" ref="custom_leads_19.quality_new"/>
+        <field name="event_name">Lead</field>
+        <field name="sequence">10</field>
+    </record>
+    <record id="capi_map_hot" model="otm.meta.capi.map">
+        <field name="quality_id" ref="custom_leads_19.quality_hot"/>
+        <field name="event_name">Qualified</field>
+        <field name="sequence">20</field>
+    </record>
+    <record id="capi_map_warm" model="otm.meta.capi.map">
+        <field name="quality_id" ref="custom_leads_19.quality_warm"/>
+        <field name="event_name">Qualified</field>
+        <field name="sequence">30</field>
+    </record>
+    <record id="capi_map_waiting" model="otm.meta.capi.map">
+        <field name="quality_id" ref="custom_leads_19.quality_waiting_for_admission"/>
+        <field name="event_name">Qualified</field>
+        <field name="sequence">40</field>
+    </record>
+    <record id="capi_map_admission" model="otm.meta.capi.map">
+        <field name="quality_id" ref="custom_leads_19.quality_admission"/>
+        <field name="event_name">Admission</field>
+        <field name="sequence">50</field>
+    </record>
+    <record id="cron_meta_capi_send" model="ir.cron">
+        <field name="name">Leads: Send CRM events to Meta</field>
+        <field name="model_id" ref="model_otm_meta_capi_log"/>
+        <field name="state">code</field>
+        <field name="code">model.cron_send()</field>
+        <field name="interval_number">5</field>
+        <field name="interval_type">minutes</field>
+        <field name="active" eval="True"/>
+    </record>
+</odoo>

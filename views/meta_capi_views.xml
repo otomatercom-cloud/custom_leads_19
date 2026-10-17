@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_meta_capi_map_list" model="ir.ui.view">
+        <field name="name">otm.meta.capi.map.list</field>
+        <field name="model">otm.meta.capi.map</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="quality_id" options="{'no_create': True}"/>
+                <field name="event_name"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+    <record id="action_meta_capi_map" model="ir.actions.act_window">
+        <field name="name">Meta CRM Events</field>
+        <field name="res_model">otm.meta.capi.map</field>
+        <field name="view_mode">list</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Map a lead quality to a Meta CRM event</p>
+            <p>When a Meta lead gets this quality, Odoo sends the event to Meta (Settings &gt; Leads &gt; Meta CRM events).</p>
+        </field>
+    </record>
+
+    <record id="view_meta_capi_log_list" model="ir.ui.view">
+        <field name="name">otm.meta.capi.log.list</field>
+        <field name="model">otm.meta.capi.log</field>
+        <field name="arch" type="xml">
+            <list create="0" decoration-danger="state == 'failed'" decoration-success="state == 'sent'">
+                <field name="create_date"/>
+                <field name="lead_id"/>
+                <field name="leadgen_id"/>
+                <field name="event_name"/>
+                <field name="state"/>
+                <field name="tries"/>
+                <field name="response" optional="hide"/>
+                <button name="action_send_now" type="object" string="Send now" icon="fa-paper-plane"
+                        invisible="state == 'sent'"/>
+                <button name="action_requeue" type="object" string="Retry" icon="fa-repeat"
+                        invisible="state != 'failed'"/>
+            </list>
+        </field>
+    </record>
+    <record id="view_meta_capi_log_search" model="ir.ui.view">
+        <field name="name">otm.meta.capi.log.search</field>
+        <field name="model">otm.meta.capi.log</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="lead_id"/>
+                <field name="event_name"/>
+                <filter string="Pending" name="pending" domain="[('state', '=', 'pending')]"/>
+                <filter string="Failed" name="failed" domain="[('state', '=', 'failed')]"/>
+                <filter string="Sent" name="sent" domain="[('state', '=', 'sent')]"/>
+            </search>
+        </field>
+    </record>
+    <record id="action_meta_capi_log" model="ir.actions.act_window">
+        <field name="name">Meta CRM Event Log</field>
+        <field name="res_model">otm.meta.capi.log</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <menuitem id="menu_meta_capi_map" name="Meta CRM Events" parent="custom_leads_19.menu_leads_config"
+              action="action_meta_capi_map" sequence="60"
+              groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager,custom_leads_19.group_lead_digital_head"/>
+    <menuitem id="menu_meta_capi_log" name="Meta CRM Event Log" parent="custom_leads_19.menu_leads_config"
+              action="action_meta_capi_log" sequence="70"
+              groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager,custom_leads_19.group_lead_digital_head"/>
+</odoo>

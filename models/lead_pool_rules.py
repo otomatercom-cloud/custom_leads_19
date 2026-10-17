@@ -274,7 +274,9 @@ class LeadAssignmentRulePoolRules(models.Model):
             base_dom = [
                 ('is_hiring', '=', False), ('is_crash_course', '=', False),
                 ('lead_owner', '!=', False), ('state', '!=', 'lost'),
-                ('lead_quality', 'in', [False, 'new']),
+                # any quality: a Meta lead can arrive already as "May Be Later" etc. Whether the officer touched
+                # it is checked below (quality history + calls), not by the quality value itself.
+                ('lead_quality', 'not in', ['admission', 'logic_students']),
                 ('auto_reassign_count', '<', rule.pool_max_reassigns),
             ] + ([('leads_source', 'in', rule.pool_source_ids.ids)] if rule.pool_source_ids else [])
             leads = Lead.search(base_dom + [
@@ -290,6 +292,9 @@ class LeadAssignmentRulePoolRules(models.Model):
             hist_ids = list({h.lead_id.id for h in hist if h.lead_id} - set(leads.ids))
             if hist_ids:
                 leads |= Lead.search(base_dom + [('id', 'in', hist_ids)], order='id asc', limit=100)
+            quality_hist = {}
+            for q in self.env['lead.quality.history'].sudo().search([('lead_id', 'in', leads.ids)]):
+                quality_hist.setdefault(q.lead_id.id, []).append(q)
             last_hist = {}
             for h in self.env['lead.assignment.history'].sudo().search(
                     [('lead_id', 'in', leads.ids)], order='id asc'):
@@ -316,6 +321,9 @@ class LeadAssignmentRulePoolRules(models.Model):
                     since = h.assigned_date
                 if since < now - timedelta(days=1):
                     continue
+                if lead.lead_quality not in (False, 'new') and any(
+                        q.change_date and q.change_date >= since for q in quality_hist.get(lead.id, [])):
+                    continue        # the officer worked the lead (changed its quality) - leave it
                 if lead.call_log_ids.filtered(lambda c: (c.call_time or c.create_date) >= since):
                     continue
                 owner_user = lead.lead_owner.user_id

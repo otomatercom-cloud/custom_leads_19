@@ -71,3 +71,4 @@ from . import meta_ads
 from . import hiring_process
 from . import mobile_key
 from . import lead_quality_config
+from . import meta_capi

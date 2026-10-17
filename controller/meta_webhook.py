@@ -139,6 +139,7 @@ class MetaLeadWebhookController(http.Controller):
             'email_address': email,
             'phone_number': phone,
             'leads_source': source.id,
+            'meta_leadgen_id': str(leadgen_id),
         })
         _logger.info("Meta webhook: created lead from leadgen_id %s, source '%s'.",
                     leadgen_id, source_name)

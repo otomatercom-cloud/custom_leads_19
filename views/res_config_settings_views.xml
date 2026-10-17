@@ -262,6 +262,18 @@
                             <field name="meta_ads_enabled"/>
                         </setting>
                     </block>
+                    <block title="Meta CRM events (Conversion Leads)">
+                        <setting string="Send lead quality back to Meta"
+                                 help="When a Meta lead becomes Qualified or gets an Admission, Odoo tells Meta, so the ad finds more people like them. Needs the dataset ID and a Conversions API access token.">
+                            <field name="meta_capi_enabled"/>
+                            <div class="content-group" invisible="not meta_capi_enabled">
+                                <div class="row mt8"><label class="col-lg-4" for="meta_capi_dataset_id"/><field name="meta_capi_dataset_id"/></div>
+                                <div class="row"><label class="col-lg-4" for="meta_capi_token"/><field name="meta_capi_token" password="True"/></div>
+                                <div class="row"><label class="col-lg-4" for="meta_capi_crm_name"/><field name="meta_capi_crm_name"/></div>
+                                <div class="row"><label class="col-lg-4" for="meta_capi_version"/><field name="meta_capi_version"/></div>
+                            </div>
+                        </setting>
+                    </block>
                     <block title="Call button">
                         <setting string="Call button uses" help="The 📞 Call button on a lead dials through this service and the call is recorded and logged by it.">
                             <field name="call_provider"/>
