@@ -94,6 +94,26 @@ def _cell(lead, fname):
     return value
 
 
+_SKIP_PREFIX = ('message_', 'activity_', 'my_activity', 'website_message', 'rating_')
+_SKIP_NAMES = {'id', 'display_name', 'write_uid', 'write_date', '__last_update', 'has_message', 'access_url',
+               'access_token', 'access_warning'}
+
+
+def _all_columns(Lead):
+    """The curated columns first (in their order), then EVERY other stored field of the lead model,
+    so the export carries all the data. One2many fields (call logs, history ...) and binary / html fields are left out."""
+    cols = [(f, l) for f, l in EXPORT_FIELDS if f in Lead._fields]
+    seen = {f for f, _l in cols}
+    extra = []
+    for fname, field in Lead._fields.items():
+        if (fname in seen or fname in _SKIP_NAMES or fname.startswith(_SKIP_PREFIX)
+                or not field.store or field.type in ('one2many', 'binary', 'html', 'properties', 'json')):
+            continue
+        extra.append((fname, field.string or fname))
+    extra.sort(key=lambda x: x[1].lower())
+    return cols + extra
+
+
 def _safe_filename(name):
     """Strip characters that are unsafe in a downloaded filename, keep it
     readable."""
@@ -127,6 +147,10 @@ class LeadSourceExportController(http.Controller):
                 headers=[('Content-Type', 'text/plain')])
 
         Lead = request.env['leads.logic']
+        if not Lead._user_can_export():
+            return request.make_response(
+                "Exporting leads is allowed only for Admin, Manager and Team Lead.",
+                headers=[('Content-Type', 'text/plain')], status=403)
         leads = Lead.with_context(tz=request.env.user.tz or 'Asia/Kolkata').browse(id_list).exists()
         if not leads:
             return request.make_response(
@@ -152,7 +176,7 @@ class LeadSourceExportController(http.Controller):
             'border': 1, 'align': 'center', 'valign': 'vcenter'})
         fmt_cell = workbook.add_format({'border': 1})
 
-        cols = [(f, l) for f, l in EXPORT_FIELDS if f in Lead._fields]
+        cols = _all_columns(Lead)
         for col, (_f, label) in enumerate(cols):
             sheet.write(0, col, label, fmt_head)
             sheet.set_column(col, col, max(14, min(40, len(label) + 6)))

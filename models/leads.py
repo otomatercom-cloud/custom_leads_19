@@ -4,7 +4,7 @@ import requests
 from urllib.parse import quote
 from odoo.http import request
 from odoo import models, fields, api, _
-from odoo.exceptions import ValidationError, UserError
+from odoo.exceptions import ValidationError, UserError, AccessError
 from odoo.tools import html_escape
 from markupsafe import Markup
 
@@ -1521,8 +1521,21 @@ class LeadsForm(models.Model):
             """)
         return res
 
+    # ── Export permission: Super Admin, Manager and Team Lead only ──────────
+    @api.model
+    def _user_can_export(self):
+        u = self.env.user
+        return bool(u._is_superuser() or u.has_group('custom_leads_19.group_super_admin')
+                    or u.has_group('custom_leads_19.group_lead_manager')
+                    or u.has_group('custom_leads_19.group_lead_team_lead'))
+
+    def _check_can_export(self):
+        if not self._user_can_export():
+            raise AccessError(_('Exporting leads is allowed only for Admin, Manager and Team Lead.'))
+
     # ── Export Audit ───────────────────────────────────────────────────────
     def export_data(self, fields_to_export):
+        self._check_can_export()
         ip_addr = 'Unknown'
         if request:
             ip_addr = request.httprequest.remote_addr
@@ -1542,6 +1555,7 @@ class LeadsForm(models.Model):
         """Downloads the selected leads as a CSV named after their Source
         (falls back to a dated generic name if multiple sources are
         selected together). See controller/lead_source_export.py."""
+        self._check_can_export()
         self.env['lead.export.history'].sudo().create({
             'user_id': self.env.user.id,
             'export_date': fields.Datetime.now(),
