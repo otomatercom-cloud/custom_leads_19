@@ -26,7 +26,7 @@
         <field name="name">otm.meta.capi.log.list</field>
         <field name="model">otm.meta.capi.log</field>
         <field name="arch" type="xml">
-            <list create="0" decoration-danger="state == 'failed'" decoration-success="state == 'sent'">
+            <list create="0" decoration-danger="state == 'failed'" decoration-success="state == 'sent'" decoration-info="state == 'test'">
                 <field name="create_date"/>
                 <field name="lead_id"/>
                 <field name="leadgen_id"/>
@@ -50,6 +50,7 @@
                 <field name="event_name"/>
                 <filter string="Pending" name="pending" domain="[('state', '=', 'pending')]"/>
                 <filter string="Failed" name="failed" domain="[('state', '=', 'failed')]"/>
+                <filter string="Test sent" name="test" domain="[('state', '=', 'test')]"/>
                 <filter string="Sent" name="sent" domain="[('state', '=', 'sent')]"/>
             </search>
         </field>

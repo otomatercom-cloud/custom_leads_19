@@ -269,6 +269,7 @@
                             <div class="content-group" invisible="not meta_capi_enabled">
                                 <div class="row mt8"><label class="col-lg-4" for="meta_capi_dataset_id"/><field name="meta_capi_dataset_id"/></div>
                                 <div class="row"><label class="col-lg-4" for="meta_capi_token"/><field name="meta_capi_token" password="True"/></div>
+                                <div class="row"><label class="col-lg-4" for="meta_capi_test_code"/><field name="meta_capi_test_code"/></div>
                                 <div class="row"><label class="col-lg-4" for="meta_capi_crm_name"/><field name="meta_capi_crm_name"/></div>
                                 <div class="row"><label class="col-lg-4" for="meta_capi_version"/><field name="meta_capi_version"/></div>
                             </div>

@@ -43,7 +43,7 @@ class OtmMetaCapiLog(models.Model):
     leadgen_id = fields.Char(index=True)
     event_name = fields.Char(required=True)
     event_time = fields.Datetime(default=fields.Datetime.now)
-    state = fields.Selection([('pending', 'Pending'), ('sent', 'Sent'), ('failed', 'Failed')],
+    state = fields.Selection([('pending', 'Pending'), ('test', 'Test sent'), ('sent', 'Sent'), ('failed', 'Failed')],
                              default='pending', index=True)
     tries = fields.Integer()
     response = fields.Text()
@@ -61,7 +61,9 @@ class OtmMetaCapiLog(models.Model):
         dataset, token = self._cfg('dataset_id').strip(), self._cfg('token').strip()
         if not dataset or not token:
             return
-        recs = self.sudo().search([('state', '=', 'pending'), ('tries', '<', MAX_TRIES)], order='id', limit=200)
+        # events sent while a test code was set are sent again for real once the test code is cleared
+        states = ['pending'] if self._cfg('test_code').strip() else ['pending', 'test']
+        recs = self.sudo().search([('state', 'in', states), ('tries', '<', MAX_TRIES)], order='id', limit=200)
         if recs:
             recs._send(dataset, token)
 
@@ -69,7 +71,7 @@ class OtmMetaCapiLog(models.Model):
         dataset, token = self._cfg('dataset_id').strip(), self._cfg('token').strip()
         if not dataset or not token:
             raise UserError(_('Set the Dataset ID and Access Token in Settings > Leads > Meta CRM events first.'))
-        self.filtered(lambda r: r.state != 'sent')._send(dataset, token)
+        self.filtered(lambda r: r.state not in ('sent',))._send(dataset, token)
 
     def action_requeue(self):
         self.sudo().write({'state': 'pending', 'tries': 0})
@@ -77,6 +79,7 @@ class OtmMetaCapiLog(models.Model):
     def _send(self, dataset, token):
         ver = self._cfg('version', 'v21.0') or 'v21.0'
         crm = self._cfg('crm_name', 'Odoo') or 'Odoo'
+        test_code = self._cfg('test_code').strip()
         url = 'https://graph.facebook.com/%s/%s/events' % (ver, dataset)
         for rec in self.sudo():
             lid = (rec.leadgen_id or '').strip()
@@ -93,10 +96,12 @@ class OtmMetaCapiLog(models.Model):
                 'user_data': {'lead_id': int(lid) if lid.isdigit() else lid},
                 'custom_data': {'event_source': 'crm', 'lead_event_source': crm},
             }]}
+            if test_code:
+                payload['test_event_code'] = test_code      # shows in Events Manager > Test events only
             try:
                 r = requests.post(url, params={'access_token': token}, json=payload, timeout=20)
                 ok = r.status_code == 200 and not (r.json() or {}).get('error')
-                rec.write({'tries': rec.tries + 1, 'state': 'sent' if ok else 'pending',
+                rec.write({'tries': rec.tries + 1, 'state': ('test' if test_code else 'sent') if ok else 'pending',
                            'response': (r.text or '')[:2000]})
                 if not ok:
                     _logger.warning('Meta CAPI %s for lead %s failed: %s', rec.event_name, rec.lead_id.id, r.text[:300])
@@ -151,6 +156,9 @@ class ResConfigSettingsMetaCapi(models.TransientModel):
                                        help='Events Manager > Data sources > your dataset (Pixel) > ID.')
     meta_capi_token = fields.Char(string='Conversions API access token', config_parameter=P + 'token',
                                   help='Events Manager > dataset > Settings > Conversions API > Generate access token.')
+    meta_capi_test_code = fields.Char(string='Test event code', config_parameter=P + 'test_code',
+                                      help='Only while testing: paste the code from Events Manager > Test events (e.g. TEST12345). '
+                                           'Events then show in Test events and do not count. CLEAR it when the test is done.')
     meta_capi_crm_name = fields.Char(string='CRM name', config_parameter=P + 'crm_name', default='Odoo',
                                      help='Shown in Meta as the source of the events.')
     meta_capi_version = fields.Char(string='Graph API version', config_parameter=P + 'version', default='v21.0')
