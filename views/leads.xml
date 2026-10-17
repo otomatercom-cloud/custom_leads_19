@@ -204,6 +204,7 @@
                                 <field name="lead_stage_category" readonly="1"/>
                                 <field name="is_abroad"/>
                                 <field name="is_crash_course" groups="custom_leads_19.group_crash_course_on" readonly="1"/>
+                                <field name="meta_leadgen_id" groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager,custom_leads_19.group_lead_digital_head" string="Meta Lead ID"/>
                                 <field name="in_topup_pool"/>
                                 <field name="admission_status"/>
                                 <field name="admission_date" invisible="not admission_status"/>
