@@ -34,6 +34,24 @@ DEFAULT_MAP = {
 }
 
 
+class DynSelection:
+    """Selection source that is a callable (options read from the DB) AND iterable (the built-in defaults), so
+    code in other modules that still does dict(field.selection) keeps working instead of crashing."""
+
+    def __init__(self, model, defaults):
+        self.model, self.defaults = model, defaults
+
+    def __call__(self, records):
+        return records.env[self.model].get_selection()
+
+    def __iter__(self):
+        return iter(list(self.defaults))
+
+
+QUALITY_SELECTION = DynSelection('lead.quality.config', DEFAULT_QUALITY)
+STAGE_SELECTION = DynSelection('lead.stage.category', DEFAULT_STAGE)
+
+
 def _slug(text):
     s = re.sub(r'[^a-z0-9]+', '_', (text or '').lower()).strip('_')
     return s or 'x'

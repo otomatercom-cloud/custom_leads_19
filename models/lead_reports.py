@@ -169,7 +169,11 @@ class OtmLeadReports(models.AbstractModel):
         return rows
 
     def _sel(self, field):
-        return dict(self.env['leads.logic']._fields[field].selection)
+        if field == 'lead_quality':
+            return dict(self.env['lead.quality.config'].get_selection())
+        if field == 'lead_stage_category':
+            return dict(self.env['lead.stage.category'].get_selection())
+        return dict(self.env['leads.logic']._fields[field]._description_selection(self.env))
 
     @staticmethod
     def _pct(a, b):

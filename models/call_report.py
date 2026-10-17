@@ -466,7 +466,7 @@ class LeadCallLogReport(models.Model):
                     'date': h['change_date'],
                 }
 
-        quality_labels = dict(Lead._fields['lead_quality'].selection)
+        quality_labels = dict(self.env['lead.quality.config'].get_selection())
 
         rows = []
         for lead in leads:

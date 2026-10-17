@@ -1,4 +1,5 @@
 from odoo import models, fields, api, _
+from .lead_quality_config import QUALITY_SELECTION, STAGE_SELECTION
 from odoo.exceptions import UserError
 
 
@@ -15,7 +16,7 @@ class KanbanResponseWizard(models.TransientModel):
 
     # ── Lead Quality change ───────────────────────────────────────────────────
     new_quality = fields.Selection(
-        selection=lambda self: self.env['lead.quality.config'].get_selection(), string='Lead Quality', required=True)
+        selection=QUALITY_SELECTION, string='Lead Quality', required=True)
 
     # ── Response ──────────────────────────────────────────────────────────────
     response_text = fields.Text(
@@ -60,7 +61,7 @@ class KanbanResponseWizard(models.TransientModel):
         lead.write({'call_responses': [(4, response_obj.id)]})
 
         # Post to chatter
-        quality_label = dict(self._fields['new_quality'].selection).get(
+        quality_label = dict(self.env['lead.quality.config'].get_selection()).get(
             self.new_quality, self.new_quality)
         lead.message_post(
             body=(
@@ -85,15 +86,15 @@ class KanbanQualityWizard(models.TransientModel):
     current_quality = fields.Selection(related='lead_id.lead_quality',
                                         string='Current Quality', readonly=True)
     new_quality = fields.Selection(
-        selection=lambda self: self.env['lead.quality.config'].get_selection(), string='Change To', required=True)
+        selection=QUALITY_SELECTION, string='Change To', required=True)
     reason = fields.Char(string='Response / Reason', required=True,
                          help='Saved as a 💬 Response on the lead.')
 
     def action_update_quality(self):
         self.ensure_one()
-        old = dict(self._fields['new_quality'].selection).get(
+        old = dict(self.env['lead.quality.config'].get_selection()).get(
             self.lead_id.lead_quality, self.lead_id.lead_quality)
-        new = dict(self._fields['new_quality'].selection).get(
+        new = dict(self.env['lead.quality.config'].get_selection()).get(
             self.new_quality, self.new_quality)
         self.lead_id.with_context(skip_response_check=True).write({'lead_quality': self.new_quality})
         if self.new_quality != 'not_responding':

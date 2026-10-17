@@ -33,7 +33,7 @@ class LeadsLogicBucketDashboard(models.Model):
         y_s, y_e = self._rd_utc(yest), self._rd_utc(yest, end=True)
         emps = self._bd_employees().filtered(lambda e: e.active)
         ids = emps.ids
-        labels = dict(self._fields['lead_quality'].selection)
+        labels = dict(self.env['lead.quality.config'].get_selection())
         res = {'date': str(today), 'yesterday': str(yest), 'labels': labels, 'lost_qualities': list(LOST_QUALITIES),
                'ranges': {'t_s': fields.Datetime.to_string(t_s), 't_e': fields.Datetime.to_string(t_e),
                           'y_s': fields.Datetime.to_string(y_s), 'y_e': fields.Datetime.to_string(y_e)},

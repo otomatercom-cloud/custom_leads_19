@@ -27,7 +27,7 @@ class LeadScoreQuality(models.Model):
     _description = 'Call priority points per lead quality'
     _order = 'points desc, id'
 
-    quality = fields.Selection(selection=lambda self: self.env['leads.logic']._fields['lead_quality'].selection,
+    quality = fields.Selection(selection=lambda self: self.env['lead.quality.config'].get_selection(),
                                string='Lead quality', required=True)
     points = fields.Integer(string='Priority points', required=True, default=0,
                             help='0-100. The bigger the number, the sooner officers are told to call this lead.')

@@ -174,7 +174,7 @@ class LeadsLogicPoolRules(models.Model):
         for rec in reassign:
             rule._pool_reassign_lead(
                 rec, _("quality changed to %s on a new lead") % (
-                    dict(rec._fields['lead_quality'].selection).get(rec.lead_quality, rec.lead_quality)))
+                    dict(rec.env['lead.quality.config'].get_selection()).get(rec.lead_quality, rec.lead_quality)))
         return res
 
 

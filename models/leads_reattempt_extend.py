@@ -167,7 +167,7 @@ class LeadsLogicReattemptExtension(models.Model):
 
             owner = existing.lead_owner
             assigned_on = existing.assigned_date or existing.date_of_adding
-            quality = dict(existing._fields['lead_quality'].selection).get(existing.lead_quality, '') \
+            quality = dict(self.env['lead.quality.config'].get_selection()).get(existing.lead_quality, '') \
                 if existing.lead_quality else ''
             raise ValidationError(_(
                 "Duplicate lead - not allowed.\n\n"

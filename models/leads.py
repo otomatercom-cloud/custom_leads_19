@@ -5,6 +5,7 @@ from urllib.parse import quote
 from odoo.http import request
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError, UserError, AccessError
+from .lead_quality_config import QUALITY_SELECTION, STAGE_SELECTION
 from odoo.tools import html_escape
 from markupsafe import Markup
 
@@ -35,7 +36,7 @@ class LeadQualityHistory(models.Model):
 
     lead_id = fields.Many2one('leads.logic', index=True, string='Lead', ondelete='cascade')
     lead_quality = fields.Selection(
-        selection=lambda self: self.env['lead.quality.config'].get_selection(),
+        selection=QUALITY_SELECTION,
         string='Lead Quality'
     )
     user_id = fields.Many2one('res.users', string='Changed By', default=lambda self: self.env.user)
@@ -208,12 +209,12 @@ class LeadsForm(models.Model):
 
     # ── Lead Quality & Stage ───────────────────────────────────────────────
     lead_quality = fields.Selection(
-        selection=lambda self: self.env['lead.quality.config'].get_selection(),
+        selection=QUALITY_SELECTION,
         string='Lead Quality', default='new', required=True, tracking=True
     )
 
     lead_stage_category = fields.Selection(
-        selection=lambda self: self.env['lead.stage.category'].get_selection(), string='Stage Category', compute='_compute_lead_stage', store=True)
+        selection=STAGE_SELECTION, string='Stage Category', compute='_compute_lead_stage', store=True)
 
     @api.depends('lead_quality')
     def _compute_lead_stage(self):
