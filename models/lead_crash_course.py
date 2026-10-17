@@ -53,28 +53,48 @@ class LeadsLogicCrashCourse(models.Model):
                 for e in emps}
         return min(emps, key=lambda e: (load[e.id], e.id))
 
+    def _crash_assign_head(self):
+        """Give each crash-course lead to a Crash Head. Returns the number of leads that got a head."""
+        done = 0
+        for rec in self.sudo():
+            head = rec._crash_pick_head()
+            if not head:
+                continue
+            if rec.lead_owner != head:
+                rec.message_post(body=_('Moved to Crash Course. Assigned to Crash Head %s (was %s).') % (
+                    head.name, rec.lead_owner.name or '-'))
+                rec.with_context(skip_pool_rules=True, crash_assigning=True).write({'lead_owner': head.id})
+            done += 1
+        return done
+
+    def write(self, vals):
+        res = super().write(vals)
+        # any way of ticking Crash Course (button, checkbox, list, import) hands the lead to a Crash Head
+        if vals.get('is_crash_course') and not self.env.context.get('crash_assigning') and self._crash_enabled():
+            self._crash_assign_head()
+        return res
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        recs = super().create(vals_list)
+        crash = recs.filtered('is_crash_course')
+        if crash and self._crash_enabled():
+            crash._crash_assign_head()
+        return recs
+
     def action_move_crash_course(self):
         if not self._crash_enabled():
             raise UserError(_('The Crash Course option is switched off in Settings.'))
-        moved = 0
-        head = self.env['hr.employee']
-        for rec in self.sudo():
-            head = rec._crash_pick_head()
-            vals = {'is_crash_course': True}
-            if head and rec.lead_owner != head:
-                vals['lead_owner'] = head.id
-                rec.message_post(body=_('Moved to Crash Course. Assigned to Crash Head %s (was %s).') % (
-                    head.name, rec.lead_owner.name or '-'))
-            rec.with_context(skip_pool_rules=True).write(vals)
-            moved += 1
-        msg = _('%s lead(s) moved to the Crash Course menu.') % moved
-        if head:
+        self.sudo().write({'is_crash_course': True})
+        heads = self.sudo()._crash_assign_head()
+        msg = _('%s lead(s) moved to the Crash Course menu.') % len(self)
+        if heads:
             msg += ' ' + _('Assigned to Crash Head.')
         else:
-            msg += ' ' + _('No Crash Head user found - owner not changed.')
+            msg += ' ' + _('No Crash Head found (add a user with the Crash Head group who has an Employee record) - owner not changed.')
         res = self._crash_notice(msg)
         # the officer may no longer have access to this lead: go back to the Leads list
-        if head and not self.env.user.has_group('custom_leads_19.group_crash_head') \
+        if heads and not self.env.user.has_group('custom_leads_19.group_crash_head') \
                 and not self._user_can_reassign():
             res['params']['next'] = self.env['ir.actions.act_window']._for_xml_id(
                 'custom_leads_19.action_leads_logic')

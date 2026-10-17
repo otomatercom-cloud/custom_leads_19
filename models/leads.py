@@ -35,27 +35,7 @@ class LeadQualityHistory(models.Model):
 
     lead_id = fields.Many2one('leads.logic', index=True, string='Lead', ondelete='cascade')
     lead_quality = fields.Selection(
-        [
-            ('new', '🆕  New'),
-            ('first_attempt', '🎯 First Attempt'),
-            ('waiting_for_admission', '⏳  Waiting for Admission'),
-            ('admission', '🎓  Admission'),
-            ('hot', '🔥  Hot'),
-            ('warm', '🌞  Warm'),
-            ('cold', '❄️  Cold'),
-            ('bad_lead', '⚠️  Language Barrier'),
-            ('crash_lead', '💥  Crash Lead'),
-            ('not_responding', '🔕  Ringing Not Responding'),
-            ('call_later', '📞  Call Later'),
-            ('may_be_later', '🔔 May Be Later'),
-            ('follow_up', '⏰  Follow Up'),
-            ('not_reachable', '🚫  Not Reachable'),
-            ('logic_students', '🏫 Logic Students'),
-            ('joined_other_institute', '🏫 Joined Other Institute'),
-            ('wrong_number', '📵 Wrong number'),
-            ('not_enquiry', '🛑 Not Enquiry'),
-            ('not_interested', 'Not Interested'),
-        ],
+        selection=lambda self: self.env['lead.quality.config'].get_selection(),
         string='Lead Quality'
     )
     user_id = fields.Many2one('res.users', string='Changed By', default=lambda self: self.env.user)
@@ -228,60 +208,18 @@ class LeadsForm(models.Model):
 
     # ── Lead Quality & Stage ───────────────────────────────────────────────
     lead_quality = fields.Selection(
-        [
-            ('new', '🆕  New'),
-            ('first_attempt', '🎯 First Attempt'),
-            ('waiting_for_admission', '⏳  Waiting for Admission'),
-            ('admission', '🎓  Admission'),
-            ('hot', '🔥  Hot'),
-            ('warm', '🌞  Warm'),
-            ('cold', '❄️  Cold'),
-            ('bad_lead', '⚠️  Language Barrier'),
-            ('crash_lead', '💥  Crash Lead'),
-            ('not_responding', '🔕  Ringing Not Responding'),
-            ('call_later', '📞  Call Later'),
-            ('may_be_later', '🔔 May Be Later'),
-            ('follow_up', '⏰  Follow Up'),
-            ('not_reachable', '🚫  Not Reachable'),
-            ('logic_students', '🏫 Logic Students'),
-            ('joined_other_institute', '🏫 Joined Other Institute'),
-            ('wrong_number', '📵 Wrong number'),
-            ('not_enquiry', '🛑 Not Enquiry'),
-            ('not_interested', 'Not Interested'),
-        ],
+        selection=lambda self: self.env['lead.quality.config'].get_selection(),
         string='Lead Quality', default='new', required=True, tracking=True
     )
 
-    lead_stage_category = fields.Selection([
-        ('funnel', 'FUNNEL'),
-        ('prospects', 'PROSPECTS'),
-        ('rnr_dnp', 'RNR / DNP'),
-        ('admission_done', 'ADMISSION DONE'),
-        ('re_try', 'RE-TRY'),
-        ('alumni', 'ALUMNI'),
-        ('junk', 'JUNK'),
-    ], string='Stage Category', compute='_compute_lead_stage', store=True)
+    lead_stage_category = fields.Selection(
+        selection=lambda self: self.env['lead.stage.category'].get_selection(), string='Stage Category', compute='_compute_lead_stage', store=True)
 
     @api.depends('lead_quality')
     def _compute_lead_stage(self):
+        mapping = self.env['lead.quality.config'].stage_map()
         for record in self:
-            quality = record.lead_quality
-            if quality in ['hot', 'warm', 'cold', 'call_later', 'may_be_later', 'waiting_for_admission']:
-                record.lead_stage_category = 'prospects'
-            elif quality in ['new', 'first_attempt', 'follow_up']:
-                record.lead_stage_category = 'funnel'
-            elif quality in ['not_interested', 'bad_lead', 'crash_lead', 'joined_other_institute']:
-                record.lead_stage_category = 're_try'
-            elif quality in ['not_responding', 'not_reachable']:
-                record.lead_stage_category = 'rnr_dnp'
-            elif quality in ['admission', 'converted']:
-                record.lead_stage_category = 'admission_done'
-            elif quality in ['logic_students']:
-                record.lead_stage_category = 'alumni'
-            elif quality in ['wrong_number', 'not_enquiry']:
-                record.lead_stage_category = 'junk'
-            else:
-                record.lead_stage_category = False
+            record.lead_stage_category = mapping.get(record.lead_quality) or False
 
     hide_marketing_stages = fields.Boolean(string="Hide Toggle", default=False)
     marketing_button_label = fields.Char(compute="_compute_marketing_button_label")

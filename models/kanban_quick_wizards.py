@@ -14,27 +14,8 @@ class KanbanResponseWizard(models.TransientModel):
                                         string='Current Quality', readonly=True)
 
     # ── Lead Quality change ───────────────────────────────────────────────────
-    new_quality = fields.Selection([
-        ('new', '🆕  New'),
-        ('first_attempt', '🎯 First Attempt'),
-        ('waiting_for_admission', '⏳  Waiting for Admission'),
-        ('admission', '🎓  Admission'),
-        ('hot', '🔥  Hot'),
-        ('warm', '🌞  Warm'),
-        ('cold', '❄️  Cold'),
-        ('bad_lead', '⚠️  Language Barrier'),
-        ('crash_lead', '💥  Crash Lead'),
-        ('not_responding', '🔕  Ringing Not Responding'),
-        ('call_later', '📞  Call Later'),
-        ('may_be_later', '🔔 May Be Later'),
-        ('follow_up', '⏰  Follow Up'),
-        ('not_reachable', '🚫  Not Reachable'),
-        ('logic_students', '🏫 Logic Students'),
-        ('joined_other_institute', '🏫 Joined Other Institute'),
-        ('wrong_number', '📵 Wrong number'),
-        ('not_enquiry', '🛑 Not Enquiry'),
-        ('not_interested', 'Not Interested'),
-    ], string='Lead Quality', required=True)
+    new_quality = fields.Selection(
+        selection=lambda self: self.env['lead.quality.config'].get_selection(), string='Lead Quality', required=True)
 
     # ── Response ──────────────────────────────────────────────────────────────
     response_text = fields.Text(
@@ -103,27 +84,8 @@ class KanbanQualityWizard(models.TransientModel):
     phone_number = fields.Char(related='lead_id.phone_number', readonly=True)
     current_quality = fields.Selection(related='lead_id.lead_quality',
                                         string='Current Quality', readonly=True)
-    new_quality = fields.Selection([
-        ('new', '🆕  New'),
-        ('first_attempt', '🎯 First Attempt'),
-        ('waiting_for_admission', '⏳  Waiting for Admission'),
-        ('admission', '🎓  Admission'),
-        ('hot', '🔥  Hot'),
-        ('warm', '🌞  Warm'),
-        ('cold', '❄️  Cold'),
-        ('bad_lead', '⚠️  Language Barrier'),
-        ('crash_lead', '💥  Crash Lead'),
-        ('not_responding', '🔕  Ringing Not Responding'),
-        ('call_later', '📞  Call Later'),
-        ('may_be_later', '🔔 May Be Later'),
-        ('follow_up', '⏰  Follow Up'),
-        ('not_reachable', '🚫  Not Reachable'),
-        ('logic_students', '🏫 Logic Students'),
-        ('joined_other_institute', '🏫 Joined Other Institute'),
-        ('wrong_number', '📵 Wrong number'),
-        ('not_enquiry', '🛑 Not Enquiry'),
-        ('not_interested', 'Not Interested'),
-    ], string='Change To', required=True)
+    new_quality = fields.Selection(
+        selection=lambda self: self.env['lead.quality.config'].get_selection(), string='Change To', required=True)
     reason = fields.Char(string='Response / Reason', required=True,
                          help='Saved as a 💬 Response on the lead.')
 

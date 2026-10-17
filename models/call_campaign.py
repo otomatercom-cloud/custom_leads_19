@@ -142,7 +142,7 @@ class CallCampaign(models.Model):
     @api.model
     def get_campaign_leads(self, campaign_id):
         campaign = self.browse(campaign_id)
-        quality_map = dict(QUALITY_SELECTION)
+        quality_map = dict(self.env['lead.quality.config'].get_selection())
         leads = []
         for lead in campaign.lead_ids:
             leads.append({
@@ -164,7 +164,7 @@ class CallCampaign(models.Model):
             'called': called,
             'pending': len(leads) - called,
             'leads': leads,
-            'quality_options': QUALITY_SELECTION,
+            'quality_options': self.env['lead.quality.config'].get_selection(),
         }
 
     @api.model
@@ -214,12 +214,12 @@ class CallCampaign(models.Model):
                            else 'answered',
             'caller_number': lead.phone_number or '',
             'remarks': _('Campaign call — %s%s') % (
-                dict(QUALITY_SELECTION).get(quality, quality or ''),
+                dict(self.env['lead.quality.config'].get_selection()).get(quality, quality or ''),
                 (': ' + response) if response else ''),
         })
 
         # ── Chatter note ─────────────────────────────────────────────────
-        quality_label = dict(QUALITY_SELECTION).get(quality, quality or '')
+        quality_label = dict(self.env['lead.quality.config'].get_selection()).get(quality, quality or '')
         msg = _('📞 <b>Campaign Call</b> — Quality: %s') % quality_label
         if response:
             msg += '<br/>' + response
@@ -767,7 +767,7 @@ class CallCampaignQuality(models.Model):
 
     @api.model
     def _ensure_defaults(self):
-        for val, label in QUALITY_SELECTION:
+        for val, label in self.env['lead.quality.config'].get_selection():
             if not self.search([('value', '=', val)], limit=1):
                 self.create({'name': label, 'value': val})
 

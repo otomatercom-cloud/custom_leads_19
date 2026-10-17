@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Lead Qualities -->
+    <record id="view_lead_quality_config_list" model="ir.ui.view">
+        <field name="name">lead.quality.config.list</field>
+        <field name="model">lead.quality.config</field>
+        <field name="arch" type="xml">
+            <list editable="bottom" default_order="sequence, id">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="stage_id" options="{'no_create': True}"/>
+                <field name="code" readonly="1"/>
+                <field name="lead_count"/>
+                <field name="is_system" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_lead_quality_config_search" model="ir.ui.view">
+        <field name="name">lead.quality.config.search</field>
+        <field name="model">lead.quality.config</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="stage_id"/>
+                <group>
+                    <filter string="Stage Category" name="group_stage" context="{'group_by': 'stage_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_lead_quality_config" model="ir.actions.act_window">
+        <field name="name">Lead Qualities</field>
+        <field name="res_model">lead.quality.config</field>
+        <field name="view_mode">list</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Add a lead quality</p>
+            <p>The options officers pick in the Lead Quality field. Choose the stage category each one belongs to.</p>
+        </field>
+    </record>
+
+    <!-- Stage Categories -->
+    <record id="view_lead_stage_category_list" model="ir.ui.view">
+        <field name="name">lead.stage.category.list</field>
+        <field name="model">lead.stage.category</field>
+        <field name="arch" type="xml">
+            <list editable="bottom" default_order="sequence, id">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="code" readonly="1"/>
+                <field name="quality_count"/>
+                <field name="is_system" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_lead_stage_category" model="ir.actions.act_window">
+        <field name="name">Stage Categories</field>
+        <field name="res_model">lead.stage.category</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <menuitem id="menu_lead_quality_config" name="Lead Qualities" parent="custom_leads_19.menu_leads_config"
+              action="action_lead_quality_config" sequence="40"
+              groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager"/>
+    <menuitem id="menu_lead_stage_category" name="Stage Categories" parent="custom_leads_19.menu_leads_config"
+              action="action_lead_stage_category" sequence="50"
+              groups="custom_leads_19.group_super_admin,custom_leads_19.group_lead_manager"/>
+</odoo>
