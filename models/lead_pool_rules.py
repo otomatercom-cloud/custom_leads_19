@@ -271,17 +271,29 @@ class LeadAssignmentRulePoolRules(models.Model):
                 continue
             now = fields.Datetime.now()
             limit = now - timedelta(minutes=rule.pool_first_call_minutes)
-            leads = Lead.search([
+            base_dom = [
                 ('is_hiring', '=', False), ('is_crash_course', '=', False),
                 ('lead_owner', '!=', False), ('state', '!=', 'lost'),
                 ('lead_quality', 'in', [False, 'new']),
                 ('auto_reassign_count', '<', rule.pool_max_reassigns),
+            ] + ([('leads_source', 'in', rule.pool_source_ids.ids)] if rule.pool_source_ids else [])
+            leads = Lead.search(base_dom + [
                 '|',
                 '&', ('reassign_date', '>=', now - timedelta(days=1)), ('reassign_date', '<=', limit),
                 '&', ('reassign_date', '=', False),
                 '&', ('create_date', '>=', now - timedelta(days=1)), ('create_date', '<=', limit),
-            ] + ([('leads_source', 'in', rule.pool_source_ids.ids)] if rule.pool_source_ids else []),
-                order='id asc', limit=100)
+            ], order='id asc', limit=100)
+            # leads assigned today to an officer by any rule (source rule, bulk assign, ...) have no reassign_date
+            # and may be old records: take the assignment time from the Assignment History
+            hist = self.env['lead.assignment.history'].sudo().search([
+                ('assigned_date', '>=', now - timedelta(days=1)), ('assigned_date', '<=', limit)], order='id desc')
+            hist_ids = list({h.lead_id.id for h in hist if h.lead_id} - set(leads.ids))
+            if hist_ids:
+                leads |= Lead.search(base_dom + [('id', 'in', hist_ids)], order='id asc', limit=100)
+            last_hist = {}
+            for h in self.env['lead.assignment.history'].sudo().search(
+                    [('lead_id', 'in', leads.ids)], order='id asc'):
+                last_hist[h.lead_id.id] = h
             moved = 0
             # the clock only runs while the officer is free and has not yet looked at the lead:
             #  - after the end of the officer's latest call (a long call on another lead pauses it)
@@ -299,6 +311,11 @@ class LeadAssignmentRulePoolRules(models.Model):
                     busy_until[c.user_id.id] = end
             for lead in leads:
                 since = lead.reassign_date or lead.create_date
+                h = last_hist.get(lead.id)
+                if h and h.assigned_date and h.owner_id == lead.lead_owner and h.assigned_date > since:
+                    since = h.assigned_date
+                if since < now - timedelta(days=1):
+                    continue
                 if lead.call_log_ids.filtered(lambda c: (c.call_time or c.create_date) >= since):
                     continue
                 owner_user = lead.lead_owner.user_id
