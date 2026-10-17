@@ -203,7 +203,7 @@
                                 <field name="attendance_percentage" string="Attendance %"/>
                                 <field name="lead_stage_category" readonly="1"/>
                                 <field name="is_abroad"/>
-                                <field name="is_crash_course" groups="custom_leads_19.group_crash_course_on"/>
+                                <field name="is_crash_course" groups="custom_leads_19.group_crash_course_on" readonly="1"/>
                                 <field name="in_topup_pool"/>
                                 <field name="admission_status"/>
                                 <field name="admission_date" invisible="not admission_status"/>

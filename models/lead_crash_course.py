@@ -40,11 +40,45 @@ class LeadsLogicCrashCourse(models.Model):
             return [('is_crash_course', '=', want)]
         return [('id', '=', 0)] if want else [('id', '!=', 0)]
 
+    def _crash_pick_head(self):
+        """The Crash Head (employee) with the fewest crash-course leads - leads are shared out evenly."""
+        grp = self.env.ref('custom_leads_19.group_crash_head', raise_if_not_found=False)
+        if not grp:
+            return self.env['hr.employee']
+        users = self.env['res.users'].sudo().search([('group_ids', 'in', grp.id), ('active', '=', True)])
+        emps = self.env['hr.employee'].sudo().search([('user_id', 'in', users.ids)])
+        if not emps:
+            return emps
+        load = {e.id: self.sudo().search_count([('lead_owner', '=', e.id), ('is_crash_course', '=', True)])
+                for e in emps}
+        return min(emps, key=lambda e: (load[e.id], e.id))
+
     def action_move_crash_course(self):
         if not self._crash_enabled():
             raise UserError(_('The Crash Course option is switched off in Settings.'))
-        self.write({'is_crash_course': True})
-        return self._crash_notice(_('%s lead(s) moved to the Crash Course menu.') % len(self))
+        moved = 0
+        head = self.env['hr.employee']
+        for rec in self.sudo():
+            head = rec._crash_pick_head()
+            vals = {'is_crash_course': True}
+            if head and rec.lead_owner != head:
+                vals['lead_owner'] = head.id
+                rec.message_post(body=_('Moved to Crash Course. Assigned to Crash Head %s (was %s).') % (
+                    head.name, rec.lead_owner.name or '-'))
+            rec.with_context(skip_pool_rules=True).write(vals)
+            moved += 1
+        msg = _('%s lead(s) moved to the Crash Course menu.') % moved
+        if head:
+            msg += ' ' + _('Assigned to Crash Head.')
+        else:
+            msg += ' ' + _('No Crash Head user found - owner not changed.')
+        res = self._crash_notice(msg)
+        # the officer may no longer have access to this lead: go back to the Leads list
+        if head and not self.env.user.has_group('custom_leads_19.group_crash_head') \
+                and not self._user_can_reassign():
+            res['params']['next'] = self.env['ir.actions.act_window']._for_xml_id(
+                'custom_leads_19.action_leads_logic')
+        return res
 
     def action_move_back_crash_course(self):
         self.write({'is_crash_course': False})
