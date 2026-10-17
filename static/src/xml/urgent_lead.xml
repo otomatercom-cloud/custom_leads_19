@@ -7,6 +7,7 @@
                 <div class="o_urgent_head">
                     <span class="o_urgent_siren">🚨</span>
                     <span class="o_urgent_title" t-if="a.kind === 'rnr'">RNR call not done — please call</span>
+                    <span class="o_urgent_title" t-elif="a.is_hiring">NEW HIRING LEAD — please review</span>
                     <span class="o_urgent_title" t-else="">URGENT — new lead, call now</span>
                     <span class="o_urgent_count" t-if="state.alerts.length > 1" t-esc="state.alerts.length + ' waiting'"/>
                 </div>
@@ -28,6 +29,7 @@
                     <button class="o_urgent_btn o_urgent_btn_call" t-on-click="() => svc.call(a)">📞 Call now</button>
                     <button class="o_urgent_btn" t-on-click="() => svc.open(a)">Open lead</button>
                     <button class="o_urgent_btn o_urgent_btn_ghost" t-on-click="() => svc.snooze(a, 5)">Remind in 5 min</button>
+                    <button class="o_urgent_btn o_urgent_btn_ghost" t-if="a.can_close" t-on-click.stop="() => svc.closeAlert(a)">✕ Close</button>
                 </div>
             </div>
         </div>

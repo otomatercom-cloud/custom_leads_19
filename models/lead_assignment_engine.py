@@ -331,7 +331,7 @@ class LeadAssignmentRule(models.Model):
     def _pool_pending_leads(self, limit=None):
         self.ensure_one()
         domain = [('lead_owner', '=', False), ('state', '!=', 'lost'), ('topup_pool_lead', '=', False),
-                  ('is_hiring', '=', False)]
+                  ('is_hiring', '=', False), ('is_crash_course', '=', False)]
         if self.pool_source_ids:
             domain.append(('leads_source', 'in', self.pool_source_ids.ids))
         if self.backlog_days:

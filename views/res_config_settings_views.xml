@@ -85,6 +85,12 @@
                             <field name="urgent_rnr_hour"/>
                         </setting>
                     </block>
+                    <block title="Crash Course">
+                        <setting string="Crash Course option"
+                                 help="ON: an officer can move a lead to the Crash Course menu (checkbox and button on the lead). OFF: the option and the menu are hidden, and those leads show in Leads again.">
+                            <field name="group_crash_course_on"/>
+                        </setting>
+                    </block>
                     <block title="Call Timer Popup">
                         <setting string="Enable Call Timer Popup"
                                  help="When ON: clicking Call opens the timer overlay with duration tracking and recording. When OFF: clicking Call directly dials via tel: link with no overlay.">

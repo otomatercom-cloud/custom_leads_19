@@ -128,6 +128,14 @@ export const urgentLeadService = {
                     target: "current",
                 });
             },
+            async closeAlert(a) {
+                remove(a.id);
+                try {
+                    await orm.call("lead.urgent.alert", "action_close", [[a.id]]);
+                } catch (e) {
+                    refresh(false);
+                }
+            },
             async snooze(a, minutes) {
                 remove(a.id);
                 await orm.call("lead.urgent.alert", "action_snooze", [[a.id]], { minutes });

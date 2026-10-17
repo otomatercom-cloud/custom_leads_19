@@ -12,6 +12,7 @@ from datetime import datetime, timedelta
 import pytz
 
 from odoo import api, fields, models, _
+from odoo.exceptions import AccessError
 
 _logger = logging.getLogger(__name__)
 PARAM_URGENT = 'custom_leads_19.urgent_lead_popup'
@@ -145,6 +146,8 @@ class LeadUrgentAlert(models.Model):
             'id': self.id,
             'kind': self.kind or 'new',
             'calls': len(calls),
+            'is_hiring': bool(lead.is_hiring),
+            'can_close': self._user_can_close(self.user_id),
             'lead_id': lead.id,
             'name': lead.name or '',
             'phone': lead.phone_number or '',
@@ -192,6 +195,22 @@ class LeadUrgentAlert(models.Model):
                 continue
             out.append(a._payload())
         return out
+
+    @api.model
+    def _user_can_close(self, user):
+        """Only HR (HR Assistant group), Managers and Super Admins get a Close button on the popup.
+        Admission officers can only call, open or snooze it - it goes away when they call or change the quality."""
+        return any(user.has_group(g) for g in (
+            'custom_leads_19.group_lead_hr_assistant', 'custom_leads_19.group_lead_manager',
+            'custom_leads_19.group_super_admin'))
+
+    def action_close(self):
+        """Close button (HR only)."""
+        for a in self.sudo().filtered(lambda r: r.user_id.id == self.env.uid):
+            if not self._user_can_close(a.user_id):
+                raise AccessError(_('Only HR can close this popup. Call the lead or change its quality.'))
+            a._close('closed by HR')
+        return True
 
     def action_snooze(self, minutes=5):
         for a in self.sudo().filtered(lambda r: r.user_id.id == self.env.uid):
